@@ -1,0 +1,223 @@
+read_fittrack <- function(fitfile) {
+
+  #  this code is a modified and repurposed version of the scripts posted in
+  #  various websites and in the examples with the fitdc package, which does the
+  #  actual hard work of reading the binary fit file.
+  data_mesgs <- fitdc::read_fit(fitfile)
+
+  ## msg types: "file_id","file_creator","event","device_info","unknown","record","lap","session","activity"
+  ## Filter out the record and event messages, the session summary:
+  is_record <- function(mesg) mesg$name == "record"
+  is_event <- function(mesg) (mesg$name == "event")
+  is_session <- function(mesg) (mesg$name == "session")
+
+  records <- Filter(is_record, data_mesgs)
+  records <- lapply(records, format_record)
+  ## Some records have missing fields:
+  colnames_full <- names(records[[which.max(lengths(records))]])
+  empty <- stats::setNames(as.list(rep(NA, length(colnames_full))),colnames_full)
+  records <- dplyr::bind_rows(lapply(records, merge_lists, empty))
+  if (!"cadence.rpm" %in% colnames(records)) records$cadence.rpm <- NA
+  if (!"heart_rate.bpm" %in% colnames(records)) records$heart_rate.bpm <- NA
+  colnames(records) <- gsub("m/s","m.s",colnames(records))
+
+  events <- Filter(is_event, data_mesgs)
+  events <- lapply(events, format_event)
+  ## Some records have missing fields:
+  #colnames_full <- names(events[[which.max(lengths(events))]])
+  #  try this since few relatively few events compared to records, slow but avoids warnings...
+  colnames_full <- unique(unlist(lapply(events,names)))
+  empty <- stats::setNames(as.list(rep(NA, length(colnames_full))),colnames_full)
+  if (!"data." %in% colnames(empty)) empty$data. <- NA
+  events <- dplyr::bind_rows(lapply(events, merge_lists, empty))
+
+  session <- Filter(is_session, data_mesgs)
+  session <- lapply(session, format_session)
+  if (length(session)==1) {
+    session <- as_data_frame(session[[1]])
+  } else {
+    print(paste0("file has ",length(session)," session records, returning NULL for session variables"))
+    session <- NULL
+  }
+  if (length(which(events$timer_trigger. == "auto"))==0) {
+    # patch together situation for no auto-on/off - typical of no cadence sensor paired
+    records <- records[!is.na(records$distance.m),]
+    no.move <- (records$distance.m == lag_one(records$distance.m)) & (records$distance.m == lead_one(records$distance.m))
+    no.gps <- !("position_lat.semicircles" %in% colnames(records))
+    records <- records[!(no.move|no.gps),]
+
+    seg.stop <- records$distance.m == lead_one(records$distance.m)
+    seg.start <- records$distance.m == lag_one(records$distance.m)
+
+    timestamp.s <- records$timestamp.s[seg.start]
+    event. <- rep("timer",length(timestamp.s))
+    event_type. <- rep("start",length(timestamp.s))
+    timer_trigger. <- rep("auto",length(timestamp.s))
+    event_group. <- rep(0,length(timestamp.s))
+    data. <- rep(NA,length(timestamp.s))
+    new.starts <- data.frame(timestamp.s,timer_trigger.,event.,event_type.,event_group.,data.)
+    timestamp.s <- records$timestamp.s[seg.stop]
+    event. <- rep("timer",length(timestamp.s))
+    event_type. <- rep("stop_all",length(timestamp.s))
+    timer_trigger. <- rep("auto",length(timestamp.s))
+    event_group. <- rep(0,length(timestamp.s))
+    data. <- rep(NA,length(timestamp.s))
+    new.stops <- data.frame(timestamp.s,timer_trigger.,event.,event_type.,event_group.,data.)
+
+    events <- dplyr::arrange(rbind(events,rbind(new.starts,new.stops)),timestamp.s)
+  }
+  recovery_hr <- events[events$event. == "recovery_hr",]
+  recovery_hr <- recovery_hr[,c("timestamp.s","data.")]
+
+  # to thin out breaks, we need distance in the event frame
+  #   put in check that assumption of 1 record per timestamp holds...
+  events <- events[events$event. %in% c("timer","power_down","power_up"),]
+  events <- dplyr::arrange(left_join(events,records,by="timestamp.s"),timestamp.s,event.,event_type.)
+
+  # knock out events and records before any early power-off-power-on pairs
+  power.on.event <- events$event. == "power_up" &
+                    (lag_n(events$event.,1) == "power_down" |
+                     lag_n(events$event.,2) == "power_down") &
+                        cumsum(ifelse(is.na(events$distance.m), 0, events$distance.m)) < 10
+
+   if (sum(power.on.event)>0){
+    last.power.on <- max(which(power.on.event))
+    first.time <- events$timestamp.s[last.power.on]
+    events <- events[events$timestamp.s>first.time,]
+    records <- records[records$timestamp.s>first.time,]
+   }
+
+  #  remove manual stops and starts in track
+  #  assume auto stop without speed is an event immediately after manual start during pause, drop it
+  astop.nospeed <-   (events$timer_trigger. == "auto" & !is.na(events$timer_trigger.)) &
+          events$event_type. == "stop_all" & is.na(events$speed.m.s)
+  events <- events[!astop.nospeed,]
+  ## remove second and third of power_down=manual.stop_all,power_up,manual.start
+  event.seq.beg <- events$event.=="power_down" &
+    !is.na(lead_one(events$timer_trigger.)) &  lead_one(events$timer_trigger.)=="manual" &
+    lead_one(events$event_type.)=="stop_all" &
+    !is.na(lead_n(events$event.,2)) &  lead_n(events$event.,2)=="power_up" &
+    lead_n(events$event_type.,3)=="start" &
+    events$timestamp.s==lead_one(events$timestamp.s)
+  drop.powerdown <- lag_one(event.seq.beg)
+  drop.powerup <- lag_one(drop.powerdown)
+  events <- events[!(drop.powerdown|drop.powerup),]
+  ## remove first,second and third of manual.stop_all,power_down,power_up,manual.start if preceding event was a stop
+  event.seq.beg <- !is.na(events$timer_trigger.) & events$timer_trigger.=="manual" &  events$event_type. == "stop_all" &
+    lead_one(events$event.)=="power_down" &
+    lead_n(events$event.,2)=="power_up" &
+    lead_n(events$event_type.,3)=="start" &
+    lag_one(events$event_type.)=="stop_all"
+  drop.powerdown <- lag_one(event.seq.beg)
+  drop.powerup <- lag_one(drop.powerdown)
+  events <- events[!(event.seq.beg|drop.powerdown|drop.powerup),]
+
+  ## manual stop which immediately follows: a stop or
+  ##                                        precedes a stop with the same timestamp and follows a start
+  mstop.delete <-  events$timer_trigger. == "manual" & events$event_type. == "stop_all" &
+                             (lag_one(events$event_type.) == "stop_all" |
+                              ( lead_one(events$event_type.) == "stop_all" &
+                                lead_one(events$timestamp.s) == events$timestamp.s &
+                                !is.na(lead_n(events$timestamp.s,1)) &
+                                lag_one(events$event_type.) == "start"))
+  ## manual start which precedes an auto start a stop with the same timestamp
+  mstart.delete <- events$timer_trigger. == "manual" & events$event_type. == "start" &
+                     (lead_one(events$event_type.) == "start" |
+                        (lag_one(events$event_type.) == "stop_all" & lag_one(events$timestamp.s) == events$timestamp.s))
+  events <- events[!(mstop.delete | mstart.delete),]
+
+
+  last.start <- max(which(events$event_type. == "start"))
+  if (length(events$event_type.) > last.start) {
+    if (events$event_type.[last.start+1] != "stop_all") stop("fitfile problem - event after last start not a stop")
+    events <- events[(1:(last.start+1)),]
+  }
+  #   drop events where distance is missing (those before and after collected location data) keep last start if needed
+  drop.events <- is.na(events$distance.m)
+  drop.events <- drop.events & !(events$timer_trigger. == "manual" & events$event_type. == "start" &
+                                 !lead_one(drop.events) & lead_one(events$event_type.) == "stop_all") &
+                             !(events$event.=="power_down" | events$event.=="power_up")
+  events <- events[!drop.events,]
+
+  segment.start.times <- events$timestamp.s[events$event_type. == "start"]
+  segment.end.times <- events$timestamp.s[events$event_type. == "stop_all"]
+  nsegments <- length(segment.start.times)
+
+  records$segment <- NA
+  for(seg in 1:nsegments) {
+    records$segment[(records$timestamp.s>=segment.start.times[seg])&(records$timestamp.s<=segment.end.times[seg])] <- seg
+  }
+  ##  snip off any short very delayed final records
+  if (nsegments > 1) {
+    if (sum(records$segment==nsegments)<3 &
+       (as.numeric(segment.start.times[nsegments])-as.numeric(segment.end.times[nsegments-1])>120)){
+      records <- records[records$segment!=nsegments,]
+      nsegments <- nsegments-1
+      segment.start.times <- segment.start.times[1:nsegments]
+      segment.end.times <- segment.end.times[1:nsegments]
+    }
+  }
+  records$timestamp.s <- as.POSIXct(records$timestamp.s,tz="UTC",origin='1989-12-31')
+  records <- dplyr::arrange(records[!is.na(records$segment),],timestamp.s)
+  if ("position_lat.semicircles" %in% colnames(records)) {
+    records$position_lat.dd <- records$position_lat.semicircles*( 180 / 2^31 )
+    records$position_lon.dd <- records$position_long.semicircles*( 180 / 2^31 )
+  } else {
+    records$position_lat.dd <- NA
+    records$position_lon.dd <- NA
+  }
+
+  records <- records[,!(names(records) %in% c("position_lat.semicircles","position_long.semicircles"))]
+  if (nrow(recovery_hr)>0) {
+    recovery_hr$heart_rate.at.stop <- records$heart_rate.bpm[nrow(records)]
+    names(recovery_hr) <- gsub("data.","heart_rate.postride",names(recovery_hr))
+    cat(paste0("\nhr at stop = ",recovery_hr$heart_rate.at.stop,"   hr after 2 min = ",recovery_hr$heart_rate.postride))
+  }
+  return(list(track=records,recovery_hr=recovery_hr,session=session))
+}
+merge_lists <- function(ls_part, ls_full) {
+  extra <- setdiff(names(ls_full), names(ls_part))
+  #s.data.frame(append(ls_part, ls_full[extra])[names(ls_full)])  # order as well
+  as_data_frame(append(ls_part, ls_full[extra])[names(ls_full)])  # order as well
+}
+format_record <- function(record) {
+  out <- record$fields
+  units <- record$units
+  # get rid of the units if hr or cadence aren't there
+  if (!"cadence"%in%names(out)) {
+    if (length(which(units=="rpm"))>0) units <- units[-which(units=="rpm")]
+  }
+  if (!"heart_rate"%in%names(out)) {
+    if (length(which(units=="bpm"))>0) units <- units[-which(units=="bpm")]
+  }
+  names(out) <- paste(names(out), units, sep = ".")
+  out
+}
+format_event <- function(event) {
+  out <- event$fields
+  if (!"event_group"%in%names(out)) {
+    #  this is a cheap and dirty fix, we won't use the variable but it screws up processing
+    #  could use fitfilerepair utility, but why bother.
+    if (out$event == "recovery_hr") {
+      #cat(paste0("*****recovery_hr timer event in fit file. HR=",out$data))
+    } else if (out$event == "hr_high_alert") {
+      cat(paste0("*****hr high alert event in fit file. HR=",out$data))
+    } else if (out$event == "course_point") {
+      #cat("*****course point event in fit file.\n")
+    } else {
+      cat("\n *****missing event_group in fit file!\n")
+      print(event)
+    }
+    out$event_group <- 0
+  }
+  if (!"event_group"%in%names(out)) {
+    out$data <- 0
+  }
+  names(out) <- paste(names(out), event$units, sep = ".")
+  return(out)
+}
+format_session <- function(session) {
+  out <- session$fields
+  #  units should be obvious, don't append them
+  return(out)
+}
