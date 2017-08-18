@@ -1,4 +1,4 @@
-#' Plot ride track data on a map
+#' plot ride track data on a map
 #'
 #' \code{map_rides} Plot lat/long data on maps, optionally using colored
 #'   dots to indicate speed
@@ -31,26 +31,32 @@
 #' @param fine.map if true, use c(7680,4800) for map size
 #' @param margin.factor percentage to expand map area beyond limits of
 #'    the track in each direction, when autodetermining region to plot
+#' @param draw.speed if true, draw track(s) as a series of points whose color
+#'    indicates travel speed
 #' @param line.color the color to draw the lines of the tracks,
-#'    if a palette is specified (\code{"plasma"} or \code{"viridis"} or \code{"rainbow"})
+#'    if a palette is specified (\code{"plasma"} or \code{"viridis"} or \code{"rainbow"}
+#'     or \code{"heat"} or \code{"red-blue"})
 #'    is specified, each track supplied will be assigned a color from that palette
 #' @param line.width the width of the line for the tracks
 #' @param line.alpha the opacity of the line
-#' @param speed.color palette to use to represent speed on plot (\code{"plasma"} or
-#'     \code{"magma"} or \code{"heat"} or \code{"rainbow"} or \code{"red-blue-green"})
+#' @param speed.color palette to use to represent speed on plot (\code{"speedcolors"} or
+#'     \code{"red-blue-green"} or \code{"rainbow"} or \code{"plasma"} or \code{"magma"} or
+#'     \code{"heat"} )
 #' @param speed.alpha opacity of the speed line if \eqn{speed.color} specified
 #' @param speed.ptsize size for the symbols used to plot the speed line, doubled
 #'    if \eqn{fine.map} is set true.
 #' @param speed.pch the character to use plotting the points of the speed line
-#' @param jpeg.quality quality loss from compression for jpeg output
+#' @param jpeg.quality the ‘quality’ of the JPEG image, as a percentage. Smaller
+#'    values will give more compression but also more degradation of the image
 #'
 #' @return NULL
 #'
 #' @export
 map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,maptype="maptoolkit-topo",minTiles=50,
                       mapsize=c(1600,1200),fine.map=FALSE,margin.factor=0.08,
+                      draw.speed=FALSE,
                       line.color="magenta",line.width=3,line.alpha=0.8,
-                      speed.color="plasma",speed.alpha=0.7,speed.ptsize=6,speed.pch=19,
+                      speed.color="speedcolors",speed.alpha=0.7,speed.ptsize=6,speed.pch=19,
                       jpeg.quality=90) {
 
   ##  geodf: a tibble or dataframe containing at least: position_lat.dd,position_lon.dd,(or lat,lon)(both numeric),
@@ -146,13 +152,18 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,maptype="maptool
     par(mar = rep(0,4))
     plot(map)
     if (!missing(maptitle)) title(main=as.character(maptitle),cex.main=2*mapheight/800,col="gray57",line=-3*(mapheight/800))
-    if (missing(speed.color)) {
+    if (!draw.speed) {
       if (line.color=="plasma") {
-        colorvec <- rev(viridis::plasma(length(trackstarts),begin=0.0,end=0.7))
+        colorvec <- viridis::plasma(length(trackstarts),begin=0.0,end=0.7)
       } else if (line.color=="viridis") {
-        colorvec <- rev(viridis::viridis(length(trackstarts),begin=0.1,end=0.9))
+        colorvec <- viridis::viridis(length(trackstarts),begin=0.1,end=0.9)
       } else if (line.color=="rainbow") {
-        colorvec <- rev(rainbow(length(trackstarts),start=0.2,end=0.9))
+        colorvec <- rainbow(length(trackstarts),start=0.2,end=0.9)
+      } else if (line.color=="heat") {
+        colorvec <- heat.colors(length(trackstarts))
+      } else if (line.color=="red-blue") {
+        colorvec <- colorRampPalette(c("red","blue"))(101)
+
       } else {
         colorvec <- rep(line.color,length(trackstarts))
       }
@@ -175,14 +186,16 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,maptype="maptool
       } else if (speed.color=="heat") {
         spdcolors <- rev(heat.colors(101))
       } else if (speed.color=="rainbow") {
-        spdcolors <- (rainbow(101,start=0.3,end=1))
-      } else {
+        spdcolors <- (rainbow(101,start=0.15,end=1))
+      } else if (speed.color=="red-blue-green") {
         spdcolors <- colorRampPalette(c("red","blue","green"))(101)
+      } else {
+        spdcolors <- colorRampPalette(c("red","yellow","cornflowerblue","dodgerblue","blue","darkorchid","purple","magenta"))(101)
       }
       speed <- mapdf$speed.m.s*2.23694
-      speed[speed>45] <- 45
+      speed[speed>40] <- 40
       speed[speed<3] <- 3
-      colorvec <- spdcolors[floor(100*(speed - 3)/42) + 1]
+      colorvec <- spdcolors[floor(100*(speed - 3)/37) + 1]
       temp <- OpenStreetMap::projectMercator(mapdf$lat, mapdf$lon)
       points(temp[,1], temp[,2], pch=speed.pch, col=alpha(colorvec,speed.alpha), lwd=speed.ptsize)
     }
@@ -190,7 +203,9 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,maptype="maptool
   }
   return(NULL)
 }
-#' Plot ride track data on a map
+#' plot heartrate, cadence, speed and more using color-driven
+#'   data summaries to convey performance patterns
+#'
 #'
 #' \code{plot_elev_profile_plus} creates a plot which uses the elevation profile
 #'   and colored bands to compactly display the relationship between terrain,
@@ -204,16 +219,18 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,maptype="maptool
 #'    location and elevation data, as well as heartrate and cadence
 #' @param summary data frame or tibble containing track summary from the
 #'    data frames generated by \code{read_ride}
-#' @param savefn name of output file, extension is either .pdf or .png
+#' @param savefn name of output file, format is determined by the file
+#'    extension specified, .pdf, .png or .jpg
 #' @param title title printed over top center of map
-#' @param palette palette to use in graphicv(\code{"magma"} or
-#'       \code{"inferno"} or \code{"plasma"})
+#' @param palette palette to use in graphic (\code{"plasma"} or \code{"magma"} or
+#'       \code{"inferno"} or \code{"viridis"})
 #' @param vertical.multiplier default vertical exaggeration factor.  Default
 #'    ranges from 25 to 60 depending on the length being plotted
 #' @param ppm override calculated default number of points per mile
 #' @param show.stops draw row with short and long stops
 #' @param show.time draw row with 15 minute and hour marks
 #' @param show.summary display summary results if supplied
+#' @param cad.cont display cadence as a continuos color map
 #' @param hr.low heartrates below this are same color
 #' @param hr.high heartrates above this are same color
 #' @param hr.color.low set color for hr.low and lower
@@ -222,12 +239,17 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,maptype="maptool
 #'    to the desired limit on the range of heartrates
 #' @param cad.low low cadence limit
 #' @param cad.target target cadence range minimum
+#' @param cad.cont.low lower cadence limit for continuous color, all
+#'    lower cadences are displayed as same color
+#' @param cad.cont.high upper cadence limit for continuous color, all
+#'    higher cadences are displayed as same color
 #' @param cad.color.low set color for cadence at cad.low or below
 #' @param cad.color.mid set color for cadence above low but below target
 #' @param cad.color.high set color for cadence above target
 #' @param hr.smooth.bw.meters bandwidth (in meters) for smoothing kernel
 #'    for heartrate data
-#' @param hr.smooth.nn number of points (on each side) to use in
+#' @param hr.smooth.nn number of points (on each side) to use in smoothing
+#'    kernel for heartrate data
 #' @param cad.smooth.bw.meters bandwidth (in meters) for smoothing kernel
 #'    for cadence data
 #' @param cad.smooth.nn number of points (on each side) to use in
@@ -237,11 +259,13 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,maptype="maptool
 #' @return a ggplot object
 #'
 #' @export
-plot_elev_profile_plus <- function(track,summary,savefn,title="Ride",palette="magma",
-          vertical.multiplier=NA,ppm=NA,show.stops=TRUE,show.time=TRUE,show.summary=TRUE,
-          hr.low=125,hr.high=170,hr.color.low=10,hr.color.high=33,
-          cad.low=65,cad.target=82,cad.color.low=4,cad.color.mid=8,cad.color.high=15,
-          hr.smooth.bw.meters=12,hr.smooth.nn=8,cad.smooth.bw.meters=30,cad.smooth.nn=12,
+plot_elev_profile_plus <- function(track,summary,savefn,title="Ride",palette="plasma",
+          vertical.multiplier=NA,ppm=NA,
+          show.stops=TRUE,show.time=TRUE,show.summary=TRUE,cad.cont=TRUE,
+          hr.low=100,hr.high=170,hr.color.low=9,hr.color.high=31,
+          cad.low=65,cad.target=88,cad.cont.low=60,cad.cont.high=100,
+          cad.color.low=3,cad.color.mid=9,cad.color.high=15,
+          hr.smooth.bw.meters=6,hr.smooth.nn=5,cad.smooth.bw.meters=20,cad.smooth.nn=15,
           min.numpoints=1000) {
   ###  make the R checker happy with utterly irrelevant initializations of variables used with ggplot
   alphachar <- alphahour <- distlegend <- prtchar <- prthour <- NULL
@@ -250,7 +274,7 @@ plot_elev_profile_plus <- function(track,summary,savefn,title="Ride",palette="ma
 
 
   miles <- track$distance.m[nrow(track)]/1609.34
-  elevsm <- smoothEpanechnikov(track$distance.m,track$altitude.m,nneighbors=5,bw=20)
+  elevsm <- smoothTriangular(track$distance.m,track$altitude.m,nneighbors=2,bw=5)
   track.elapsed <- as.numeric(difftime(track$timestamp.s,track$timestamp.s[1],units="secs"))
   #  set points in plot and points.per.mile
   if (!missing(ppm)&ppm>=10) {
@@ -308,30 +332,30 @@ plot_elev_profile_plus <- function(track,summary,savefn,title="Ride",palette="ma
   ybottom <- elev.min.int
   if (show.time) {
     y.clock <- ybottom - 100
-    ybottom <- y.clock
-  }
-  if (show.stops) {
-    y.stops <- ybottom - 400
-    ybottom <- y.stops
+    ybottom <- y.clock - 50
   }
   if (any(!is.na(track$cadence.rpm))) {
-    y.cadence.band <- ybottom -500
+    y.cadence.band <- ybottom - 300
     ybottom <- y.cadence.band
 
   }
   if (any(!is.na(track$heart_rate.bpm))) {
-    y.hr.band <- ybottom -500
+    y.hr.band <- ybottom - 300
     ybottom <- y.hr.band
   }
-  ymin <- ybottom-300
-  ymax <- elev.max.int+800
+  if (show.stops) {
+    y.stops <- ybottom - 240
+    ybottom <- y.stops
+  }
+  ymin <- ybottom-130
+  ymax <- elev.max.int+700
   xmin <- 0
   xmax <- miles.per.point*ngraphpoints
 
-  hr.band.height <- 160
+  hr.band.height <- 120
   hr.label.height <- 100
 
-  cad.band.height <- 160
+  cad.band.height <- 120
   cad.label.height <- 100
 
   aspect.ratio <- vertical.multiplier*(ymax-ymin)/(5280*(npoints)*miles.per.point)
@@ -339,16 +363,24 @@ plot_elev_profile_plus <- function(track,summary,savefn,title="Ride",palette="ma
   hrcadlegendwidth <- miles.per.point*min(npoints,2*min.numpoints)/(13*2) #column width vectors sum to 13
 
   speed[speed<3] <- 3
-  speed[speed>45] <- 45
+  speed[speed>40] <- 40
   major.breaks <- ifelse(miles>100,10,ifelse(miles>10,5,1))
   plotdata <- data.frame(distance,elevation,time,speed,elevprtchar,elevalpha)
 
   g <- ggplot(plotdata,aes(x=distance,y=elevation)) +
-        scale_y_continuous(limits=c(ymin,ymax),expand=c(0,0),breaks=seq(from=0,to=ymax,by=500),minor_breaks=seq(0,ymax,100)) +
-        scale_x_continuous(limits=c(xmin,xmax),expand=c(0,0),breaks=seq(from=0,to=xmax,by=major.breaks),minor_breaks=seq(0,xmax,1)) +
+        scale_y_continuous(limits=c(ymin,ymax),expand=c(0,0),
+                           breaks=seq(from=0,to=ymax,by=500),
+                           minor_breaks=seq(0,ymax,100)) +
+        scale_x_continuous(limits=c(xmin,xmax),expand=c(0,0),
+                           breaks=seq(from=0,to=xmax,by=major.breaks),
+                           minor_breaks=seq(0,xmax,1)) +
         theme(aspect.ratio=aspect.ratio) +
-        scale_color_viridis(option=palette,limits=c(0,45),na.value="white",direction=-1) +
-        scale_fill_viridis(option=palette,limits=c(0,45),na.value="white",direction=-1) +
+        theme(legend.title=element_text(colour="steelblue",size=7)) +
+        theme(legend.text=element_text(colour="lightsteelblue",size=6)) +
+        theme(legend.key.size=unit(10,"points")) +
+        theme(legend.justification="top") +
+        scale_color_viridis(option=palette,limits=c(0,40),na.value="white",direction=-1) +
+        scale_fill_viridis(option=palette,limits=c(0,40),na.value="white",direction=-1) +
         geom_rect(aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=0),fill="white",color="white") +
         geom_area(color="white",fill="white") +
         geom_point(aes(color=speed),shape="|",size=1,position=position_nudge(y=1.2))
@@ -364,60 +396,29 @@ plot_elev_profile_plus <- function(track,summary,savefn,title="Ride",palette="ma
     cadence[cadencenas] <- NA
     cadence <- smoothTriangular(distance,cadence,segment,nneighbors=cad.smooth.nn,bw=cad.smooth.bw)
     cadence[cadencenas] <- NA
-    cadencelabels <- c("Cadence",
-                       paste0("   < ",cad.low,"  "),
-                       paste0("   ",cad.low,"-",cad.target," "),
-                       paste0("   >= ",cad.target," "))
-    cadencecolors <- c(NA,cad.color.low,cad.color.mid,cad.color.high)
-    cadprtvalue  <-  rep(NA,npoints)
-    cadprtvalue[!is.na(cadence) & cadence>0 & cadence<cad.low] <- cadencecolors[2]
-    cadprtvalue[!is.na(cadence) & cadence>=cad.low & cadence<cad.target] <- cadencecolors[3]
-    cadprtvalue[!is.na(cadence) & cadence>=cad.target] <- cadencecolors[4]
-
-    width.cad <- c(4,3,3,3)
-    x1.cad <- c(0,cumsum(width.cad[1:3]))*hrcadlegendwidth
-    x2.cad <- cumsum(width.cad)*hrcadlegendwidth
-    y1.cad <- y.cadence.band+cad.label.height-10
-    y2.cad <- y1.cad+cad.label.height-10
-    xtext.cad <- x1.cad+(x2.cad-x1.cad)/2
-    xtext.cad <- x1.cad
-    ytext.cad <- y1.cad+(y2.cad-y1.cad)/2
-    alpha.cad <- c(0,1,1,1)
-    hjust.cad <- c(0,0,0,0)
-    cadDataFrame <- data.frame(distance,cadprtvalue)
-    cadTextFrame <- data.frame(x1.cad,x2.cad,y1.cad,y2.cad,xtext.cad,ytext.cad,cadencelabels,cadencecolors,alpha.cad,hjust.cad)
-    g <- g +
-      geom_tile(data=cadDataFrame,aes(y=y.cadence.band,x=distance,fill=cadprtvalue,color=cadprtvalue),height=cad.band.height,show.legend = FALSE) +
-      geom_rect(data=cadTextFrame,aes(xmin=x1.cad,xmax=x2.cad,fill=cadencecolors,alpha=alpha.cad),ymin=y1.cad,ymax=y2.cad,inherit.aes=FALSE,show.legend = FALSE) +
-      geom_text(data=cadTextFrame,aes(x=xtext.cad,y=ytext.cad,label=cadencelabels,hjust=hjust.cad),size=2,fontface="italic")
+    if (cad.cont) {
+      g <- continuous_bar(g,legendtext="Cadence",xvar=distance,vals=cadence,
+                          lowval=cad.cont.low,hival=cad.cont.high,
+                          lowcolor=cad.color.low,hicolor=cad.color.high,
+                          legendwidth=hrcadlegendwidth,y.band=y.cadence.band,
+                          band.height=cad.band.height,label.height=cad.label.height)
+    } else {
+      g <- discrete_bar(g,legendtext="Cadence",xvar=distance,vals=cadence,
+                        lowval=cad.low,hival=cad.target,
+                        lowcolor=cad.color.low,midcolor=cad.color.mid,hicolor=cad.color.high,
+                        legendwidth=hrcadlegendwidth,y.band=y.cadence.band,
+                        band.height=cad.band.height,label.height=cad.label.height)
+    }
   }
   if (any(!is.na(track$heart_rate.bpm))) {
     #  assume if any heartrate that smoothing is okay,  this eliminates missing value information....
     heartrate <- stats::approx(trackdistance,track$heart_rate.bpm,xout=distance,n=npoints)[[2]]
     heartrate <- smoothEpanechnikov(distance,heartrate,segment,nneighbors=hr.smooth.nn,bw=hr.smooth.bw)
-    hrprtvalue <- hr.color.low + (hr.color.high-hr.color.low)*(heartrate-hr.low)/(hr.high-hr.low) #  map hr interval to color interval
-    hrprtvalue[!is.na(hrprtvalue)&hrprtvalue<hr.color.low] <- hr.color.low
-    hrprtvalue[!is.na(hrprtvalue)&hrprtvalue>hr.color.high] <- hr.color.high
-    hrprtalpha <- (hrprtvalue-hr.color.low)/(hr.color.high-hr.color.low)  #higher heartrate more intense
-    hrprtalpha[hrprtalpha<0.3] <- 0.3
-    #hrprtalpha <- rep(1,npoints)
-
-    width.hr <- c(4,2,5,2)
-    column.hr <- c(0,cumsum(width.hr)[-4])*hrcadlegendwidth
-    hrlegendpos <- distance>=column.hr[3] & distance<=column.hr[4]
-    hrprtlegend <- seq(hr.color.low,hr.color.high,length.out=sum(hrlegendpos))
-    xtext.hr <- c(0,column.hr[3],column.hr[3],column.hr[4])
-    ytext.hr <- rep(y.hr.band+1*hr.band.height,4)
-    alpha.hr.label <- c(1,1,0,1)
-    hjust.hr <- c(0,1,0,0)
-    hrlabels <- c("Heart Rate",paste0(hr.low," "),"",paste0("  ",hr.high))
-    hrDataFrame <- data.frame(distance,hrprtvalue,hrprtalpha,heartrate)
-    hrLegendFrame <- data.frame(distlegend=distance[hrlegendpos],hrprtlegend)
-    hrTextFrame <- data.frame(xtext.hr,ytext.hr,width.hr,hrlabels,alpha.hr.label,hjust.hr)
-    g <- g +
-      geom_tile(data=hrDataFrame,aes(y=y.hr.band,x=distance,fill=hrprtvalue,color=hrprtvalue,alpha=hrprtalpha),height=hr.band.height,show.legend = FALSE) +
-      geom_tile(data=hrLegendFrame,aes(y=ytext.hr[1],x=distlegend,fill=hrprtlegend,color=hrprtlegend),alpha=1,height=hr.label.height,show.legend = FALSE) +
-      geom_text(data=hrTextFrame,aes(x=xtext.hr,y=ytext.hr,label=hrlabels,hjust=hjust.hr,alpha=alpha.hr.label),size=2,color="black",fontface="italic",show.legend = FALSE)
+    g <- continuous_bar(g,legendtext="Heart Rate",xvar=distance,vals=heartrate,
+                        lowval=hr.low,hival=hr.high,
+                        lowcolor=hr.color.low,hicolor=hr.color.high,
+                        legendwidth=hrcadlegendwidth,y.band=y.hr.band,
+                        band.height=hr.band.height,label.height=hr.label.height)
   }
   if (show.summary & !missing(summary)) {
     header.width <- round(min(npoints,2*min.numpoints))*miles.per.point
@@ -436,7 +437,9 @@ plot_elev_profile_plus <- function(track,summary,savefn,title="Ride",palette="ma
     if (summary$pct.trkpts.cad < .7) summaryTextFrame <- summaryTextFrame[-5,]
     g <- g +
       ggtitle(paste0(title,"  ",summary$start.time[1])) +
-      geom_text(data=summaryTextFrame,aes(x=xpos.sum,y=ypos.sum,label=summarylabels),size=3,hjust=0,alpha=1,color="slategray4") +
+      geom_text(data=summaryTextFrame,
+                aes(x=xpos.sum,y=ypos.sum,label=summarylabels),
+                size=3,hjust=0,alpha=1,color="slategray4") +
       theme(plot.title = element_text(color="Black",face="bold",size=15,hjust=0.5))
   }
   if (show.stops) {
@@ -461,7 +464,7 @@ plot_elev_profile_plus <- function(track,summary,savefn,title="Ride",palette="ma
     stopdata.long <- stopdata[stopdata$pause.long,]
     stopTextFrame <- data.frame(xtext.stop=0,stoplabels="Stops")
     g <- g +
-      geom_text(data=stopTextFrame,aes(x=xtext.stop,label=stoplabels),y=y.stops+100,
+      geom_text(data=stopTextFrame,aes(x=xtext.stop,label=stoplabels),y=y.stops+80,
                 hjust=0,alpha=1,size=2,color="black",fontface="italic",show.legend = FALSE)
     if (nrow(stopdata.short)>0) {
       g <- g +
@@ -503,7 +506,7 @@ plot_elev_profile_plus <- function(track,summary,savefn,title="Ride",palette="ma
                   hjust=0,alpha=1,size=2,color="black",fontface="italic",show.legend = FALSE)
       g <- g +
         scale_shape_identity() +
-        geom_point(data=walltimedist,aes(y=y.clock-125,x=distance,shape=prtchar,alpha=alphachar),
+        geom_point(data=walltimedist,aes(y=y.clock-50,x=distance,shape=prtchar,alpha=alphachar),
                    size=1.5,color="black",position = position_jitter(width=0,height=0),show.legend = FALSE) +
         geom_point(data=walltimedist,aes(y=y.clock,x=distance,shape=prthour,alpha=alphahour),
                    size=1.5,color="grey13",position = position_jitter(width=0,height=0),show.legend = FALSE)
@@ -517,4 +520,80 @@ plot_elev_profile_plus <- function(track,summary,savefn,title="Ride",palette="ma
   plot.height <- plot.width*aspect.ratio
   if (!missing(savefn))  ggsave(savefn,width=plot.width,height=plot.height,units="in",dpi=600,limitsize=FALSE)
   return(g)
+}
+
+continuous_bar <- function(g,legendtext,xvar,vals,lowval,hival,lowcolor,hicolor,
+                           legendwidth,y.band,band.height,label.height) {
+  prtvalue <- lowcolor + (hicolor-lowcolor)*(vals-lowval)/(hival-lowval) #  map interval to color interval
+  prtvalue[!is.na(vals) & vals<lowcolor] <- lowcolor
+  prtvalue[!is.na(vals) & vals<hicolor] <- hicolor
+  prtalpha <- (prtvalue-lowcolor)/(hicolor-lowcolor)  #higher values more intense
+  prtalpha[prtalpha<0.3] <- 0.3
+
+  width.legend <- c(4,2,5,2) #  columns forlegend - description,lowvalue,colorbar,hivalue
+  column.legend <- c(0,cumsum(width.legend)[-4])*legendwidth
+  xtext.legend <- c(0,column.legend[3],column.legend[3],column.legend[4])
+  ytext.legend <- rep(y.band+1*band.height,4)
+  alpha.legend <- c(1,1,0,1)
+  hjust.legend <- c(0,1,0,0)
+  legendlabels <- c(legendtext,paste0(lowval," "),"",paste0("  ",hival))
+  legendpos <- xvar>=column.legend[3] & xvar<=column.legend[4]
+  prtlegend <- seq(lowcolor,hicolor,length.out=sum(legendpos))
+  x.legend <- xvar[legendpos]
+  y.legend <- rep(ytext.legend[1],length(x.legend))
+  valsDataFrame <- data.frame(xvar,prtvalue,prtalpha,vals,y.band,band.height)
+  valsLegendFrame <- data.frame(x.legend,y.legend,prtlegend,label.height)
+  valsTextFrame <- data.frame(xtext.legend,ytext.legend,width.legend,
+                              legendlabels,alpha.legend,hjust.legend)
+  gnew <- g +
+    geom_tile(data=valsDataFrame,
+              aes(y=y.band,x=xvar,fill=prtvalue,color=prtvalue,
+                  alpha=prtalpha),
+              height=band.height,show.legend = FALSE) +
+    geom_tile(data=valsLegendFrame,
+              aes(y=y.legend,x=x.legend,fill=prtlegend,
+                  color=prtlegend),
+              height=label.height,alpha=1,show.legend = FALSE) +
+    geom_text(data=valsTextFrame,
+              aes(x=xtext.legend,y=ytext.legend,label=legendlabels,
+                  hjust=hjust.legend,alpha=alpha.legend),
+              size=2,color="black",fontface="italic",show.legend = FALSE)
+  return(gnew)
+}
+discrete_bar <- function(g,legendtext,xvar,vals,lowval,hival,lowcolor,midcolor,hicolor,
+                         legendwidth,y.band,band.height,label.height) {
+  legendlabels <- c(legendtext,
+                    paste0("   < ",lowval,"  "),
+                    paste0("   ",lowval,"-",hival," "),
+                    paste0("   >= ",hival," "))
+  legendcolors <- c(NA,lowcolor,midcolor,hicolor)
+  prtvalue  <-  rep(NA,length(vals))
+  prtvalue[!is.na(vals) & vals>0 & vals<lowval] <- legendcolors[2]
+  prtvalue[!is.na(vals) & vals>=lowval & vals<hival] <- legendcolors[3]
+  prtvalue[!is.na(vals) & vals>=hival] <- legendcolors[4]
+
+  width.legend <- c(4,3,3,3)
+  x1.legend <- c(0,cumsum(width.legend[1:3]))*legendwidth
+  x2.legend <- cumsum(width.legend)*legendwidth
+  y1.legend <- y.band+label.height-10
+  y2.legend <- y1.legend+label.height-10
+  xtext.legend <- x1.legend
+  ytext.legend <- y1.legend+(y2.legend-y1.legend)/2
+  alpha.legend <- c(0,1,1,1)
+  hjust.legend <- c(0,0,0,0)
+  valsDataFrame <- data.frame(xvar,y.band,vals,prtvalue,band.height)
+  valsTextFrame <- data.frame(x1.legend,x2.legend,y1.legend,y2.legend,
+                              xtext.legend,ytext.legend,legendlabels,
+                              legendcolors,alpha.legend,hjust.legend)
+  gnew <- g +
+    geom_tile(data=valsDataFrame,
+              aes(y=y.band,x=xvar,fill=prtvalue,color=prtvalue),
+              height=band.height,show.legend=FALSE) +
+    geom_rect(data=valsTextFrame,
+              aes(xmin=x1.legend,xmax=x2.legend,fill=legendcolors,alpha=alpha.legend),
+              ymin=y1.legend,ymax=y2.legend,inherit.aes=FALSE,show.legend=FALSE) +
+    geom_text(data=valsTextFrame,
+              aes(x=xtext.legend,y=ytext.legend,label=legendlabels,hjust=hjust.legend),
+              size=2,fontface="italic")
+  return(gnew)
 }

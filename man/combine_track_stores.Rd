@@ -2,19 +2,19 @@
 % Please edit documentation in R/gps_tracklibs.R
 \name{combine_track_stores}
 \alias{combine_track_stores}
-\title{Combine two (summary,track) tibble pairs}
+\title{combine two (summary,track) tbl pairs}
 \usage{
 combine_track_stores(primary_sums, primary_tracks, secondary_sums,
   secondary_tracks, prefer_secondary = "")
 }
 \arguments{
-\item{primary_sums}{tibble of ride summaries created from gpx and/or fit files}
+\item{primary_sums}{tbl of ride summaries created from gpx and/or fit files}
 
-\item{primary_tracks}{tibble of ride tracks created from gpx and/or fit files}
+\item{primary_tracks}{tbl of ride tracks created from gpx and/or fit files}
 
-\item{secondary_sums}{tibble of ride summaries created from gpx and/or fit files}
+\item{secondary_sums}{tbl of ride summaries created from gpx and/or fit files}
 
-\item{secondary_tracks}{tibble of ride tracks created from gpx and/or fit files}
+\item{secondary_tracks}{tbl of ride tracks created from gpx and/or fit files}
 
 \item{prefer_secondary}{vector of strings specifying times to use data from
 secondary pair even if present in primary.  format is "YYYYMMDDHHMMSS",
@@ -23,14 +23,14 @@ day of month, HH is the 2 digit (0-23) hour of day, MM is 2 digit minutes
 and SS is 2 digit seconds}
 }
 \value{
-a list of two tibbles containing the combined summaries and tracks
+a list of two tbls containing the combined summaries and tracks
 }
 \description{
 \code{combine_track_stores} Combine two (summary,track) data pairs.  When both
   sets have data for the same date and time, the first is used unless overidden.
 }
 \details{
-Combine two (summary,track) tibble pairs,using data
+Combine two (summary,track) tbl pairs,using data
   the first of the pairs for rides starting at the same time on the same day,
   with exceptions specifiable.  Typically this is to prefer data from a .fit
   file over data from a .gpx file corresponding to the same ride.

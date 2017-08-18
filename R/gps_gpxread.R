@@ -52,10 +52,13 @@ readGPXhrcad <- function(gpx.file) {
     #        and maintained by Tomislav Hengl, et al available on CRAN
     #
     #        This modification gathers hr and cadence values from XML tree instead
-    #        collecting all extension values into a single string.  My experience\
+    #        collecting all extension values into a single string.  My experience
     #        with XML is near-zero, and the code is very slow, because I could
     #        not find vectorized XML functions which return NA when a leaf
-    #        is not present, rather than just returning a shortened list
+    #        is not present, rather than just returning a shortened list.  gpx XML
+    #        is not a natural format for recording multiple simultaneous data streams
+    #        with intermittent data loss such as loss of GPS signal, or loss of contact
+    #        with the heartrate or cadence transmitters
     #
     #        for readability, xml:: prefix before functions from package xml
     #        are omitted

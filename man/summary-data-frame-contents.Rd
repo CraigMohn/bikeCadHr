@@ -12,24 +12,24 @@ Data fields in the summary:
 \itemize{
  \item{date - the date of the ride}
  \item{start.time - time of the first track point after discarding false starts}
- \item{start.hour - numeric version of start.time rounded to 15 minutes. this is useful
-     for merging with other data sources with slightly misaligned clocks}
+ \item{start.hour - time that track recording started, rounded to the quarter hour.
+     This is useful for merging with other data sources with slightly misaligned clocks}
  \item{nwaypoints - number of waypoints in the track}
  \item{numsegs - number of segments in the track}
  \item{distance - the distance traveled.  for fit files this uses the
-     cadence sensor if present. Otherwise it uses gps position changes.}
+     wheel distance sensor if present. Otherwise it uses gps position changes.}
  \item{total.time - time from first start to final stop}
  \item{rolling.time - time while moving}
  \item{pedal.time - time with a nonzero, nonmissing cadence measure}
- \item{startline.time - time between hitting start and beginning motion}
+ \item{startline.time - time between starting track data recording and beginning motion}
  \item{pedal.strokes - estimate of pedal strokes based on stream of cadence values}
  \item{avgcadence.nozeros - average cadence excluding zeros}
  \item{avgcadence.withzeros - average cadence including zeros}
- \item{avgcadence.midsegment - average cadence excluding time before anf after stops}
+ \item{avgcadence.midsegment - average cadence excluding time before and after stops}
  \item{hr.at.stop - fit file only, heart rate at end of ride}
- \item{hr.recovery - fit file only, only if you waited 2 minutes after hitting stop
-    before you reset counters, heart rate after 2 minute interval}
- \item{speed.rolling.m.s - average speed while moving in meters per seconf}
+ \item{hr.recovery - fit file only, and only if you waited 2 minutes after hitting stop
+    before you stop recording or reset counters, heart rate after 2 minute interval}
+ \item{speed.rolling.m.s - average speed while moving in meters per second}
  \item{speed.all.m.s - average speed including stationary time}
  \item{speed.max.m.s - maximum speed}
  \item{ascent - vertical ascent estimated from smoothed elevations}
@@ -40,10 +40,10 @@ Data fields in the summary:
  \item{grade.descending.steepest - not reliable - self-explanatory}
  \item{pct.trkpts.hr - share of trackpoints with nonmissing heartrate data}
  \item{pct.trkpts.cad - share of trackpoints with nonmissing cadence data}
- \item{ride.loop - ride endpoint within 133 meters of startpoint}
+ \item{ride.loop - TRUE if ride endpoint is within 133 meters of startpoint}
  \item{stops.subminute - count of stops lasting less than 1 minute}
  \item{stops.1to10minutes - count of stops lasting between 1 and 10 minutes}
- \item{stops.10to30minutes - count of stops between 10 and 30 minutes}
+ \item{stops.10to30minutes - count of stops lasting between 10 and 30 minutes}
  \item{stops.long - count of stops longer than 30 minutes}
  \item{session.distance - fit file only - distance as calculated by GPS}
  \item{session.elapsed.time - fit file only - time as calculated by GPS}

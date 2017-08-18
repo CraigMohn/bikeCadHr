@@ -73,7 +73,6 @@ read_fittrack <- function(fitfile) {
   #   put in check that assumption of 1 record per timestamp holds...
   events <- events[events$event. %in% c("timer","power_down","power_up"),]
   events <- dplyr::arrange(left_join(events,records,by="timestamp.s"),timestamp.s,event.,event_type.)
-
   # knock out events and records before any early power-off-power-on pairs
   power.on.event <- events$event. == "power_up" &
                     (lag_n(events$event.,1) == "power_down" |
@@ -86,7 +85,6 @@ read_fittrack <- function(fitfile) {
     events <- events[events$timestamp.s>first.time,]
     records <- records[records$timestamp.s>first.time,]
    }
-
   #  remove manual stops and starts in track
   #  assume auto stop without speed is an event immediately after manual start during pause, drop it
   astop.nospeed <-   (events$timer_trigger. == "auto" & !is.na(events$timer_trigger.)) &
@@ -111,6 +109,7 @@ read_fittrack <- function(fitfile) {
   drop.powerdown <- lag_one(event.seq.beg)
   drop.powerup <- lag_one(drop.powerdown)
   events <- events[!(event.seq.beg|drop.powerdown|drop.powerup),]
+  ##if timer_trigger is missing and power_up+stop_all is followed by power_down+stop_all then power_up+stop_all, delete last pair
 
   ## manual stop which immediately follows: a stop or
   ##                                        precedes a stop with the same timestamp and follows a start
@@ -125,7 +124,6 @@ read_fittrack <- function(fitfile) {
                      (lead_one(events$event_type.) == "start" |
                         (lag_one(events$event_type.) == "stop_all" & lag_one(events$timestamp.s) == events$timestamp.s))
   events <- events[!(mstop.delete | mstart.delete),]
-
 
   last.start <- max(which(events$event_type. == "start"))
   if (length(events$event_type.) > last.start) {
@@ -147,6 +145,9 @@ read_fittrack <- function(fitfile) {
   for(seg in 1:nsegments) {
     records$segment[(records$timestamp.s>=segment.start.times[seg])&(records$timestamp.s<=segment.end.times[seg])] <- seg
   }
+  ## stick everything after the end in last seg, dump everything before beginning
+  records$segment[(records$timestamp.s>segment.end.times[nsegments])] <- nsegments
+  records <- records[records$timestamp.s>=segment.start.times[1],]
   ##  snip off any short very delayed final records
   if (nsegments > 1) {
     if (sum(records$segment==nsegments)<3 &
@@ -157,6 +158,18 @@ read_fittrack <- function(fitfile) {
       segment.end.times <- segment.end.times[1:nsegments]
     }
   }
+  ## and remove any empty segments (can arise from unit lockups, power cycling, sensor failure)
+  ## note that nsegments is not updated, since it isn't used again.  be forwarned...
+  emptyseg <- NULL
+  for(seg in 1:nsegments) {
+    if (sum(records$segment==seg)==0) emptyseg <- c(seg,emptyseg) # reversed order is important
+  }
+  if (length(emptyseg) > 0) {
+    for(seg in emptyseg) {
+      records$segment[records$segment>seg] <- records$segment[records$segment>seg]-1
+    }
+  }
+
   records$timestamp.s <- as.POSIXct(records$timestamp.s,tz="UTC",origin='1989-12-31')
   records <- dplyr::arrange(records[!is.na(records$segment),],timestamp.s)
   if ("position_lat.semicircles" %in% colnames(records)) {

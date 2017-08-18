@@ -1,11 +1,11 @@
-#' Add/replace ride data in all tibble pairs
+#' add/replace ride data in all tbl pairs
 #'
 #' \code{update_gps_variables} Add/replace ride data in .fit, .gpx and combined
-#'  tibble pairs (summary,track)
+#'  tbl pairs (summary,track)
 #'
 #' Update existing (summaries,tracks) pairs for .fit and .gpx files structured
 #'   with new files at the top level, and files already included in the
-#'   pairs of tibbles summarizing the rides are in subdirectories below them.
+#'   pairs of tbls summarizing the rides are in subdirectories below them.
 #'   there are 3 file pairs created:
 #'     (fitsummary,fittracks), (gpxsummary,gpxtracks) and (gpssummary,gpstracks)
 #'     the last pair contains data from both joined, with preference given to
@@ -35,7 +35,7 @@
 #'    the ride with speed-varying color
 #' @param ... parameters passed for track cleaning
 #'
-#' @return a tibble contining the combined summaries and tracks, with preference
+#' @return a tbl contining the combined summaries and tracks, with preference
 #'   given to data from .fit files over the corresponding .gpx file, with specified
 #'   exceptions
 #'
@@ -106,12 +106,12 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
         if (drawprofile) plot_elev_profile_plus(fittracks[fittracks$startbutton.date==idate&
                                                           fittracks$startbutton.time==itime,],
                                                 fitsummary[fitsummary$sourcefile==ridefn,],
-                                                savefn=paste0(outdir,"/",ridefn,"profile.png"))
+                                                savefn=paste0(outdir,"/",ridefn,"profile.pdf"))
         if (drawmap) map_rides(fittracks[fittracks$startbutton.date==idate&
                                          fittracks$startbutton.time==itime,],
-                               outfile=paste0(outdir,"/",ridefn,"map.jpg"),mapsize=c(3200,2400),
-                               speed.color="rainbow",speed.ptsize=8,speed.alpha=0.7,
-                               maptype="maptoolkit-topo")
+                               draw.speed=TRUE,minTiles=200,
+                               outfile=paste0(outdir,"/",ridefn,"map.jpg"),mapsize=c(3840,2400),
+                               speed.color="speedcolors",maptype="maptoolkit-topo")
       }
     }
   }
@@ -175,8 +175,8 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
                                                          savefn=paste0(outdir,"/",ridefn,"profile.png"))
         if (drawmap) map_rides(gpxtracks[gpxtracks$startbutton.date==idate&
                                          gpxtracks$startbutton.time==itime,],
-                  outfile=paste0(outdir,"/",ridefn,"map.tiff"),mapsize=c(3200,2400),
-                  speed.color="red-blue-green",speed.ptsize=8,speed.alpha=0.7)
+                  outfile=paste0(outdir,"/",ridefn,"map.jpg"),mapsize=c(1920,1200),
+                  draw.speed=TRUE,speed.color="magma")
       }
     }
   }
@@ -200,7 +200,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
   }
   return(gpssummary)
 }
-#' Join ride segments which come from separate files
+#' join multiple ride segments which come from separate files
 #'
 #' \code{join_ridefiles} Join two or more ride segments which come from
 #'   separate files, since binary .fit files are not amenable to easy
@@ -210,10 +210,10 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
 #'
 #' @param joinlist list of vectors (order matters within vectors) of .fit
 #'    or .gpx filenames, each vector a part of a track to be joined in order
-#' @param summaries tibble of ride summaries created from gpx and/or fit files
-#' @param tracks tibble of ride tracks created from gpx and/or fit files
+#' @param summaries tbl of ride summaries created from gpx and/or fit files
+#' @param tracks tbl of ride tracks created from gpx and/or fit files
 #'
-#' @return a list of two tibbles containing the summaries and tracks with the
+#' @return a list of two tbls containing the summaries and tracks with the
 #'    specified sets of tracks merged
 #'
 #' @seealso \code{\link{read_ride}}
@@ -223,8 +223,8 @@ join_ridefiles <- function(joinlist,summaries,tracks) {
   ###  make the R checker happy with utterly irrelevant initializations of variables used by dplyr
   start.time <- startbutton.date <- timestamp.s <- NULL
   #  joinlist - a list of vectors of sourcefile names to join
-  #  summaries - tibble of ridesummaries created from gpx and/or fit files
-  #  tracks - tibble of tracks consisting of timestamp.s,position_lat.dd,position_lon.dd,starttime,segment plus anything else
+  #  summaries - tbl of ridesummaries created from gpx and/or fit files
+  #  tracks - tbl of tracks consisting of timestamp.s,position_lat.dd,position_lon.dd,starttime,segment plus anything else
   values.from.first <- c("date","start.time","start.hour","sourcefile","processed.time",
                          "startbutton.date","startbutton.time")
   values.to.add <- c("nwaypoints","numsegs","distance","total.time","rolling.time","pedal.time","pedal.strokes",
@@ -316,27 +316,27 @@ join_ridefiles <- function(joinlist,summaries,tracks) {
   }
   return(list(changed,dropped.files[-1],summaries,tracks))
 }
-#' Combine two (summary,track) tibble pairs
+#' combine two (summary,track) tbl pairs
 #'
 #' \code{combine_track_stores} Combine two (summary,track) data pairs.  When both
 #'   sets have data for the same date and time, the first is used unless overidden.
 #'
-#' Combine two (summary,track) tibble pairs,using data
+#' Combine two (summary,track) tbl pairs,using data
 #'   the first of the pairs for rides starting at the same time on the same day,
 #'   with exceptions specifiable.  Typically this is to prefer data from a .fit
 #'   file over data from a .gpx file corresponding to the same ride.
 #'
-#' @param primary_sums  tibble of ride summaries created from gpx and/or fit files
-#' @param primary_tracks  tibble of ride tracks created from gpx and/or fit files
-#' @param secondary_sums  tibble of ride summaries created from gpx and/or fit files
-#' @param secondary_tracks  tibble of ride tracks created from gpx and/or fit files
+#' @param primary_sums  tbl of ride summaries created from gpx and/or fit files
+#' @param primary_tracks  tbl of ride tracks created from gpx and/or fit files
+#' @param secondary_sums  tbl of ride summaries created from gpx and/or fit files
+#' @param secondary_tracks  tbl of ride tracks created from gpx and/or fit files
 #' @param prefer_secondary vector of strings specifying times to use data from
 #'    secondary pair even if present in primary.  format is "YYYYMMDDHHMMSS",
 #'    where YYY is the 4 digit year, MM is the 2 digit month, DD is the 2 digit
 #'    day of month, HH is the 2 digit (0-23) hour of day, MM is 2 digit minutes
 #'    and SS is 2 digit seconds
 #'
-#' @return a list of two tibbles containing the combined summaries and tracks
+#' @return a list of two tbls containing the combined summaries and tracks
 #'
 #' @seealso \code{\link{read_ride}}
 #'
@@ -345,7 +345,7 @@ combine_track_stores <- function(primary_sums,primary_tracks,secondary_sums,seco
                                    prefer_secondary=""){
   ###  make the R checker happy with utterly irrelevant initializations of variables used by dplyr
   start.time <- startbutton.date <- timestamp.s <- NULL
-    #every entry in track tibbles should have a corresponding summary entry
+    #every entry in track tbls should have a corresponding summary entry
     pri.on.times <- unique(dateTimeStr(primary_sums$startbutton.date,primary_sums$startbutton.time))
     sec.on.times <- unique(dateTimeStr(secondary_sums$startbutton.date,secondary_sums$startbutton.time))
     #  specify rides to keep based on time startbutton turned on (from filename so gpx and fit should match)

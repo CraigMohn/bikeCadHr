@@ -1,4 +1,4 @@
-#' Read multiple gps data files
+#' read multiple gps data files
 #'
 #' \code{read_ridefiles} reads a vector of gps .fit and/or .gpx track files
 #'  and put into summary and detail data tibbles for modeling or graphical
@@ -38,7 +38,7 @@ read_ridefiles <- function(ridefilevec,...)  {
   return(list(summaries=dplyr::arrange(outdf,date,start.hour),
               tracks=dplyr::arrange(outtracks,startbutton.date,timestamp.s)))
 }
-#' Read and clean a gps data file
+#' read and clean a gps data file
 #'
 #' \code{read_ride}  processes a gps .fit and/or .gpx track file to create
 #'   summary and detail data tibbles for modeling or graphical summary.  Track
@@ -103,9 +103,9 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
           short.seg.delete=FALSE,short.seg.cadence.delete.na.threshold=0.5,
           cadence.time.shift.start=0,last.interval.end.notrigger=FALSE,
           cadence.trim.beg.secs=30,cadence.trim.end.secs=30,
-          cadence.max=135,cadence.correct.window=5,
+          cadence.max=160,cadence.correct.window=7,
           cadence.correct.errors=TRUE,cadence.correct.nas=FALSE,
-          grade.smooth.window=1,grade.smooth.bw=1,
+          grade.smooth.window=7,grade.smooth.bw=3,
           grade.smooth.percentiles=c(0.005,.98))  {
 
   cat(paste0("\nreading: ",ridefile))
@@ -114,6 +114,7 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
   }
   if (substr(ridefile,nchar(ridefile)-3,nchar(ridefile))==".fit") {
     temp <- read_fittrack(ridefile)
+#fit.track <<- temp[["track"]]
     time.fn.string <- basename(ridefile)
     fit.fn.time.parse <- getOption("bCadHr.fit.fn.time.parse")
     fit.fn.lead <- getOption("bCadHr.fit.fn.lead")
@@ -212,7 +213,6 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
       trackdata <- trackdata[!drop.obs,]
     }
   }
-
   ##   join segments where separating breaks are less than minimum time
   trackdeltatime <- as.numeric(difftime(trackdata$timestamp.s,lag_one(trackdata$timestamp.s),units="secs"))
   trackdeltanexttime <- as.numeric(difftime(trackdata$timestamp.s,lead_one(trackdata$timestamp.s),units="secs"))
@@ -224,7 +224,6 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
     trackdata$segment <- newsegnum
     #  patch missing cadence in midblock later
   }
-
   ##  segments with too few samples, too short in time or distance
   ##
   first.seg <- trackdata$segment != lag_one(trackdata$segment)   # this does not flag the first start
@@ -371,10 +370,10 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
   speed.rolling.m.s <- distance/rolling.time
   speed.all.m.s <- distance/total.time
   speed.max.m.s <- max(trackdata$speed.m.s,na.rm=TRUE)
-  ascent <- sum(trackdeltaelev[trackdeltaelev>0])
+  ascent  <- sum(trackdeltaelev[trackdeltaelev>0])
   descent <- sum(trackdeltaelev[trackdeltaelev<0])
-  distance.ascending <- sum(trackdeltadistance[trackdeltaelev>0.25])
-  distance.descending <- sum(trackdeltadistance[trackdeltaelev<-0.25])
+  distance.ascending  <- sum(trackdeltadistance[trackdeltaelev >  0.25])
+  distance.descending <- sum(trackdeltadistance[trackdeltaelev < -0.25])
   grade.ascending.steepest <- stats::median(trackgrade[!is.na(trackgrade)&(trackgrade>=trackgrade.tails[2])])
   grade.descending.steepest <- stats::median(trackgrade[!is.na(trackgrade)&(trackgrade<=trackgrade.tails[1])])
 

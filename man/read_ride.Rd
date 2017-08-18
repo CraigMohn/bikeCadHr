@@ -2,7 +2,7 @@
 % Please edit documentation in R/gps_read.R
 \name{read_ride}
 \alias{read_ride}
-\title{Read and clean a gps data file}
+\title{read and clean a gps data file}
 \usage{
 read_ride(ridefile, tz = "America/Los_Angeles",
   subtrack.initial.idle.agg.secs = 20,
@@ -12,9 +12,9 @@ read_ride(ridefile, tz = "America/Los_Angeles",
   short.seg.delete = FALSE, short.seg.cadence.delete.na.threshold = 0.5,
   cadence.time.shift.start = 0, last.interval.end.notrigger = FALSE,
   cadence.trim.beg.secs = 30, cadence.trim.end.secs = 30,
-  cadence.max = 135, cadence.correct.window = 5,
+  cadence.max = 160, cadence.correct.window = 7,
   cadence.correct.errors = TRUE, cadence.correct.nas = FALSE,
-  grade.smooth.window = 1, grade.smooth.bw = 1,
+  grade.smooth.window = 7, grade.smooth.bw = 3,
   grade.smooth.percentiles = c(0.005, 0.98))
 }
 \arguments{

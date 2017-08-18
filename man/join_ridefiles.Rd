@@ -2,7 +2,7 @@
 % Please edit documentation in R/gps_tracklibs.R
 \name{join_ridefiles}
 \alias{join_ridefiles}
-\title{Join ride segments which come from separate files}
+\title{join multiple ride segments which come from separate files}
 \usage{
 join_ridefiles(joinlist, summaries, tracks)
 }
@@ -10,12 +10,12 @@ join_ridefiles(joinlist, summaries, tracks)
 \item{joinlist}{list of vectors (order matters within vectors) of .fit
 or .gpx filenames, each vector a part of a track to be joined in order}
 
-\item{summaries}{tibble of ride summaries created from gpx and/or fit files}
+\item{summaries}{tbl of ride summaries created from gpx and/or fit files}
 
-\item{tracks}{tibble of ride tracks created from gpx and/or fit files}
+\item{tracks}{tbl of ride tracks created from gpx and/or fit files}
 }
 \value{
-a list of two tibbles containing the summaries and tracks with the
+a list of two tbls containing the summaries and tracks with the
    specified sets of tracks merged
 }
 \description{

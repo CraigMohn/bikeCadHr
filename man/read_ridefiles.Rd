@@ -2,7 +2,7 @@
 % Please edit documentation in R/gps_read.R
 \name{read_ridefiles}
 \alias{read_ridefiles}
-\title{Read multiple gps data files}
+\title{read multiple gps data files}
 \usage{
 read_ridefiles(ridefilevec, ...)
 }

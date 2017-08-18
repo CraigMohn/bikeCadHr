@@ -2,14 +2,14 @@
 % Please edit documentation in R/gps_visuals.R
 \name{map_rides}
 \alias{map_rides}
-\title{Plot ride track data on a map}
+\title{plot ride track data on a map}
 \usage{
 map_rides(geodf, outfile, maptitle, definedmaps, usemap,
   maptype = "maptoolkit-topo", minTiles = 50, mapsize = c(1600, 1200),
-  fine.map = FALSE, margin.factor = 0.08, line.color = "magenta",
-  line.width = 3, line.alpha = 0.8, speed.color = "plasma",
-  speed.alpha = 0.7, speed.ptsize = 6, speed.pch = 19,
-  jpeg.quality = 90)
+  fine.map = FALSE, margin.factor = 0.08, draw.speed = FALSE,
+  line.color = "magenta", line.width = 3, line.alpha = 0.8,
+  speed.color = "speedcolors", speed.alpha = 0.7, speed.ptsize = 6,
+  speed.pch = 19, jpeg.quality = 90)
 }
 \arguments{
 \item{geodf}{data frame or tibble containing at least: position_lat.dd,
@@ -43,16 +43,21 @@ but better quality}
 \item{margin.factor}{percentage to expand map area beyond limits of
 the track in each direction, when autodetermining region to plot}
 
+\item{draw.speed}{if true, draw track(s) as a series of points whose color
+indicates travel speed}
+
 \item{line.color}{the color to draw the lines of the tracks,
-if a palette is specified (\code{"plasma"} or \code{"viridis"} or \code{"rainbow"})
+if a palette is specified (\code{"plasma"} or \code{"viridis"} or \code{"rainbow"}
+ or \code{"heat"} or \code{"red-blue"})
 is specified, each track supplied will be assigned a color from that palette}
 
 \item{line.width}{the width of the line for the tracks}
 
 \item{line.alpha}{the opacity of the line}
 
-\item{speed.color}{palette to use to represent speed on plot (\code{"plasma"} or
-\code{"magma"} or \code{"heat"} or \code{"rainbow"} or \code{"red-blue-green"})}
+\item{speed.color}{palette to use to represent speed on plot (\code{"speedcolors"} or
+\code{"red-blue-green"} or \code{"rainbow"} or \code{"plasma"} or \code{"magma"} or
+\code{"heat"} )}
 
 \item{speed.alpha}{opacity of the speed line if \eqn{speed.color} specified}
 
@@ -61,7 +66,8 @@ if \eqn{fine.map} is set true.}
 
 \item{speed.pch}{the character to use plotting the points of the speed line}
 
-\item{jpeg.quality}{quality loss from compression for jpeg output}
+\item{jpeg.quality}{the ‘quality’ of the JPEG image, as a percentage. Smaller
+values will give more compression but also more degradation of the image}
 }
 \description{
 \code{map_rides} Plot lat/long data on maps, optionally using colored

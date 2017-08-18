@@ -2,7 +2,7 @@
 % Please edit documentation in R/gps_tracklibs.R
 \name{update_gps_variables}
 \alias{update_gps_variables}
-\title{Add/replace ride data in all tibble pairs}
+\title{add/replace ride data in all tbl pairs}
 \usage{
 update_gps_variables(outdir, fitrootdir, gpxrootdir, merge.files = list(c(NA,
   NA)), fitexcludes = c("bad", "short"), gpxexcludes = c("bad", "short",
@@ -45,18 +45,18 @@ the ride with speed-varying color}
 \item{...}{parameters passed for track cleaning}
 }
 \value{
-a tibble contining the combined summaries and tracks, with preference
+a tbl contining the combined summaries and tracks, with preference
   given to data from .fit files over the corresponding .gpx file, with specified
   exceptions
 }
 \description{
 \code{update_gps_variables} Add/replace ride data in .fit, .gpx and combined
- tibble pairs (summary,track)
+ tbl pairs (summary,track)
 }
 \details{
 Update existing (summaries,tracks) pairs for .fit and .gpx files structured
   with new files at the top level, and files already included in the
-  pairs of tibbles summarizing the rides are in subdirectories below them.
+  pairs of tbls summarizing the rides are in subdirectories below them.
   there are 3 file pairs created:
     (fitsummary,fittracks), (gpxsummary,gpxtracks) and (gpssummary,gpstracks)
     the last pair contains data from both joined, with preference given to
