@@ -25,7 +25,7 @@ before_install:
   - createdb empty
   - psql -d empty -c "CREATE EXTENSION postgis;"
 
-warnings_are_errors: true
+#warnings_are_errors: true
 
 after_success:
   - dropdb postgis
