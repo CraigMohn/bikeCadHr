@@ -46,7 +46,7 @@
 #' @param speed.ptsize size for the symbols used to plot the speed line, doubled
 #'    if \eqn{fine.map} is set true.
 #' @param speed.pch the character to use plotting the points of the speed line
-#' @param jpeg.quality the ‘quality’ of the JPEG image, as a percentage. Smaller
+#' @param jpeg.quality the "quality" of the JPEG image, as a percentage. Smaller
 #'    values will give more compression but also more degradation of the image
 #'
 #' @return NULL
