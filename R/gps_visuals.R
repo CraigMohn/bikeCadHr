@@ -3,7 +3,7 @@
 #' \code{map_rides} Plot lat/long data on maps, optionally using colored
 #'   dots to indicate speed
 #'
-#' Create a map displaying the tracks soecified.  Tracks may be drawn in a single
+#' Create a map displaying the tracks specified.  Tracks may be drawn in a single
 #'     specified color, with each separate track drawn in a different color from
 #'     a specified palette, or as a series of closely spaced dots (which may
 #'     be prodded into appearing as a line through judicious choice of point
