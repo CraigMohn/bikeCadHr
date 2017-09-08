@@ -14,8 +14,10 @@ read_ride(ridefile, tz = "America/Los_Angeles",
   cadence.trim.beg.secs = 30, cadence.trim.end.secs = 30,
   cadence.max = 160, cadence.correct.window = 7,
   cadence.correct.errors = TRUE, cadence.correct.nas = FALSE,
-  grade.smooth.window = 7, grade.smooth.bw = 3,
-  grade.smooth.percentiles = c(0.005, 0.98))
+  gr.bound = NULL, gr.bound2 = NULL, gr.low = 0.0378, gr.high = 0.1855,
+  gr.peak.m = 5, gr.nlowgear = 1, gr.kernel = "epanechnikov",
+  gr.adjust = 0.02, gr.density.threshold = 0.05, grade.smooth.window = 7,
+  grade.smooth.bw = 3, grade.smooth.percentiles = c(0.005, 0.98))
 }
 \arguments{
 \item{ridefile}{a filenames (.fit or .gpx extension) to process}
@@ -71,6 +73,27 @@ in the same segment}
 \item{cadence.correct.nas}{repair cadence missing values using
 triangular-kernel-weighted average of the nearest nonmissing values in
 the same segment}
+
+\item{gr.bound}{gear ratio (speed divided by cadence) cutoff for classifying
+as lowest gear.  default calculated based on parameters}
+
+\item{gr.bound2}{alternate cutoff for classifying
+as lowest gear}
+
+\item{gr.low}{lowest gear ratio (speed divided by cadence)}
+
+\item{gr.high}{highest gear ratio (speed divided by cadence)}
+
+\item{gr.peak.m}{window for identifying peaks in gear ratio density}
+
+\item{gr.nlowgear}{number of gears lumped into pct.low.gear statistic}
+
+\item{gr.kernel}{kernel to use in gear ratio density estimation}
+
+\item{gr.adjust}{multiplier for default density() bandwidth}
+
+\item{gr.density.threshold}{threshold to keep density peak, as a
+share of the largest peak density}
 
 \item{grade.smooth.window}{number of observations on each side used for
 calculating kernel smoothed elevation for the grade calculation}

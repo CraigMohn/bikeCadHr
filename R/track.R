@@ -8,7 +8,8 @@
 #'  \item{altitude.m - elevation at trackpoint as reported by gps}
 #'  \item{speed.m.s - speed at trackpoint either speed sensor or gps coordinates}
 #'  \item{heart_rate.bpm - heartrate recorded at the trackpoint}
-#'  \item{cadence.rpm - cadence recorded at the trackpoint}
+#'  \item{cadence.rpm - (possibly corrected) cadence recorded at the trackpoint}
+#'  \item{gearratio - speed divided by cadence, uncorrected values, may contain Inf and NA}
 #'  \item{temperature - temperature recorded at the trackpoint}
 #'  \item{segment - segment identifier for the trackpoint}
 #'  \item{position_lat.dd - latitude in decimal degrees at the trackpoint}
@@ -23,7 +24,7 @@
 #'       format is  HHMMSS, where HH is 00-23, MM and SS are 00-59}
 #'  }
 #'
-#'  \strong{(all distances are in meters, times are in seconds)}
+#'  \strong{(all distances are in meters, times are in seconds or minutes}
 #'
 #' @name tracks data frame contents
 #'

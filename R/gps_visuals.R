@@ -89,7 +89,7 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,maptype="maptool
           warning(paste0("Exactly where did you define map ",usemap,"??"))
           return(NULL)
         }
-        print(paste0("Using defined map area ",usemap))
+        cat("\nUsing defined map area ",usemap)
         lat.min <- u.map[["lat"]][1]
         lat.max <- u.map[["lat"]][2]
         lon.min <- u.map[["lon"]][1]
@@ -99,7 +99,7 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,maptype="maptool
           u.map <- definedmaps[[i]]
           if (lat.min >= u.map[["lat"]][1] & lat.max <= u.map[["lat"]][2] &
               lon.min >= u.map[["lon"]][1] & lon.max <= u.map[["lon"]][2]) {
-            print(paste0("using defined map area ",names(definedmaps)[[i]]))
+            cat("\nusing defined map area ",names(definedmaps)[[i]])
             lat.min <- u.map[["lat"]][1]
             lat.max <- u.map[["lat"]][2]
             lon.min <- u.map[["lon"]][1]
@@ -122,7 +122,7 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,maptype="maptool
                         c(map.lat.min.dd, map.lon.max.dd), type =maptype,minNumTiles=minTiles)
       #  native mercator - for longlat add:  map <- openproj(map, projection = "+proj=longlat")
     } else {
-      print(paste0(outfile," not created, map too small"))
+     cat("\n",outfile," not created, map too small")
         return(NULL)
     }
     map.lat.min <- map$bbox[["p2"]][2] * (180 / (2 ^ 31))
@@ -143,7 +143,7 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,maptype="maptool
     mapdf <- geodf[geodf$lon>=map.lon.min.dd-.01 & geodf$lon<=map.lon.max.dd+.01 &
                    geodf$lat>=map.lat.min.dd-.01 & geodf$lat<=map.lat.max.dd+.01,]
     trackstarts <- unique(mapdf$start.time)
-    print(paste0("outfile=",outfile))
+    cat("\noutfile=",outfile)
     if (outfiletype=="jpeg") {
       jpeg(outfile, width = mapwidth, height = mapheight, quality = jpeg.quality)
     } else if (outfiletype=="tiff") {
@@ -190,7 +190,7 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,maptype="maptool
       } else if (speed.color=="red-blue-green") {
         spdcolors <- colorRampPalette(c("red","blue","green"))(101)
       } else {
-        spdcolors <- colorRampPalette(c("red","yellow","cornflowerblue","dodgerblue","blue","darkorchid","purple","magenta"))(101)
+        spdcolors <- colorRampPalette(c("red","orange","cornflowerblue","dodgerblue","blue","darkorchid","purple","magenta"))(101)
       }
       speed <- mapdf$speed.m.s*2.23694
       speed[speed>40] <- 40
@@ -227,6 +227,7 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,maptype="maptool
 #' @param vertical.multiplier default vertical exaggeration factor.  Default
 #'    ranges from 25 to 60 depending on the length being plotted
 #' @param ppm override calculated default number of points per mile
+#' @param elevation.shape shape to use for drawing the elevation plot
 #' @param show.stops draw row with short and long stops
 #' @param show.time draw row with 15 minute and hour marks
 #' @param show.summary display summary results if supplied
@@ -260,7 +261,7 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,maptype="maptool
 #'
 #' @export
 plot_elev_profile_plus <- function(track,summary,savefn,title="Ride",palette="plasma",
-          vertical.multiplier=NA,ppm=NA,
+          vertical.multiplier=NA,ppm=NA,elevation.shape=46,
           show.stops=TRUE,show.time=TRUE,show.summary=TRUE,cad.cont=TRUE,
           hr.low=100,hr.high=170,hr.color.low=9,hr.color.high=31,
           cad.low=65,cad.target=88,cad.cont.low=60,cad.cont.high=100,
@@ -383,7 +384,7 @@ plot_elev_profile_plus <- function(track,summary,savefn,title="Ride",palette="pl
         scale_fill_viridis(option=palette,limits=c(0,40),na.value="white",direction=-1) +
         geom_rect(aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=0),fill="white",color="white") +
         geom_area(color="white",fill="white") +
-        geom_point(aes(color=speed),shape="|",size=1,position=position_nudge(y=1.2))
+        geom_point(aes(color=speed),shape=elevation.shape,size=1,position=position_nudge(y=1.2))
 
   if (any(!is.na(track$cadence.rpm))) {
     temp <- track$cadence.rpm

@@ -40,6 +40,10 @@ Data fields in the summary:
  \item{grade.descending.steepest - not reliable - self-explanatory}
  \item{pct.trkpts.hr - share of trackpoints with nonmissing heartrate data}
  \item{pct.trkpts.cad - share of trackpoints with nonmissing cadence data}
+ \item{pct.low.gear - share of trackpoints ridden in the lowest gear}
+ \item{low.gear2 - alternate value of speed/cadence ratio specified in gr.bound2}
+ \item{pct.low.gear2 - share of trackpoints ridden in gear below gr.bound2}
+ \item{low.gear - value of speed/cadence ratio corresponding to the lowest gear}
  \item{ride.loop - TRUE if ride endpoint is within 133 meters of startpoint}
  \item{stops.subminute - count of stops lasting less than 1 minute}
  \item{stops.1to10minutes - count of stops lasting between 1 and 10 minutes}

@@ -79,6 +79,18 @@ read_ridefiles <- function(ridefilevec,...)  {
 #'    triangular-kernel-weighted average of the nearest nonmissing values in
 #'    the same segment
 #' @param cadence.correct.window window size for kernel smoothing of cadence
+#' @param gr.bound gear ratio (speed divided by cadence) cutoff for classifying
+#'    as lowest gear.  default calculated based on parameters
+#' @param gr.bound2 alternate cutoff for classifying
+#'    as lowest gear
+#' @param gr.low lowest gear ratio (speed divided by cadence)
+#' @param gr.high highest gear ratio (speed divided by cadence)
+#' @param gr.peak.m window for identifying peaks in gear ratio density
+#' @param gr.nlowgear number of gears lumped into pct.low.gear statistic
+#' @param gr.kernel kernel to use in gear ratio density estimation
+#' @param gr.adjust multiplier for default density() bandwidth
+#' @param gr.density.threshold threshold to keep density peak, as a
+#'    share of the largest peak density
 #' @param grade.smooth.window number of observations on each side used for
 #'    calculating kernel smoothed elevation for the grade calculation
 #' @param grade.smooth.bw bandwidth for kernel smoothing of elevation
@@ -105,6 +117,8 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
           cadence.trim.beg.secs=30,cadence.trim.end.secs=30,
           cadence.max=160,cadence.correct.window=7,
           cadence.correct.errors=TRUE,cadence.correct.nas=FALSE,
+          gr.bound=NULL,gr.bound2=NULL,gr.low=0.0378,gr.high=0.1855,gr.peak.m=5,gr.nlowgear=1,
+          gr.kernel="epanechnikov",gr.adjust=0.02,gr.density.threshold=0.05,
           grade.smooth.window=7,grade.smooth.bw=3,
           grade.smooth.percentiles=c(0.005,.98))  {
 
@@ -279,6 +293,9 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
   trackgrade[trackdeltadistance<1] <- NA
   trackgrade.tails <- stats::quantile(trackgrade,probs=grade.smooth.percentiles,na.rm=TRUE)
 
+  ## ratio of speed to cadence
+  trackdata$gearratio <- trackdata$speed.m.s/trackdata$cadence.rpm
+
   ## patch cadence errors and then NAs
   cadence.error <- trackdata$cadence.rpm > cadence.max
   cadence.error[is.na(cadence.error)] <- FALSE
@@ -383,30 +400,45 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
   stops.10to30minutes <- length(break.time[break.time<=1800 & break.time>600])
   stops.long <- length(break.time[break.time>1800])
 
-  session.distance <- ifelse("total_distance" %in% colnames(session),session$total_distance[1],NA)
-  session.elapsed.time <- ifelse("total_elapsed_time" %in% colnames(session),session$total_elapsed_time[1],NA)
-  session.timer.time <- ifelse("total_timer_time" %in% colnames(session),session$total_timer_time[1],NA)
-  session.pedal.strokes <- ifelse("total_cycles" %in% colnames(session),session$total_cycles[1],NA)
-  session.total.calories <- ifelse("total_calories" %in% colnames(session),session$total_calories[1],NA)
-  session.avg.speed <- ifelse("avg_speed" %in% colnames(session),session$avg_speed[1],NA)
-  session.max.speed <- ifelse("max_speed" %in% colnames(session),session$max_speed[1],NA)
-  session.total.ascent <- ifelse("total_ascent" %in% colnames(session),session$total_ascent[1],NA)
-  session.total.descent <- ifelse("total_descent" %in% colnames(session),session$total_descent[1],NA)
-  session.avg.cadence <- ifelse("avg_cadence" %in% colnames(session),session$avg_cadence[1],NA)
-  session.avg.hr <- ifelse("avg_heart_rate" %in% colnames(session),session$avg_heart_rate[1],NA)
-  session.max.hr <- ifelse("max_heart_rate" %in% colnames(session),session$max_heart_rate[1],NA)
-
+  session.distance <- ifelse("total_distance" %in% colnames(session),
+                             session$total_distance[1],NA)
+  session.elapsed.time <- ifelse("total_elapsed_time" %in% colnames(session),
+                                 session$total_elapsed_time[1],NA)
+  session.timer.time <- ifelse("total_timer_time" %in% colnames(session),
+                               session$total_timer_time[1],NA)
+  session.pedal.strokes <- ifelse("total_cycles" %in% colnames(session),
+                                  session$total_cycles[1],NA)
+  session.total.calories <- ifelse("total_calories" %in% colnames(session),
+                                   session$total_calories[1],NA)
+  session.avg.speed <- ifelse("avg_speed" %in% colnames(session),
+                              session$avg_speed[1],NA)
+  session.max.speed <- ifelse("max_speed" %in% colnames(session),
+                              session$max_speed[1],NA)
+  session.total.ascent <- ifelse("total_ascent" %in% colnames(session),
+                                 session$total_ascent[1],NA)
+  session.total.descent <- ifelse("total_descent" %in% colnames(session),
+                                  session$total_descent[1],NA)
+  session.avg.cadence <- ifelse("avg_cadence" %in% colnames(session),
+                                session$avg_cadence[1],NA)
+  session.avg.hr <- ifelse("avg_heart_rate" %in% colnames(session),
+                           session$avg_heart_rate[1],NA)
+  session.max.hr <- ifelse("max_heart_rate" %in% colnames(session),
+                           session$max_heart_rate[1],NA)
   sourcefile <- basename(ridefile)
   processed.time <- Sys.time()
 
   if (!is.na(trackdata$position_lon.dd[1])){
-    beg.end.gap <- raster::pointDistance(cbind(trackdata$position_lon.dd[1],trackdata$position_lat.dd[1]),
-                                 cbind(trackdata$position_lon.dd[nrow(trackdata)],trackdata$position_lat.dd[nrow(trackdata)]),
+    beg.end.gap <- raster::pointDistance(cbind(trackdata$position_lon.dd[1],
+                                               trackdata$position_lat.dd[1]),
+                                 cbind(trackdata$position_lon.dd[nrow(trackdata)],
+                                       trackdata$position_lat.dd[nrow(trackdata)]),
                                  lonlat=TRUE)
     if (beg.end.gap>133) {
-      print(paste0("non-loop - distance between start and end = ",beg.end.gap))
-      print(paste0("start = ",trackdata$position_lon.dd[1],"  ",trackdata$position_lat.dd[1]))
-      print(paste0("stop  = ",trackdata$position_lon.dd[nrow(trackdata)],"  ",trackdata$position_lat.dd[nrow(trackdata)]))
+      cat(paste0("\n  *non-loop - distance between start and end = ",beg.end.gap,"m "))
+      cat(paste0("\n   start = ",trackdata$position_lon.dd[1],"  ",
+                   trackdata$position_lat.dd[1]))
+      cat(paste0("\n   stop  = ",trackdata$position_lon.dd[nrow(trackdata)],"  ",
+                   trackdata$position_lat.dd[nrow(trackdata)]))
       ride.loop <- FALSE
     } else {
       ride.loop <- TRUE
@@ -414,6 +446,49 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
   } else {
     ride.loop <- NA
   }
+  gr <- trackdata$gearratio[!is.na(trackdata$gearratio) &
+                              trackdata$gearratio >= gr.low &
+                              trackdata$gearratio < gr.high]
+  if (length(gr) > 0.50*nrow(trackdata)) {
+    if (is.null(gr.bound)) {
+      m <- min(gr.peak.m,round(nrow(gr)/600))
+      grdens <- stats::density(gr,kernel=gr.kernel,adjust=gr.adjust)
+      plot(grdens)
+      peakspots <- find_peaks(grdens$y,m=m)
+      maxpdens <- max(grdens$y[peakspots])
+      peakspots <- peakspots[grdens$y[peakspots] > gr.density.threshold*maxpdens]
+      peaks <- grdens$x[peakspots]
+      pprt = utils::head(formatC(peaks, digits = 3, format = "f"),16)
+      cat("\n  gears ",pprt)
+      if (length(peaks) >= gr.nlowgear+1) {
+        low.gear <- peaks[gr.nlowgear]
+        lowgear <- as.numeric( trackdata$gearratio <
+                                 (peaks[gr.nlowgear] + peaks[gr.nlowgear+1])/2 )
+        pct.low.gear <- sum(lowgear[!is.na(lowgear)])/length(trackdata$gearratio)
+      }  else  {
+        pct.low.gear <- NA
+        low.gear <- NA
+      }
+      pct.low.gear2 <- NA
+      low.gear2 <- NA
+    } else {
+      low.gear <- gr.bound
+      lowgear <- as.numeric( trackdata$gearratio < low.gear )
+      pct.low.gear <- sum(lowgear[!is.na(lowgear)])/length(trackdata$gearratio)
+      if (!is.null(gr.bound2)) {
+        low.gear2 <- gr.bound2
+        lowgear <- as.numeric( trackdata$gearratio < low.gear2 )
+        pct.low.gear2 <- sum(lowgear[!is.na(lowgear)])/length(trackdata$gearratio)
+
+      }
+    }
+  }  else {
+    pct.low.gear <- NA
+    low.gear <- NA
+    pct.low.gear2 <- NA
+    low.gear2 <- NA
+  }
+
   track.cleaned <- data_frame(date=ride.date,start.time,start.hour,nwaypoints,numsegs,
           distance,total.time,rolling.time,pedal.time,startline.time,pedal.strokes,
           avgcadence.nozeros,avgcadence.withzeros,avgcadence.midsegment,
@@ -421,12 +496,13 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
           ascent,descent,distance.ascending,distance.descending,
           grade.ascending.steepest,grade.descending.steepest,
           pct.trkpts.hr,pct.trkpts.cad,ride.loop,
+          pct.low.gear,low.gear,pct.low.gear2,low.gear2,
           stops.subminute,stops.1to10minutes,stops.10to30minutes,stops.long,
           session.distance,session.elapsed.time,session.timer.time,session.pedal.strokes,
           session.total.calories,session.avg.speed,session.max.speed,
           session.total.ascent,session.total.descent,
           session.avg.cadence,session.avg.hr,session.max.hr,
           sourcefile,processed.time,startbutton.date,startbutton.time)
-  return(list(summary=track.cleaned,trackpoints=trackdata))
+  return(list(summary=track.cleaned,trackpoints=trackdata,session=session))
 }
 

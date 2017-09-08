@@ -31,6 +31,7 @@
 #'    rather than the corresponding .fit file
 #' @param drawprofile create a .png file in the output directory profiling
 #'    the ride
+#' @param elevation.char character to use when printing the elevation profile
 #' @param drawmap create a .tiff file in the output directory mapping
 #'    the ride with speed-varying color
 #' @param ... parameters passed for track cleaning
@@ -45,7 +46,7 @@
 update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c(NA,NA)),
                   fitexcludes=c("bad","short"),gpxexcludes=c("bad","short","nosegs"),prefer.gpx=c(""),
                   rebuild.all.fit=FALSE,rebuild.all.gpx=FALSE,
-                  drawprofile=TRUE,drawmap=TRUE,...) {
+                  drawprofile=TRUE,elevation.char="|",drawmap=TRUE,...) {
 
   ###  make the R checker happy with utterly irrelevant initializations of variables used by dplyr
   start.time <- startbutton.date <- timestamp.s <- start.hour <- NULL
@@ -106,6 +107,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
         if (drawprofile) plot_elev_profile_plus(fittracks[fittracks$startbutton.date==idate&
                                                           fittracks$startbutton.time==itime,],
                                                 fitsummary[fitsummary$sourcefile==ridefn,],
+                                                elevation.shape=elevation.char,
                                                 savefn=paste0(outdir,"/",ridefn,"profile.pdf"))
         if (drawmap) map_rides(fittracks[fittracks$startbutton.date==idate&
                                          fittracks$startbutton.time==itime,],
@@ -172,6 +174,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
         if (drawprofile) rideprofile <- plot_elev_profile_plus(gpxtracks[gpxtracks$startbutton.date==idate&
                                                                          gpxtracks$startbutton.time==itime,],
                                                          gpxsummary[gpxsummary$sourcefile==ridefn,],
+                                                         elevation.shape=elevation.char,
                                                          savefn=paste0(outdir,"/",ridefn,"profile.png"))
         if (drawmap) map_rides(gpxtracks[gpxtracks$startbutton.date==idate&
                                          gpxtracks$startbutton.time==itime,],
@@ -226,17 +229,18 @@ join_ridefiles <- function(joinlist,summaries,tracks) {
   #  summaries - tbl of ridesummaries created from gpx and/or fit files
   #  tracks - tbl of tracks consisting of timestamp.s,position_lat.dd,position_lon.dd,starttime,segment plus anything else
   values.from.first <- c("date","start.time","start.hour","sourcefile","processed.time",
-                         "startbutton.date","startbutton.time")
+                         "startbutton.date","startbutton.time","low.gear","low.gear2")
   values.to.add <- c("nwaypoints","numsegs","distance","total.time","rolling.time","pedal.time","pedal.strokes",
                      "ascent","descent","distance.ascending","distance.descending","stops.subminute","stops.1to10minutes",
                      "stops.10to30minutes","stops.long","session.distance","session.elapsed.time","session.timer.time",
-                     "session.pedal.strokes","session.total.calories","session.total.ascent","session.total.descent")
+                     "session.pedal.strokes","session.total.calories","session.total.ascent","session.total.descent",
+                     "session.distance")
   values.special <- c("startline.time","avgcadence.nozeros","avgcadence.withzeros",
                       "speed.rolling.m.s","speed.all.m.s","speed.max.m.s","grade.ascending.steepest","grade.descending.steepest",
                       "session.max.speed","session.max.hr","ride.loop")
   values.weighted.mean.time <- c("avgcadence.midsegment","pct.trkpts.hr","pct.trkpts.cad",
                                  "session.avg.speed","session.avg.cadence",
-                                 "session.avg.hr")
+                                 "session.avg.hr","pct.low.gear","pct.low.gear2")
   values.from.last <- c("hr.at.stop","hr.recovery")
 
   dropped.files <- "zzz"

@@ -7,12 +7,13 @@
 \usage{
 plot_elev_profile_plus(track, summary, savefn, title = "Ride",
   palette = "plasma", vertical.multiplier = NA, ppm = NA,
-  show.stops = TRUE, show.time = TRUE, show.summary = TRUE,
-  cad.cont = TRUE, hr.low = 100, hr.high = 170, hr.color.low = 9,
-  hr.color.high = 31, cad.low = 65, cad.target = 88, cad.cont.low = 60,
-  cad.cont.high = 100, cad.color.low = 3, cad.color.mid = 9,
-  cad.color.high = 15, hr.smooth.bw.meters = 6, hr.smooth.nn = 5,
-  cad.smooth.bw.meters = 20, cad.smooth.nn = 15, min.numpoints = 1000)
+  elevation.shape = 46, show.stops = TRUE, show.time = TRUE,
+  show.summary = TRUE, cad.cont = TRUE, hr.low = 100, hr.high = 170,
+  hr.color.low = 9, hr.color.high = 31, cad.low = 65, cad.target = 88,
+  cad.cont.low = 60, cad.cont.high = 100, cad.color.low = 3,
+  cad.color.mid = 9, cad.color.high = 15, hr.smooth.bw.meters = 6,
+  hr.smooth.nn = 5, cad.smooth.bw.meters = 20, cad.smooth.nn = 15,
+  min.numpoints = 1000)
 }
 \arguments{
 \item{track}{data frame or tibble containing track details including
@@ -33,6 +34,8 @@ extension specified, .pdf, .png or .jpg}
 ranges from 25 to 60 depending on the length being plotted}
 
 \item{ppm}{override calculated default number of points per mile}
+
+\item{elevation.shape}{shape to use for drawing the elevation plot}
 
 \item{show.stops}{draw row with short and long stops}
 

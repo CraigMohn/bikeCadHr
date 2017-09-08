@@ -71,4 +71,17 @@ smoothTriangular <- function(t,x,segment,nneighbors=5,bw=5) {
 dateTimeStr <- function(intDate,intTime) {
   return(paste0(stringr::str_pad(intDate,8,pad="0"),stringr::str_pad(intTime,6,pad="0")))
 }
+#  this was lifted from stack overflow - credit author
+find_peaks <- function (x, m = 3){
+  shape <- diff(sign(diff(x, na.pad = FALSE)))
+  pks <- sapply(which(shape < 0), FUN = function(i){
+    z <- i - m + 1
+    z <- ifelse(z > 0, z, 1)
+    w <- i + m + 1
+    w <- ifelse(w < length(x), w, length(x))
+    if(all(x[c(z : i, (i + 2) : w)] <= x[i + 1])) return(i + 1) else return(numeric(0))
+  })
+  pks <- unlist(pks)
+  pks
+}
 
