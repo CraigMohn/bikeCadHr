@@ -66,7 +66,7 @@ if \eqn{fine.map} is set true.}
 
 \item{speed.pch}{the character to use plotting the points of the speed line}
 
-\item{jpeg.quality}{the ‘quality’ of the JPEG image, as a percentage. Smaller
+\item{jpeg.quality}{the "quality" of the JPEG image, as a percentage. Smaller
 values will give more compression but also more degradation of the image}
 }
 \description{
@@ -74,7 +74,7 @@ values will give more compression but also more degradation of the image}
   dots to indicate speed
 }
 \details{
-Create a map displaying the tracks soecified.  Tracks may be drawn in a single
+Create a map displaying the tracks specified.  Tracks may be drawn in a single
     specified color, with each separate track drawn in a different color from
     a specified palette, or as a series of closely spaced dots (which may
     be prodded into appearing as a line through judicious choice of point
