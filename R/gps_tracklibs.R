@@ -31,9 +31,13 @@
 #'    rather than the corresponding .fit file
 #' @param drawprofile create a .png file in the output directory profiling
 #'    the ride
+#' @param drawprofile.both create a .png file in the output directory profiling
+#'    the ride for both the .fit files and .gpx files
 #' @param elevation.char character to use when printing the elevation profile
 #' @param drawmap create a .tiff file in the output directory mapping
 #'    the ride with speed-varying color
+#' @param drawmap.both create a .tiff file in the output directory mapping
+#'    the ride with speed-varying color for both the .fit files and the .gox files
 #' @param ... parameters passed for track cleaning
 #'
 #' @return a tbl contining the combined summaries and tracks, with preference
@@ -46,11 +50,14 @@
 update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c(NA,NA)),
                   fitexcludes=c("bad","short"),gpxexcludes=c("bad","short","nosegs"),prefer.gpx=c(""),
                   rebuild.all.fit=FALSE,rebuild.all.gpx=FALSE,
-                  drawprofile=TRUE,elevation.char="|",drawmap=TRUE,...) {
+                  drawprofile=TRUE,drawprofile.both=FALSE,elevation.char="|",
+                  drawmap=TRUE,drawmap.both=FALSE,...) {
 
   ###  make the R checker happy with utterly irrelevant initializations of variables used by dplyr
   start.time <- startbutton.date <- timestamp.s <- start.hour <- NULL
 
+  num_drawn <- 0
+  num_mapped <- 0
   old_wd <- getwd()
   on.exit(setwd(old_wd))
   setwd(fitrootdir)
@@ -104,16 +111,22 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
       for (ridefn in basename(newfiles)) {
         idate <- fitsummary[fitsummary$sourcefile==ridefn,]$startbutton.date
         itime <- fitsummary[fitsummary$sourcefile==ridefn,]$startbutton.time
-        if (drawprofile) plot_elev_profile_plus(fittracks[fittracks$startbutton.date==idate&
-                                                          fittracks$startbutton.time==itime,],
-                                                fitsummary[fitsummary$sourcefile==ridefn,],
-                                                elevation.shape=elevation.char,
-                                                savefn=paste0(outdir,"/",ridefn,"profile.pdf"))
-        if (drawmap) map_rides(fittracks[fittracks$startbutton.date==idate&
-                                         fittracks$startbutton.time==itime,],
-                               draw.speed=TRUE,minTiles=200,
-                               outfile=paste0(outdir,"/",ridefn,"map.jpg"),mapsize=c(3840,2400),
-                               speed.color="speedcolors",maptype="maptoolkit-topo")
+        if (drawprofile) {
+          plot_elev_profile_plus(fittracks[fittracks$startbutton.date==idate&
+                                 fittracks$startbutton.time==itime,],
+                                 fitsummary[fitsummary$sourcefile==ridefn,],
+                                 elevation.shape=elevation.char,
+                                 savefn=paste0(outdir,"/",ridefn,"profile.pdf"))
+          num_drawn <- 1
+        }
+        if (drawmap) {
+          map_rides(fittracks[fittracks$startbutton.date==idate&
+                    fittracks$startbutton.time==itime,],
+                    draw.speed=TRUE,minTiles=200,
+                    outfile=paste0(outdir,"/",ridefn,"map.jpg"),mapsize=c(3840,2400),
+                    speed.color="speedcolors",maptype="maptoolkit-topo")
+          num_mapped <- 1
+        }
       }
     }
   }
@@ -171,13 +184,15 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
       for (ridefn in basename(newfiles)) {
         idate <- gpxsummary[gpxsummary$sourcefile==ridefn,]$startbutton.date
         itime <- gpxsummary[gpxsummary$sourcefile==ridefn,]$startbutton.time
-        if (drawprofile) rideprofile <- plot_elev_profile_plus(gpxtracks[gpxtracks$startbutton.date==idate&
-                                                                         gpxtracks$startbutton.time==itime,],
-                                                         gpxsummary[gpxsummary$sourcefile==ridefn,],
-                                                         elevation.shape=elevation.char,
-                                                         savefn=paste0(outdir,"/",ridefn,"profile.png"))
-        if (drawmap) map_rides(gpxtracks[gpxtracks$startbutton.date==idate&
-                                         gpxtracks$startbutton.time==itime,],
+        if (drawprofile &(num_drawn==0 | drawprofile.both))
+          rideprofile <- plot_elev_profile_plus(gpxtracks[gpxtracks$startbutton.date==idate&
+                                                gpxtracks$startbutton.time==itime,],
+                                                gpxsummary[gpxsummary$sourcefile==ridefn,],
+                                                elevation.shape=elevation.char,
+                                                savefn=paste0(outdir,"/",ridefn,"profile.png"))
+        if (drawmap &(num_mapped==0 | drawmap.both))
+          map_rides(gpxtracks[gpxtracks$startbutton.date==idate&
+                              gpxtracks$startbutton.time==itime,],
                   outfile=paste0(outdir,"/",ridefn,"map.jpg"),mapsize=c(1920,1200),
                   draw.speed=TRUE,speed.color="magma")
       }

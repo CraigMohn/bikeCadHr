@@ -7,8 +7,8 @@
 update_gps_variables(outdir, fitrootdir, gpxrootdir, merge.files = list(c(NA,
   NA)), fitexcludes = c("bad", "short"), gpxexcludes = c("bad", "short",
   "nosegs"), prefer.gpx = c(""), rebuild.all.fit = FALSE,
-  rebuild.all.gpx = FALSE, drawprofile = TRUE, elevation.char = "|",
-  drawmap = TRUE, ...)
+  rebuild.all.gpx = FALSE, drawprofile = TRUE, drawprofile.both = FALSE,
+  elevation.char = "|", drawmap = TRUE, drawmap.both = FALSE, ...)
 }
 \arguments{
 \item{outdir}{string containing location of output data pair files}
@@ -40,10 +40,16 @@ of \eqn{gpxrootdir}, but not in the directory itself}
 \item{drawprofile}{create a .png file in the output directory profiling
 the ride}
 
+\item{drawprofile.both}{create a .png file in the output directory profiling
+the ride for both the .fit files and .gpx files}
+
 \item{elevation.char}{character to use when printing the elevation profile}
 
 \item{drawmap}{create a .tiff file in the output directory mapping
 the ride with speed-varying color}
+
+\item{drawmap.both}{create a .tiff file in the output directory mapping
+the ride with speed-varying color for both the .fit files and the .gox files}
 
 \item{...}{parameters passed for track cleaning}
 }
