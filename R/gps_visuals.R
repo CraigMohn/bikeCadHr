@@ -268,10 +268,6 @@ plot_elev_profile_plus <- function(track,summary,savefn,title="Ride",palette="pl
           cad.color.low=3,cad.color.mid=9,cad.color.high=15,
           hr.smooth.bw.meters=6,hr.smooth.nn=5,cad.smooth.bw.meters=20,cad.smooth.nn=15,
           min.numpoints=1000) {
-  ###  make the R checker happy with utterly irrelevant initializations of variables used with ggplot
-  alphachar <- alphahour <- distlegend <- prtchar <- prthour <- NULL
-  start.hour <- start.time <- startbutton.date <- stoplabels <- timestamp.s <- NULL
-  x <- xtext.stop <- y <- NULL
 
 
   miles <- track$distance.m[nrow(track)]/1609.34

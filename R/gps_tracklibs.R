@@ -1,7 +1,7 @@
 #' add/replace ride data in all tbl pairs
 #'
 #' \code{update_gps_variables} Add/replace ride data in .fit, .gpx and combined
-#'  tbl pairs (summary,track)
+#'  tbl pairs (summaries,tracks)
 #'
 #' Update existing (summaries,tracks) pairs for .fit and .gpx files structured
 #'   with new files at the top level, and files already included in the
@@ -38,6 +38,7 @@
 #'    the ride with speed-varying color
 #' @param drawmap.both create a .tiff file in the output directory mapping
 #'    the ride with speed-varying color for both the .fit files and the .gox files
+#' @param cores numer of cores (default is #CPUs - 1)
 #' @param ... parameters passed for track cleaning
 #'
 #' @return a tbl contining the combined summaries and tracks, with preference
@@ -51,16 +52,16 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
                   fitexcludes=c("bad","short"),gpxexcludes=c("bad","short","nosegs"),prefer.gpx=c(""),
                   rebuild.all.fit=FALSE,rebuild.all.gpx=FALSE,
                   drawprofile=TRUE,drawprofile.both=FALSE,elevation.char="|",
-                  drawmap=TRUE,drawmap.both=FALSE,...) {
-
-  ###  make the R checker happy with utterly irrelevant initializations of variables used by dplyr
-  start.time <- startbutton.date <- timestamp.s <- start.hour <- NULL
+                  drawmap=TRUE,drawmap.both=FALSE,cores=4,...) {
 
   num_drawn <- 0
   num_mapped <- 0
   old_wd <- getwd()
   on.exit(setwd(old_wd))
   setwd(fitrootdir)
+  if(missing(cores)) cores <- parallel::detectCores()
+  if (is.na(cores)) cores <- 1
+
   if (rebuild.all.fit) {
     sink(file=paste0(outdir,"/gps_readfitfiles.txt"),split=TRUE)
     fl <- list.files(pattern=".fit",recursive=TRUE)
@@ -69,7 +70,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
         fl <- fl[grep(x,fl,invert=TRUE)]
       }
     }
-    fitlist <- read_ridefiles(fl,...)
+    fitlist <- read_ridefiles(fl,cores=cores,...)
     fitsummary <- fitlist[["summaries"]]
     fittracks <- dplyr::arrange(fitlist[["tracks"]],startbutton.date,timestamp.s)
     newfitfiles <- basename(fl)
@@ -92,7 +93,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
       }
     }
     if (length(newfitfiles)>0) {
-      newfitlist <- read_ridefiles(newfitfiles,...)
+      newfitlist <- read_ridefiles(newfitfiles,cores=cores,...)
       newfitresults <- newfitlist[["summaries"]]
       newfittracks <- newfitlist[["tracks"]]
       newfiles <- newfitresults$sourcefile
@@ -142,7 +143,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
         fl <- fl[grep(x,fl,invert=TRUE)]
       }
     }
-    gpxlist <- read_ridefiles(fl,...)
+    gpxlist <- read_ridefiles(fl,cores=cores,...)
     gpxsummary <- gpxlist[["summaries"]]
     gpxtracks <- dplyr::arrange(gpxlist[["tracks"]],timestamp.s)
     newgpxfiles <- basename(fl)
@@ -165,7 +166,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
        }
     }
     if (length(newgpxfiles)>0) {
-      newgpxlist <- read_ridefiles(newgpxfiles,...)
+      newgpxlist <- read_ridefiles(newgpxfiles,cores=cores,...)
       newgpxresults <- newgpxlist[["summaries"]]
       newgpxtracks <- newgpxlist[["tracks"]]
       newfiles <- newgpxresults$sourcefile
@@ -238,8 +239,6 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
 #'
 #' @export
 join_ridefiles <- function(joinlist,summaries,tracks) {
-  ###  make the R checker happy with utterly irrelevant initializations of variables used by dplyr
-  start.time <- startbutton.date <- timestamp.s <- NULL
   #  joinlist - a list of vectors of sourcefile names to join
   #  summaries - tbl of ridesummaries created from gpx and/or fit files
   #  tracks - tbl of tracks consisting of timestamp.s,position_lat.dd,position_lon.dd,starttime,segment plus anything else
@@ -362,8 +361,6 @@ join_ridefiles <- function(joinlist,summaries,tracks) {
 #' @export
 combine_track_stores <- function(primary_sums,primary_tracks,secondary_sums,secondary_tracks,
                                    prefer_secondary=""){
-  ###  make the R checker happy with utterly irrelevant initializations of variables used by dplyr
-  start.time <- startbutton.date <- timestamp.s <- NULL
     #every entry in track tbls should have a corresponding summary entry
     pri.on.times <- unique(dateTimeStr(primary_sums$startbutton.date,primary_sums$startbutton.time))
     sec.on.times <- unique(dateTimeStr(secondary_sums$startbutton.date,secondary_sums$startbutton.time))

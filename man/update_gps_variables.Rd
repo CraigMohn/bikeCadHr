@@ -8,7 +8,8 @@ update_gps_variables(outdir, fitrootdir, gpxrootdir, merge.files = list(c(NA,
   NA)), fitexcludes = c("bad", "short"), gpxexcludes = c("bad", "short",
   "nosegs"), prefer.gpx = c(""), rebuild.all.fit = FALSE,
   rebuild.all.gpx = FALSE, drawprofile = TRUE, drawprofile.both = FALSE,
-  elevation.char = "|", drawmap = TRUE, drawmap.both = FALSE, ...)
+  elevation.char = "|", drawmap = TRUE, drawmap.both = FALSE, cores = 4,
+  ...)
 }
 \arguments{
 \item{outdir}{string containing location of output data pair files}
@@ -51,6 +52,8 @@ the ride with speed-varying color}
 \item{drawmap.both}{create a .tiff file in the output directory mapping
 the ride with speed-varying color for both the .fit files and the .gox files}
 
+\item{cores}{numer of cores (default is #CPUs - 1)}
+
 \item{...}{parameters passed for track cleaning}
 }
 \value{
@@ -60,7 +63,7 @@ a tbl contining the combined summaries and tracks, with preference
 }
 \description{
 \code{update_gps_variables} Add/replace ride data in .fit, .gpx and combined
- tbl pairs (summary,track)
+ tbl pairs (summaries,tracks)
 }
 \details{
 Update existing (summaries,tracks) pairs for .fit and .gpx files structured

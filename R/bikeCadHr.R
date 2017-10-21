@@ -61,6 +61,17 @@
 #' @importFrom OpenStreetMap openmap projectMercator
 #' @importFrom raster pointDistance
 #' @importFrom lubridate mday month year second minute hour ymd_hms
+#' @importFrom doParallel registerDoParallel stopImplicitCluster
+#' @importFrom foreach foreach %dopar% %do%
+#' @importFrom parallel detectCores
 #'
 #' @name bikeCadHr
 NULL
+
+###  make the R checker happy
+tedious <- utils::globalVariables(c("alphachar","alphahour","distlegend",
+                                    "prtchar","prthour","start.hour","start.time",
+                                    "startbutton.date","stoplabels","timestamp.s",
+                                    "x","xtext.stop","y"))
+
+

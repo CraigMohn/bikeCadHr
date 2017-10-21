@@ -6,6 +6,7 @@
 #'
 #'
 #' @param ridefilevec a vector of filenames to process
+#' @param cores numer of cores (default is #CPUs - 1)
 #' @param ... parameters passed for track cleaning
 #'
 #' @return a list of two data tibbles:  \eqn{summaries} and \eqn{tracks}
@@ -15,28 +16,42 @@
 #' @seealso \code{\link{read_ride}}
 #'
 #' @export
-read_ridefiles <- function(ridefilevec,...)  {
-  ###  make the R checker happy with utterly irrelevant initializations of variables used by dplyr
-  start.time <- startbutton.date <- timestamp.s <- start.hour <- NULL
-  outdf <- NULL
-  outtracks <- NULL
-  for (x in ridefilevec) {
-    ride <- read_ride(x,...)
-    obsdf <- ride[["summary"]]
-    obstrack <- ride[["trackpoints"]]
-    if (is.null(outdf)) {
-      outdf <- obsdf
-    } else {
-      outdf <- dplyr::bind_rows(outdf,obsdf)
+read_ridefiles <- function(ridefilevec,cores=4,...)  {
+  nfiles <- length(ridefilevec)
+  if(missing(cores)) cores <- parallel::detectCores()
+  if ((nfiles > 10) & !is.na(cores) & (cores>1)) {
+    doParallel::registerDoParallel(cores)
+    `%dopar%` <- foreach::`%dopar%`
+    cfun <- function(a,b) list(summary=dplyr::bind_rows(a[["summary"]],b[["summary"]]),
+                               trackpoints=dplyr::bind_rows(a[["trackpoints"]],b[["trackpoints"]]))
+    ridelist <- foreach (x = ridefilevec,.combine=`cfun`,
+                        .packages=c("bikeCadHr")) %dopar% {
+      read_ride(x,...)
     }
-    if (is.null(outtracks)) {
-      outtracks <- obstrack
-    } else {
-      outtracks <- dplyr::bind_rows(outtracks,obstrack)
+    doParallel::stopImplicitCluster()
+    return(list(summaries=dplyr::arrange(ridelist[["summary"]],date,start.hour),
+                tracks=dplyr::arrange(ridelist[["trackpoints"]],startbutton.date,timestamp.s)))
+  } else {
+    outdf <- NULL
+    outtracks <- NULL
+    for (x in ridefilevec) {
+      ride <- read_ride(x,...)
+      obsdf <- ride[["summary"]]
+      obstrack <- ride[["trackpoints"]]
+      if (is.null(outdf)) {
+        outdf <- obsdf
+      } else {
+        outdf <- dplyr::bind_rows(outdf,obsdf)
+      }
+      if (is.null(outtracks)) {
+        outtracks <- obstrack
+      } else {
+        outtracks <- dplyr::bind_rows(outtracks,obstrack)
+      }
     }
+    return(list(summaries=dplyr::arrange(outdf,date,start.hour),
+                tracks=dplyr::arrange(outtracks,startbutton.date,timestamp.s)))
   }
-  return(list(summaries=dplyr::arrange(outdf,date,start.hour),
-              tracks=dplyr::arrange(outtracks,startbutton.date,timestamp.s)))
 }
 #' read and clean a gps data file
 #'
@@ -100,7 +115,8 @@ read_ridefiles <- function(ridefilevec,...)  {
 #' @param cadence.time.shift.start do not use, alter assumptions about gps sample recording
 #' @param last.interval.end.notrigger do not use, alter assumptions about gps sample recording
 #'
-#' @return a list of two data tibbles:  \eqn{summary} and \eqn{trackpoints}
+#' @return a list of three data tibbles:  \eqn{summary} and \eqn{trackpoints} and
+#'    \eqn{session}
 #'    These are linked by integer fields \eqn{startbutton.date}
 #'    and \eqn{startbutton.time}
 #'

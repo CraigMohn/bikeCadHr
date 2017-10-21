@@ -105,7 +105,8 @@ in the grade calculation}
 as steepest grades}
 }
 \value{
-a list of two data tibbles:  \eqn{summary} and \eqn{trackpoints}
+a list of three data tibbles:  \eqn{summary} and \eqn{trackpoints} and
+   \eqn{session}
    These are linked by integer fields \eqn{startbutton.date}
    and \eqn{startbutton.time}
 }
