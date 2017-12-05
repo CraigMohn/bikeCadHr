@@ -1,0 +1,105 @@
+---
+title: "Extracting and Visualizing Cycling Cadence and Heartrate GPS Data"
+author: "Craig A. Mohn"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >  %\VignetteIndexEntry{"Extracting and Visualizing Cycling Cadence and Heartrate GPS Data"}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+This package was created to extract and use cadence data collected by Garmin and other
+GPS cycling computers.  There are various parameters to eliminate spurious "stops" caused by 
+auto-pause kicking in briefly  on very slow climbs, or due to sensor problems, as well as fix 
+problematic or missing cadence sensor readings.  The data, in either the Garmin proprietary
+.fit or the open .gpx file format, is saved as a dataframe of samples containing location, 
+speed, cadence, heartrate and other available data, as well as a single row summary  containing 
+several measures of cadence as well as measures of time spent pedaling, time spent rolling,
+total time, estimated pedal strokes, average and maximum speed, the number of stops in
+several length categories, and many other quantities which may help to distinguish a ride 
+from similar rides.  Data extracted from .fit files also contain measures of distance, time, 
+pedal strokes, cadence, and heartrate as accumulated by the GPS unit.
+
+The initial purpose of this package was to enable recalculation of several measures of 
+cadence for use in modeling individual cycling performance.  Some GPS units offer the option
+of including or excluding zero measurements (not pedaling) from the average cadence calculation.
+This package became necessary when a long-time "masher" broke a metatarsal, and in order 
+to get back on the bike as quickly as possible, he began spinning at much higher
+cadence (and lower torque).  Surprisingly, there was a clear structural break in (estimated) 
+kCal burned per hour (controlling for terrain, duration, weather), as well as in the average 
+speed for otherwise similar rides.  A bit of experimenting led to the conclusion that 
+cadence is an important variable in predicting performance, and that including zeros in
+calculating the average cadence was superior to excluding them.  However, the summary results
+that are easily accessible are not only limited to integer values, but it is not obvious 
+from the data what assumptions went into that average.  So to use data from 
+past rides, I had to be able to consistently recalculate the cadence measures from the data
+available.
+
+Once a rider realizes that perhaps the experts might know something, and that upping your cadence
+is a worthwhile training goal, it becomes inevitable that you will want to look at when 
+and under what terrain conditions your cadence is where you want it to be.  Unfortunately,
+most software available presents a set of overlaid wiggly lines reflecting speed, 
+cadence, heartrate and maybe terrain. This traditional  data presentation technique requires 
+a lot of cognitive effort for the information that it conveys.  So this package
+offers a color-based alternative showing cadence and heartrate in bands below an elevation 
+profile of the ride.  The elevation is colored based on the speed of travel, and stops 
+are optionally shown in a separate band below the profile.  There is also a function to map a 
+ride or set of rides using a number of different options for a base map layer.
+
+## What???  Two Different Distance Results For The Same Ride??  
+
+If the data is stored in the proprietary .fit file format, there is session-summary data which
+contains pedal strokes and rolling time which can yield average cadence including zeros.
+However, .fit files seem to be a bit fragile, and sometimes they are not easily read into R. 
+It is often possible to use file recovery utilities to recover a usable .gpx file from 
+this situation.  In this format, the session info is absent, so pedalstrokes and cadence 
+have to be calculated from the recorded samples.  It is also worth mentioning that .gpx files 
+use location as the key variables.  If the GPS is disabled or unable to get a signal, no data
+will be recorded in the file.  Distance and speed are calculated based on location.  This will
+systematically understate distance, as curves are approximated by line segments.  In particular, 
+the same ride will show slightly different distance and speed depending on whether the data 
+is derived from a .fit file or from the corresponding .gpx file.  It is also important to keep
+in mind that different gps units have different delays in pausing and restarting at stops (if
+autopause is enabled), and this will be reflected in average speed and other summary results.
+
+## Reading A GPS Data File
+
+Note the various macros within the `vignette` section of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the `title` field and the `\VignetteIndexEntry` to match the title of your vignette.
+
+## Styles
+
+The `html_vignette` template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:
+
+    output: 
+      rmarkdown::html_vignette:
+        css: mystyles.css
+
+## Figures
+
+The figure sizes have been customised so that you can easily put two images side-by-side. 
+
+```{r, fig.show='hold'}
+plot(1:10)
+plot(10:1)
+```
+
+You can enable figure captions by `fig_caption: yes` in YAML:
+
+    output:
+      rmarkdown::html_vignette:
+        fig_caption: yes
+
+Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
+
+## More Examples
+
+You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
+
+```{r, echo=FALSE, results='asis'}
+knitr::kable(head(mtcars, 10))
+```
+
+Also a quote using `>`:
+
+> "He who gives up [code] safety for [code] speed deserves neither."
+([via](https://twitter.com/hadleywickham/status/504368538874703872))

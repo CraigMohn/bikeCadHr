@@ -1,8 +1,8 @@
 Package: bikeCadHr
 Type: Package
 Title: Analyze Cycling Cadence Data From GPS .fit and .gpx Files
-Version: 0.8.0
-Date: 2017-06-01
+Version: 0.9.0
+Date: 2017-12-07
 Author: Craig Mohn
 Maintainer: Craig Mohn <craig.mohn.projects@gmail.com>
 Depends: R (>= 2.15.0)

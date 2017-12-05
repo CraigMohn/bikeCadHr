@@ -30,6 +30,7 @@ smoothEpanechnikov <- function(t,x,segment,nneighbors=5,bw=5) {
   xpresent <- as.numeric(!is.na(x))
   num <- xpresent*x
   den <- xpresent
+  t <- as.numeric(t)
   for (i in 1:nneighbors) {
     twt <- 1.0-((lead_n(t,i)-t)/bw)*((lead_n(t,i)-t)/bw)
     twt[is.na(twt)] <- 0
@@ -52,6 +53,7 @@ smoothTriangular <- function(t,x,segment,nneighbors=5,bw=5) {
   xpresent <- as.numeric(!is.na(x))
   num <- xpresent*x
   den <- xpresent
+  t <- as.numeric(t)
   for (i in 1:nneighbors) {
     twt <- 1.0-((lead_n(t,i)-t)/bw)
     twt[is.na(twt)] <- 0

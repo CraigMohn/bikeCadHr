@@ -54,6 +54,6 @@ Very short .fit files (typically for rides less than 30 seconds) sometimes fail 
 
 \section{map and visualization}{
 
-  \link{map_rides}, \link{plot_elev_profile_plus}
+  \link{map_rides}, \link{plot_profile}
 }
 

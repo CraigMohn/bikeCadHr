@@ -46,7 +46,7 @@
 #'   \link{update_gps_variables}, \link{join_ridefiles}, \link{combine_track_stores}
 #'
 #' @section map and visualization:
-#'   \link{map_rides}, \link{plot_elev_profile_plus}
+#'   \link{map_rides}, \link{plot_profile}
 #'
 #'
 #' @import magrittr tibble dplyr stringr ggplot2
@@ -72,6 +72,8 @@ NULL
 tedious <- utils::globalVariables(c("alphachar","alphahour","distlegend",
                                     "prtchar","prthour","start.hour","start.time",
                                     "startbutton.date","stoplabels","timestamp.s",
-                                    "x","xtext.stop","y"))
+                                    "x","xtext.stop","y","xend","xcol",
+                                    "verticalMultiplier","color","hjust","label",
+                                    "yend"))
 
 

@@ -1,0 +1,184 @@
+continuous_bar <- function(g,legendtext,xvar,vals,lowval,hival,lowcolor,hicolor,
+                           legendwidth,y.bottom,band.height,label.height,gap.height=10,
+                           showlegend=TRUE) {
+
+  prtvalue <- lowcolor + (hicolor-lowcolor)*(vals-lowval)/(hival-lowval) #  map interval to color interval
+  prtvalue[!is.na(vals) & vals<lowval] <- lowcolor
+  prtvalue[!is.na(vals) & vals>hival] <- hicolor
+  prtalpha <- (prtvalue-lowcolor)/(hicolor-lowcolor)  #higher values more intense
+  prtalpha[prtalpha<0.3] <- 0.3
+
+  y.band <- y.bottom + gap.height + (band.height/2)
+  width.legend <- c(4,2,5,2) #  columns forlegend - description,lowvalue,colorbar,hivalue
+  column.legend <- c(0,cumsum(width.legend)[-4])*legendwidth
+  if (showlegend) {
+    xtext.legend <- c(0,column.legend[3],column.legend[3],column.legend[4])
+    ytext.legend <- rep(y.band+(band.height/2)+gap.height+(label.height/2),4)
+    alpha.legend <- c(1,1,0,1)
+    hjust.legend <- c(0,1,0,0)
+    legendlabels <- c(legendtext,paste0(lowval," "),"",paste0("  ",hival))
+  } else {
+    xtext.legend <- 0
+    ytext.legend <- y.band+(band.height/2)+gap.height+(label.height/2)
+    legendlabels <- legendtext
+    alpha.legend <- 1
+    hjust.legend <- 0
+  }
+  legendpos <- xvar>=column.legend[3] & xvar<=column.legend[4]
+  prtlegend <- seq(lowcolor,hicolor,length.out=sum(legendpos))
+  x.legend <- xvar[legendpos]
+  y.legend <- rep(ytext.legend[1],length(x.legend))
+
+  y.band <- rep(y.band,length(xvar))
+  valsDataFrame <- data.frame(xvar,prtvalue,prtalpha,vals,y.band,band.height)
+  valsLegendFrame <- data.frame(x.legend,y.legend,prtlegend,label.height)
+  valsTextFrame <- data.frame(xtext.legend,ytext.legend,
+                              legendlabels,alpha.legend,hjust.legend)
+  gnew <- g +
+    geom_tile(data=valsDataFrame,
+              aes(y=y.band,x=xvar,fill=prtvalue,color=prtvalue,
+                  alpha=prtalpha),
+              height=band.height,show.legend = FALSE) +
+    geom_text(data=valsTextFrame,
+              aes(x=xtext.legend,y=ytext.legend,label=legendlabels,
+                  hjust=hjust.legend,alpha=alpha.legend),
+              size=2,color="black",fontface="italic",show.legend = FALSE)
+  if (showlegend) {
+    gnew <- gnew +
+     geom_tile(data=valsLegendFrame,
+               aes(y=y.legend,x=x.legend,fill=prtlegend,
+                    color=prtlegend),
+               height=label.height,alpha=1,show.legend = FALSE)
+  }
+  return(gnew)
+}
+discrete_bar <- function(g,legendtext,xvar,vals,lowval,hival,lowcolor,midcolor,hicolor,
+                         legendwidth,y.bottom,band.height,label.height,gap.height=10,
+                         showlegend=TRUE) {
+  if (showlegend) {
+    legendlabels <- c(legendtext,
+                      paste0("   < ",lowval,"  "),
+                      paste0("   ",lowval,"-",hival," "),
+                      paste0("   >= ",hival," "))
+    legendcolors <- c(NA,lowcolor,midcolor,hicolor)
+    prtvalue  <-  rep(NA,length(vals))
+    prtvalue[!is.na(vals) & vals>0 & vals<lowval] <- legendcolors[2]
+    prtvalue[!is.na(vals) & vals>=lowval & vals<hival] <- legendcolors[3]
+    prtvalue[!is.na(vals) & vals>=hival] <- legendcolors[4]
+  } else {
+    legendlabels <- c(legendtext)
+    legendcolors <- NA
+    prtvalue <- NA
+  }
+
+
+  y.band <- y.bottom + gap.height + (band.height/2)
+  width.legend <- c(4,3,3,3)
+  x1.legend <- c(0,cumsum(width.legend[1:3]))*legendwidth
+  x2.legend <- cumsum(width.legend)*legendwidth
+  y1.legend <- y.band+(band.height/2)+gap.height
+  y2.legend <- y1.legend+label.height
+
+  if (showlegend) {
+    xtext.legend <- x1.legend
+    ytext.legend <- rep(y.band+(band.height/2)+gap.height+(label.height/2),4)
+    alpha.legend <- c(0,1,1,1)
+    hjust.legend <- c(0,0,0,0)
+  } else {
+    xtext.legend <- 0
+    ytext.legend <- y.band+(band.height/2)+gap.height+(label.height/2)
+    legendlabels <- legendtext
+    alpha.legend <- 1
+    hjust.legend <- 0
+  }
+  valsDataFrame <- data.frame(xvar,y.band,vals,prtvalue,band.height)
+  valsTextFrame <- data.frame(x1.legend,x2.legend,y1.legend,y2.legend,
+                              xtext.legend,ytext.legend,legendlabels,
+                              legendcolors,alpha.legend,hjust.legend)
+  gnew <- g +
+    geom_tile(data=valsDataFrame,
+              aes(y=y.band,x=xvar,fill=prtvalue,color=prtvalue),
+              height=band.height,show.legend=FALSE) +
+    geom_text(data=valsTextFrame,
+              aes(x=xtext.legend,y=ytext.legend,label=legendlabels,hjust=hjust.legend),
+              size=2,fontface="italic")
+  if (showlegend) {
+    gnew <- gnew +
+      geom_rect(data=valsTextFrame,
+                aes(xmin=x1.legend,xmax=x2.legend,fill=legendcolors,alpha=alpha.legend),
+                ymin=y1.legend,ymax=y2.legend,inherit.aes=FALSE,show.legend=FALSE)
+  }
+  return(gnew)
+}
+
+
+# return the number of points on the x-axis for data
+numPointsXAxis <- function(dist,ppm,imperial) {
+  miles <- ifelse(imperial,dist,milesFromMeters(1000*dist))
+  if (!is.na(ppm)&ppm>=10) {
+    return(ceiling(ppm*miles))
+  } else {
+    distbends <- c(0,10,35,85,200,100000000)       # begin at 0, end at max distance imaginable
+    pointsbends <- c(0,2000,4000,6500,10000,10000) # begin at 0, end at maximum number of points
+    return(ceiling(pointsbends[which(distbends>miles)[1]-1] +
+                     ( (pointsbends[which(distbends>miles)[1]]-
+                          pointsbends[which(distbends>miles)[1]-1])/
+                         (distbends[which(distbends>miles)[1]]-
+                            distbends[which(distbends>miles)[1]-1]) )*
+                     (miles-distbends[which(distbends>miles)[1]-1])))
+  }
+}
+#  return vertical scaling factor for profile
+verticalMult <- function(dist,imperial) {
+  miles <- ifelse(imperial,dist,milesFromMeters(1000*dist))
+  distbends <- c(0,10,35,85,200,100000000) # begin at 0, end at max distance imaginable
+  vertbends <- c(25,25,35,45,55,60)        # begin at 0, end at maximum number of points
+  vm <-
+    ceiling(vertbends[which(distbends>miles)[1]-1] +
+                        ( (vertbends[which(distbends>miles)[1]]-
+                           vertbends[which(distbends>miles)[1]-1]) /
+                          (distbends[which(distbends>miles)[1]]-
+                           distbends[which(distbends>miles)[1]-1]) ) *
+                        (miles-distbends[which(distbends>miles)[1]-1]) )
+  return(35)
+}
+heightWith <- function(hrDistance,cadDistance,hrTime,cadTime,headerTime,totalCall=FALSE) {
+  topGaps <- 1
+  itemH <- height("gap") + height("band") + height("gap") +
+            height("label") + topGaps*height("gap")
+  headerH <- 2*height("axis") + height("connector")
+  axisH <- height("axis")
+  return( ifelse((!headerTime)&totalCall,axisH,0) +
+          ifelse(hrDistance,itemH,0) +
+          ifelse(cadDistance,itemH,0) +
+          ifelse(headerTime,headerH,0) +
+          ifelse(hrTime,itemH,0) +
+          ifelse(cadTime,itemH,0)
+  )
+}
+height <- function(what) {
+  if (what=="label") return(50)
+  else if (what=="band") return(85)
+  else if (what=="gap") return(5)
+  else if (what=="axis") return(175)
+  else if (what=="connector") return(50)
+  else return(NA)
+}
+cadenceSmooth <- function(timevec,cadencevec,segment,cadSmoothNN,cadSmoothBW) {
+
+  temp <- cadencevec
+  temp[temp==0] <- NA  # don't move zeros
+  cadence <- smoothTriangular(timevec,temp,segment,
+                              nneighbors=cadSmoothNN,bw=cadSmoothBW)
+  cadence[is.na(cadence)] <- 0
+  return(cadence)
+}
+milesFromMeters <- function(meters) {
+  return(meters/1609.34)
+}
+kmFromMeters <- function(meters) {
+  return(meters/1000)
+}
+feetFromMeters <- function(meters) {
+  return(meters*3.28084)
+}
