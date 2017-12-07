@@ -13,7 +13,7 @@ plot_profile(track, summary, savefn, title = "Ride", palette = "plasma",
   cadTarget = 88, cadCont = TRUE, cadContLow = 60, cadContHigh = 100,
   cadColorLow = 3, cadColorMid = 9, cadColorHigh = 15, hrSmoothBW = 6,
   hrSmoothNN = 5, cadSmoothBW = 20, cadSmoothNN = 15,
-  minNumPoints = 1000, imperial = TRUE)
+  minNumPoints = 3600, imperial = TRUE)
 }
 \arguments{
 \item{track}{data frame or tibble containing track details including

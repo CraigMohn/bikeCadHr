@@ -23,7 +23,6 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
   distance <- eProfilePts[[1]]
   elevation <- eProfilePts[[2]]
   speed <- sProfilePts[[2]]
-
   #  need to do color scaling
   if (imperial) {
     speed[speed<3] <- 3
@@ -93,16 +92,17 @@ drawSummary <- function(ggp,summary,title){
   ggpreturn <- ggp
   ymax <- ggp[["ymax"]]
   xmax <- ggp[["xmax"]]
+  xlast <- ggp[["xlast"]]
   g <- ggp[["g"]]
   heightFactor=ggp[["heightFactor"]]
-  headerWidth <- min(xmax,40)
+  headerWidth <- min(xmax,25)
   ycenterSum <- seq(1,3) #rows
   ycenterSum <- ymax - (60/heightFactor)*ycenterSum
   xcenterSum <- c(headerWidth*0.10,headerWidth*0.60)
   xposSum <- c(rep(xcenterSum[1],3),rep(xcenterSum[2],3))
   yposSum <- c(ycenterSum,ycenterSum)
   summarylabels <-
-    c(paste0(round(xmax,digits=2)," miles"),
+    c(paste0(round(xlast,digits=2)," miles"),
       paste0(round(3.28084*summary$ascent[1],digits=0)," ft climbing"),
       paste0(round(1/60*summary$rolling.time[1],digits=0)," minutes rolling"),
       paste0(round(2.23694*summary$speed.rolling.m.s[1],digits=2)," mph avg"),
@@ -229,6 +229,7 @@ drawTAxis <- function(ggp,segment,walltime,distPerPoint,hoursPerPoint) {
                  aes(x=x,y=y,xend=xend,yend=y,color=xcol))
   tmax <- (xmax/xscale)
   tincr <- round(exp(log(10)*floor(log10(tmax))))
+
   axischarsize <- 3
   if (tincr > 0) {
     t <- seq(0,tmax,tincr)
@@ -243,20 +244,30 @@ drawTAxis <- function(ggp,segment,walltime,distPerPoint,hoursPerPoint) {
   g <- g +
     geom_text(data=tAxisLabels,aes(x=x,y=y,label=ttext,hjust=hjust),
               size=axischarsize,vjust=1.2,show.legend = FALSE)
-  if (tmax <3) {
+  if (tmax <3 & tmax >= 0.25) {
     df15 <- data.frame(x=seq(900,tmax*3600,3600),y=yCenter,ttext="1/4")
-    df30 <- data.frame(x=seq(1800,tmax*3600,3600),y=yCenter,ttext="1/2")
-    df45 <- data.frame(x=seq(2700,tmax*3600,3600),y=yCenter,ttext="3/4")
-    qAxisLabels <- rbind(df15,df30,df45)
-    qAxisLabels$x <- (xscale/3600)*qAxisLabels$x
+    if (tmax >= 0.5)
+      df15 <- rbind(df15,
+               data.frame(x=seq(1800,tmax*3600,3600),y=yCenter,ttext="1/2"))
+     if (tmax >= 0.75)
+      df15 <- rbind(df15,
+                    data.frame(x=seq(2700,tmax*3600,3600),y=yCenter,ttext="3/4"))
+    df15$x <- (xscale/3600)*df15$x
     g <- g +
-      geom_text(data=qAxisLabels,aes(x=x,y=y,label=ttext),hjust=0.5,
+      geom_text(data=df15,aes(x=x,y=y,label=ttext),hjust=0.5,
                 size=0.75*axischarsize,vjust=1.2,show.legend = FALSE)
   }
+  incr <- ifelse(tmax > 6,xscale,xscale/4)
+  t <- seq(0,xscale*tmax,incr)
+  axisdata2 <- data.frame(x=t,y=yCenter)
+  g <- g +
+    geom_point(data=axisdata2,aes(x=x,y=y),size=1,color="black",
+               shape=124,show.legend=FALSE)
+
   tAxisTextFrame <- data.frame(x=xmax/2,y=yCenter,label="Time")
   g <- g +
     geom_text(data=tAxisTextFrame,aes(x=x,y=y,label=label),
-              size=1.25*axischarsize,vjust=2.05,hjust=0.5,
+              size=1.10*axischarsize,vjust=2.05,hjust=0.5,
               color="black",show.legend = FALSE)
 
   ggpreturn[["g"]] <- g
@@ -264,7 +275,8 @@ drawTAxis <- function(ggp,segment,walltime,distPerPoint,hoursPerPoint) {
   return(ggpreturn)
 }
 drawXAxis <- function(ggp,segment,walltime,distance,
-                      showStops,distPerPoint,underLine=FALSE) {
+                      showStops,distPerPoint,
+                      underLine=FALSE,lineAtZero=FALSE) {
   ggpreturn <- ggp
   g <- ggp[["g"]]
   xmax <- ggp[["xmax"]]
@@ -272,14 +284,15 @@ drawXAxis <- function(ggp,segment,walltime,distance,
   npoints <- ggp[["npoints"]]
   heightFactor=ggp[["heightFactor"]]
   yXAxis <- ggp[["ymin"]]
-  if(underLine) {
+  if (!underLine & ! lineAtZero)
+    yXAxis <- yXAxis - height("gap",heightFactor)
+  if(underLine | lineAtZero) {
     ymin <- yXAxis - 0.5*height("axis",heightFactor)
     yCenter <- yXAxis
   } else {
     ymin <- yXAxis - height("axis",heightFactor)
     yCenter <- (yXAxis+ymin)/2
   }
-
   if (xmax < 2) {
     xincrement <- 0.5
     mincrement <- 0.5
@@ -296,7 +309,7 @@ drawXAxis <- function(ggp,segment,walltime,distance,
     xincrement <- 10
     mincrement <- 5
   } else {
-    xincrement <- 50
+    xincrement <- 20
     mincrement <- 5
   }
   distancegraphends <- c(0,npoints*distPerPoint)
@@ -352,11 +365,11 @@ drawXAxis <- function(ggp,segment,walltime,distance,
     geom_point(data=axisdata2,aes(x=x,y=y),size=1,color="black",
                shape=124,show.legend=FALSE)
 
-  vjust <- ifelse(underLine,1.8,-1.15)
+  vjust <- ifelse(underLine,1.8,-1.20)
   xAxisTextFrame <- data.frame(x=xmax/2,y=yCenter,label="Distance",vjust=vjust)
   g <- g +
     geom_text(data=xAxisTextFrame,aes(x=x,y=y,label=label,vjust=vjust),
-              size=1.25*axischarsize,hjust=0.5,
+              size=1.10*axischarsize,hjust=0.5,
               color="black",show.legend = FALSE)
 
   ggpreturn[["g"]] <- g
@@ -419,10 +432,12 @@ drawXTConnect <- function(ggp,distance,walltime,segment,
   hourtimes <- seq(0,timelast,3600)
   hourcolors <- rep(40,length(hourtimes))
   houralphas <- rep(0.5,length(hourtimes))
-  if (timelast <= 7200) {
-    quartertimes <- c(seq(900,timelast,3600),
-                      seq(1800,timelast,3600),
-                      seq(2700,timelast,3600))
+  if (timelast <= 7200 & timelast >= 900) {
+    quartertimes <- seq(900,timelast,3600)
+    if (timelast >= 1800)
+      quartertimes <- c(quartertimes,seq(1800,timelast,3600))
+    if (timelast >= 2700)
+      quartertimes <- c(quartertimes,seq(2700,timelast,3600))
     quartercolors <- rep(35,length(quartertimes))
     quarteralphas <- rep(0.25,length(quartertimes))
     hourtimes <- c(hourtimes,quartertimes)

@@ -126,8 +126,8 @@ numPointsXAxis <- function(dist,ppm,imperial) {
   if (!is.na(ppm)&ppm>=10) {
     return(ceiling(ppm*miles))
   } else {
-    distbends <- c(0,10,35,85,200,Inf)       # begin at 0, end at max distance
-    pointsbends <- c(0,2000,4000,6500,10000,10000) # begin at 0, end at max
+    distbends <- c(0,5,10,35,85,200,Inf)       # begin at 0, end at max distance
+    pointsbends <- c(0,2000,3000,4500,6500,10000,10000) # begin at 0, end at max
     return(ceiling(pointsbends[which(distbends>miles)[1]-1] +
                      ( (pointsbends[which(distbends>miles)[1]]-
                           pointsbends[which(distbends>miles)[1]-1])/
@@ -140,7 +140,7 @@ numPointsXAxis <- function(dist,ppm,imperial) {
 verticalMult <- function(dist,imperial) {
   miles <- ifelse(imperial,dist,milesFromMeters(1000*dist))
   distbends <- c(0,10,35,85,200,Inf) # begin at 0, end max distance
-  vertbends <- c(25,25,35,45,55,60)  # begin at 25, end 60
+  vertbends <- c(25,25,30,40,50,50)  # begin at 25, end 50
   vm <-
     ceiling(vertbends[which(distbends>miles)[1]-1] +
                         ( (vertbends[which(distbends>miles)[1]]-
@@ -171,9 +171,9 @@ heightItem <- function(scale) {
 }
 height <- function(what,scale) {
   if (what=="label") return(40/scale)
-  else if (what=="band") return(85/scale)
-  else if (what=="gap") return(8/scale)
-  else if (what=="axis") return(170/scale)
+  else if (what=="band") return(75/scale)
+  else if (what=="gap") return(9/scale)
+  else if (what=="axis") return(180/scale)
   else if (what=="connector") return(40/scale)
   else if (what=="summary") return(180/scale)
   else return(NA)

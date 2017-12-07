@@ -389,7 +389,7 @@ plot_profile <- function(track,summary,savefn,title="Ride",palette="plasma",
                                   cadColorLow=3,cadColorMid=9,cadColorHigh=15,
                                   hrSmoothBW=6,hrSmoothNN=5,
                                   cadSmoothBW=20,cadSmoothNN=15,
-                                  minNumPoints=1000,
+                                  minNumPoints=3600,
                                   imperial=TRUE) {
   ##  what will we add below the profile
   cadDistance <- cadDistance & any(!is.na(track$cadence.rpm))
@@ -447,8 +447,8 @@ plot_profile <- function(track,summary,savefn,title="Ride",palette="plasma",
     grlist <- drawXAxis(grlist,segment=track$segment,
                         walltime,distance,showStops,distPerPoint,
                         underLine=TRUE)
-  } else {
-    grlist[["ymin"]] <- grlist[["ymin"]] - 20
+#  } else {
+#    grlist[["ymin"]] <- grlist[["ymin"]] - 20
   }
   if (cadDistance) grlist <- drawCadence(grlist,cadencesm,distance,
                                          cadLow,cadTarget,
@@ -463,7 +463,8 @@ plot_profile <- function(track,summary,savefn,title="Ride",palette="plasma",
 
   if (showTime) {
     grlist <- drawXAxis(grlist,segment=track$segment,
-                        walltime,distance,showStops=FALSE,distPerPoint)
+                        walltime,distance,showStops=FALSE,distPerPoint,
+                        lineAtZero=!(cadDistance|hrDistance))
     grlist <- drawXTConnect(grlist,distance,walltime,segment=track$segment,
                             distPerPoint,hoursPerPoint)
     grlist <- drawTAxis(grlist,segment=track$segment,
@@ -489,16 +490,9 @@ plot_profile <- function(track,summary,savefn,title="Ride",palette="plasma",
   g <- grlist[["g"]]
 
   plot.width <- (ngraphpoints/600)+0.75
-  plot.height <- (((ymax-ymin)*vertmult/(5280*distPerPoint))/600)*1.2 + 2
+  plot.height <- (((ymax-ymin)*vertmult/(5280*distPerPoint))/600)*1.2 + 2.5
 
-#  aspect.ratio <- 0.8*vertmult*(ymax-ymin)/(5280*(ngraphpoints)*distPerPoint)
-#  plot.width <- (ngraphpoints+800)/600
-#  plot.height <- plot.width*((ymax-ymin+400)*vertmult/5280)/
-                   ((ngraphpoints+800)*distPerPoint)
-#  plot.height <- plot.width*aspect.ratio
   if (!missing(savefn))
-#    ggsave(savefn,height=8,units="in")
-#    ggsave(savefn,width=plot.width,
     ggsave(savefn,width=plot.width,height=plot.height,
            units="in",dpi=600,limitsize=FALSE)
   return(g)
