@@ -27,8 +27,8 @@ extension specified, .pdf, .png or .jpg}
 
 \item{title}{title printed over top center of map}
 
-\item{palette}{palette to use in graphic (\code{"plasma"} or \code{"magma"} or
-\code{"inferno"} or \code{"viridis"})}
+\item{palette}{palette to use in graphic (\code{"plasma"} or \code{"magma"}
+or \code{"inferno"} or \code{"viridis"})}
 
 \item{verticalMultiplier}{default vertical exaggeration factor.  Default
 ranges from 25 to 60 depending on the length being plotted}

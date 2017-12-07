@@ -30,8 +30,8 @@ latitude andf longitude of the map area}
 \item{maptype}{map to use as background (\code{"maptoolkit-topo"} or
 \code{"bing"} or \code{"osm"} or \code{"stamen-terrain"} or
 \code{"esri-topo"}  or \code{"stamen-watercolor"} or \code{"mapbox"} or
-\code{"esri"} or \code{"osm-public-transport"} or \code{"opencyclemap"} or
-\code{"apple-iphoto"} or \code{"skobbler"})}
+\code{"esri"} or \code{"osm-public-transport"} or \code{"opencyclemap"}
+or \code{"apple-iphoto"} or \code{"skobbler"})}
 
 \item{minTiles}{minimum number of tiles fetched for map, larger is slower
 but better quality}
@@ -47,26 +47,27 @@ the track in each direction, when autodetermining region to plot}
 indicates travel speed}
 
 \item{line.color}{the color to draw the lines of the tracks,
-if a palette is specified (\code{"plasma"} or \code{"viridis"} or \code{"rainbow"}
- or \code{"heat"} or \code{"red-blue"})
-is specified, each track supplied will be assigned a color from that palette}
+if a palette is specified (\code{"plasma"} or \code{"viridis"} or
+ \code{"rainbow"} or \code{"heat"} or \code{"red-blue"})is specified,
+each track supplied will be assigned a color from that palette}
 
 \item{line.width}{the width of the line for the tracks}
 
 \item{line.alpha}{the opacity of the line}
 
-\item{speed.color}{palette to use to represent speed on plot (\code{"speedcolors"} or
-\code{"red-blue-green"} or \code{"rainbow"} or \code{"plasma"} or \code{"magma"} or
+\item{speed.color}{palette to use to represent speed on plot
+(\code{"speedcolors"} or \code{"red-blue-green"} or
+\code{"rainbow"} or \code{"plasma"} or \code{"magma"} or
 \code{"heat"} )}
 
 \item{speed.alpha}{opacity of the speed line if \eqn{speed.color} specified}
 
-\item{speed.ptsize}{size for the symbols used to plot the speed line, doubled
-if \eqn{fine.map} is set true.}
+\item{speed.ptsize}{size for the symbols used to plot the speed line,
+doubled if \eqn{fine.map} is set true.}
 
 \item{speed.pch}{the character to use plotting the points of the speed line}
 
-\item{jpeg.quality}{the "quality" of the JPEG image, as a percentage. Smaller
+\item{jpeg.quality}{the "quality" of the JPEG image, a percentage. Smaller
 values will give more compression but also more degradation of the image}
 }
 \description{
@@ -74,7 +75,7 @@ values will give more compression but also more degradation of the image}
   dots to indicate speed
 }
 \details{
-Create a map displaying the tracks specified.  Tracks may be drawn in a single
+Create a map displaying the tracks specified.  Tracks may be drawn all in one
     specified color, with each separate track drawn in a different color from
     a specified palette, or as a series of closely spaced dots (which may
     be prodded into appearing as a line through judicious choice of point

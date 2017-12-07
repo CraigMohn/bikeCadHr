@@ -2,13 +2,20 @@
 #  elevation and speed are smoothed already if that's what is wanted
 drawProfile <- function(distancevec,elevationvec,speedvec,
                         distPerPoint,palette,
-                        vertMult,npoints,minNumPoints,heightBelow,
-                        elevationShape,imperial) {
+                        vertMult,npoints,minNumPoints,
+                        elevationShape,imperial,
+                        hrDistance,cadDistance,
+                        hrTime,cadTime,showTime) {
 
   ngraphpoints <- max(minNumPoints,npoints)
   dist <- distancevec[length(distancevec)]
   if (is.na(vertMult)|vertMult<=1)
     vertMult <- verticalMult(dist,imperial)
+  heightFactor=vertMult/50
+  heightBelow <- heightWith(hrDistance,cadDistance,
+                             hrTime,cadTime,
+                             showTime,totalCall=TRUE,
+                             scale=heightFactor)
 
   #  use equally spaced grid for plotting
   eProfilePts <- stats::approx(distancevec,elevationvec,n=npoints)
@@ -21,13 +28,15 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
   if (imperial) {
     speed[speed<3] <- 3
     speed[speed>40] <- 40
-    elevalpha <- 0.4 + 0.6*(ifelse(speed > 15,ifelse(speed<40,(speed-15)/25,1),0))
+    elevalpha <-
+      0.4 + 0.6*(ifelse(speed > 15,ifelse(speed<40,(speed-15)/25,1),0))
     elevround <- 200
   }
   else {
     speed[speed<5] <- 5
     speed[speed>67] <- 67
-    elevalpha <- 0.4 + 0.6*(ifelse(speed > 25,ifelse(speed<67,(speed-12)/25,1),0))
+    elevalpha <-
+      0.4 + 0.6*(ifelse(speed > 25,ifelse(speed<67,(speed-12)/25,1),0))
     elevround <- 200
   }
   elevprtchar <- rep("|",length(distance))
@@ -38,13 +47,13 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
   elevMax <- max(elevation)
   elevMaxInt <- elevround*ceiling(elevMax/elevround)
   ymin <- elevMinInt - heightBelow - 200
-  ymax <- elevMaxInt + 600
+  ymax <- elevMaxInt + height("summary",heightFactor)
   xmin <- 0
   xmax <- distPerPoint*ngraphpoints
 
   plotdata <- data.frame(distance,elevation,speed,elevprtchar,elevalpha)
   major.breaks <- ifelse(dist>100,10,ifelse(dist>10,5,1))
-  aspect.ratio <- vertMult*(ymax-ymin)/(5280*(ngraphpoints)*distPerPoint)
+ #  aspect.ratio <- vertMult*(ymax-ymin)/(5280*(ngraphpoints)*distPerPoint)
 
   g <- ggplot2::ggplot(plotdata,aes(x=distance,y=elevation)) +
     ggplot2::scale_y_continuous(limits=c(ymin,ymax),expand=c(0,0),
@@ -53,7 +62,7 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
     ggplot2::scale_x_continuous(limits=c(xmin,xmax),expand=c(0,0),
                                 breaks=seq(from=0,to=xmax,by=major.breaks),
                                 minor_breaks=seq(0,xmax,1)) +
-   # ggplot2::theme(aspect.ratio=aspect.ratio) +
+ #  ggplot2::theme(aspect.ratio=aspect.ratio) +
     ggplot2::theme(legend.title=
                      ggplot2::element_text(colour="steelblue",size=7)) +
     ggplot2::theme(legend.text=
@@ -72,9 +81,11 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
                        fill="white",color="white") +
     ggplot2::geom_area(color="white",fill="white") +
     ggplot2::geom_point(ggplot2::aes(color=speed),shape=elevationShape,
-                        size=2,position=ggplot2::position_nudge(y=1.2))
-  return(list(g=g,xmin=xmin,xmax=xmax,xlast=distPerPoint*npoints,
+                        size=1.25*heightFactor,
+                        position=ggplot2::position_nudge(y=1.2))
+    return(list(g=g,xmin=xmin,xmax=xmax,xlast=distPerPoint*npoints,
               ymin=elevMinInt,ymax=ymax,vertmult=vertMult,
+              distPerPoint=distPerPoint,heightFactor=heightFactor,
               npoints=npoints,ngraphpoints=ngraphpoints))
 }
 drawSummary <- function(ggp,summary,title){
@@ -83,26 +94,32 @@ drawSummary <- function(ggp,summary,title){
   ymax <- ggp[["ymax"]]
   xmax <- ggp[["xmax"]]
   g <- ggp[["g"]]
+  heightFactor=ggp[["heightFactor"]]
   headerWidth <- min(xmax,40)
-  ycenterSum <- c(ymax-140,ymax-320,ymax-500)
+  ycenterSum <- seq(1,3) #rows
+  ycenterSum <- ymax - (60/heightFactor)*ycenterSum
   xcenterSum <- c(headerWidth*0.10,headerWidth*0.60)
   xposSum <- c(rep(xcenterSum[1],3),rep(xcenterSum[2],3))
   yposSum <- c(ycenterSum,ycenterSum)
-  summarylabels <- c(paste0(round(xmax,digits=2)," miles"),
-                     paste0(round(3.28084*summary$ascent[1],digits=0)," ft climbing"),
-                     paste0(round(1/60*summary$rolling.time[1],digits=0)," minutes rolling"),
-                     paste0(round(2.23694*summary$speed.rolling.m.s[1],digits=2)," mph avg"),
-                     paste0(round(summary$avgcadence.withzeros[1],digits=1)," cad avg(incl/zeros)"),
-                     paste0(round(summary$session.total.calories[1],digits=0)," kCal burned"))
+  summarylabels <-
+    c(paste0(round(xmax,digits=2)," miles"),
+      paste0(round(3.28084*summary$ascent[1],digits=0)," ft climbing"),
+      paste0(round(1/60*summary$rolling.time[1],digits=0)," minutes rolling"),
+      paste0(round(2.23694*summary$speed.rolling.m.s[1],digits=2)," mph avg"),
+      paste0(round(summary$avgcadence.withzeros[1],digits=1),
+             " cad avg(incl/zeros)"),
+      paste0(round(summary$session.total.calories[1],digits=0)," kCal burned"))
   summaryTextFrame <- data.frame(xposSum,yposSum,summarylabels)
-  if ((summary$pct.trkpts.hr < .98)|(is.na(summary$session.total.calories))) summaryTextFrame <- summaryTextFrame[-6,]
-  if (summary$pct.trkpts.cad < .7) summaryTextFrame <- summaryTextFrame[-5,]
+  if ((summary$pct.trkpts.hr < .98)|(is.na(summary$session.total.calories)))
+    summaryTextFrame <- summaryTextFrame[-6,]
+  if (summary$pct.trkpts.cad < .7)
+    summaryTextFrame <- summaryTextFrame[-5,]
   g <- g +
     ggtitle(paste0(title,"  ",summary$start.time[1])) +
     geom_text(data=summaryTextFrame,
               aes(x=xposSum,y=yposSum,label=summarylabels),
               size=3,hjust=0,alpha=1,color="slategray4") +
-    theme(plot.title = element_text(color="Black",face="bold",size=15,hjust=0.5))
+    theme(plot.title=element_text(color="Black",face="bold",size=15,hjust=0.5))
   ggpreturn[["g"]] <- g
   return(ggpreturn)
 
@@ -114,11 +131,12 @@ drawCadence <- function(ggp,cadence,xvar,
                         cadColorLow,cadColorMid,cadColorHigh,
                         minNumPoints,showlegend=TRUE) {
   ggpreturn <- ggp
-  yCadTop <- ggp[["ymin"]]
-  ymin <- yCadTop - heightWith(FALSE,TRUE,FALSE,FALSE,FALSE)
   xend <- ggp[["xlast"]]
   g <- ggp[["g"]]
   npoints <- ggp[["npoints"]]
+  heightFactor=ggp[["heightFactor"]]
+  yCadTop <- ggp[["ymin"]]
+  ymin <- yCadTop - heightItem(scale=heightFactor)
   # column width vectors sum to 13 in bar functionsd
   hrCadLegendWidth <- (xend/npoints)*
     min(npoints,2*minNumPoints)/(13*2)
@@ -131,16 +149,18 @@ drawCadence <- function(ggp,cadence,xvar,
                         lowval=cadContLow,hival=cadContHigh,
                         lowcolor=cadColorLow,hicolor=cadColorHigh,
                         legendwidth=hrCadLegendWidth,y.bottom=ymin,
-                        band.height=height("band"),label.height=height("label"),
-                        gap.height=height("gap"),showlegend)
+                        band.height=height("band",heightFactor),
+                        label.height=height("label",heightFactor),
+                        gap.height=height("gap",heightFactor),showlegend)
     } else {
     g <- discrete_bar(g,legendtext="Cadence",xvar=xvardraw,vals=caddraw,
                       lowval=cadLow,hival=cadTarget,
                       lowcolor=cadColorLow,midcolor=cadColorMid,
                       hicolor=cadColorHigh,
                       legendwidth=hrCadLegendWidth,y.bottom=ymin,
-                      band.height=height("band"),label.height=height("label"),
-                      gap.height=height("gap"),showlegend)
+                      band.height=height("band",heightFactor),
+                      label.height=height("label",heightFactor),
+                      gap.height=height("gap",heightFactor),showlegend)
   }
   ggpreturn[["g"]] <- g
   ggpreturn[["ymin"]] <- ymin
@@ -152,11 +172,12 @@ drawHr <- function(ggp,hr,xvar,
                    minNumPoints,showlegend=TRUE) {
 
   ggpreturn <- ggp
-  yHrTop <- ggp[["ymin"]]
-  ymin <- yHrTop - heightWith(TRUE,FALSE,FALSE,FALSE,FALSE)
   xend <- ggp[["xlast"]]
   g <- ggp[["g"]]
   npoints <- ggp[["npoints"]]
+  heightFactor=ggp[["heightFactor"]]
+  yHrTop <- ggp[["ymin"]]
+  ymin <- yHrTop - heightItem(scale=heightFactor)
   # column width vectors sum to 13 in bar functionsd
   hrCadLegendWidth <- (xend/npoints)*
     min(npoints,2*minNumPoints)/(13*2)
@@ -170,21 +191,23 @@ drawHr <- function(ggp,hr,xvar,
                       lowval=hrLow,hival=hrHigh,
                       lowcolor=hrColorLow,hicolor=hrColorHigh,
                       legendwidth=hrCadLegendWidth,y.bottom=ymin,
-                      band.height=height("band"),label.height=height("label"),
-                      gap.height=height("gap"),showlegend)
+                      band.height=height("band",heightFactor),
+                      label.height=height("label",heightFactor),
+                      gap.height=height("gap",heightFactor),showlegend)
   ggpreturn[["g"]] <- g
   ggpreturn[["ymin"]] <- ymin
   return(ggpreturn)
 }
 drawTAxis <- function(ggp,segment,walltime,distPerPoint,hoursPerPoint) {
   ggpreturn <- ggp
-  yTAxis <- ggp[["ymin"]]
-  ymin <- yTAxis - height("axis")
-  yCenter <- (yTAxis+ymin)/2
   g <- ggp[["g"]]
   xmax <- ggp[["xmax"]]
   ngraphpoints <- ggp[["ngraphpoints"]]
   npoints <- ggp[["npoints"]]
+  heightFactor=ggp[["heightFactor"]]
+  yTAxis <- ggp[["ymin"]]
+  ymin <- yTAxis - height("axis",heightFactor)
+  yCenter <- (yTAxis+ymin)/2
 
   newseg <- segment != lag_one(segment)
   newseg[1] <- TRUE
@@ -219,7 +242,7 @@ drawTAxis <- function(ggp,segment,walltime,distPerPoint,hoursPerPoint) {
   tAxisLabels$hjust <- c(0,rep(0.5,nrow(tAxisLabels)-1))
   g <- g +
     geom_text(data=tAxisLabels,aes(x=x,y=y,label=ttext,hjust=hjust),
-              size=axischarsize,vjust=1.0,show.legend = FALSE)
+              size=axischarsize,vjust=1.2,show.legend = FALSE)
   if (tmax <3) {
     df15 <- data.frame(x=seq(900,tmax*3600,3600),y=yCenter,ttext="1/4")
     df30 <- data.frame(x=seq(1800,tmax*3600,3600),y=yCenter,ttext="1/2")
@@ -228,12 +251,12 @@ drawTAxis <- function(ggp,segment,walltime,distPerPoint,hoursPerPoint) {
     qAxisLabels$x <- (xscale/3600)*qAxisLabels$x
     g <- g +
       geom_text(data=qAxisLabels,aes(x=x,y=y,label=ttext),hjust=0.5,
-                size=0.75*axischarsize,vjust=1.0,show.legend = FALSE)
+                size=0.75*axischarsize,vjust=1.2,show.legend = FALSE)
   }
   tAxisTextFrame <- data.frame(x=xmax/2,y=yCenter,label="Time")
   g <- g +
     geom_text(data=tAxisTextFrame,aes(x=x,y=y,label=label),
-              size=1.25*axischarsize,vjust=1.75,hjust=0.5,
+              size=1.25*axischarsize,vjust=2.05,hjust=0.5,
               color="black",show.legend = FALSE)
 
   ggpreturn[["g"]] <- g
@@ -241,20 +264,22 @@ drawTAxis <- function(ggp,segment,walltime,distPerPoint,hoursPerPoint) {
   return(ggpreturn)
 }
 drawXAxis <- function(ggp,segment,walltime,distance,
-                      showStops,distPerPoint,atTop=FALSE) {
+                      showStops,distPerPoint,underLine=FALSE) {
   ggpreturn <- ggp
-  yXAxis <- ggp[["ymin"]]
-  if(atTop) {
-    ymin <- yXAxis - 0.5*height("axis")
-    yCenter <- yXAxis
-  } else {
-    ymin <- yXAxis - height("axis")
-    yCenter <- (yXAxis+ymin)/2
-  }
   g <- ggp[["g"]]
   xmax <- ggp[["xmax"]]
   ngraphpoints <- ggp[["ngraphpoints"]]
   npoints <- ggp[["npoints"]]
+  heightFactor=ggp[["heightFactor"]]
+  yXAxis <- ggp[["ymin"]]
+  if(underLine) {
+    ymin <- yXAxis - 0.5*height("axis",heightFactor)
+    yCenter <- yXAxis
+  } else {
+    ymin <- yXAxis - height("axis",heightFactor)
+    yCenter <- (yXAxis+ymin)/2
+  }
+
   if (xmax < 2) {
     xincrement <- 0.5
     mincrement <- 0.5
@@ -280,8 +305,8 @@ drawXAxis <- function(ggp,segment,walltime,distance,
 
   if (showStops) {
     #  create data frames for stops/breaks
-    #  classify segment breaks as short stops or long breaks - work in grid coords
-    first.seg <- segment != lag_one(segment)  #  don't include first egment start
+    #  classify seg breaks as short stops or long breaks, work in grid coords
+    first.seg <- segment != lag_one(segment) # don't include first egment start
     pause.len <- first.seg*(walltime-lag_one(walltime))
     pause.size <- rep(0,npoints)
     pause.alpha <- rep(0,npoints)
@@ -295,34 +320,39 @@ drawXAxis <- function(ggp,segment,walltime,distance,
       pause.size[pause.long] <- 1.5 + 1.5*log(pause.len[pause.long]/300)
       pause.alpha[pause.long] <- 0.5
     }
-    stopdata <- data.frame(distance,yCenter,pause.long,pause.short,pause.size,pause.alpha)
+    stopdata <-
+      data.frame(distance,yCenter,pause.long,pause.short,pause.size,pause.alpha)
     stopdata.short <- stopdata[stopdata$pause.short,]
     stopdata.long <- stopdata[stopdata$pause.long,]
     if (nrow(stopdata.short)>0) {
       g <- g +
-        geom_point(data=stopdata.short,aes(y=yCenter,alpha=pause.alpha,size=pause.size),color="red3",shape=124,show.legend=FALSE)
+        geom_point(data=stopdata.short,
+                   aes(y=yCenter,alpha=pause.alpha,size=pause.size),
+                   color="red3",shape=124,show.legend=FALSE)
     }
     if (nrow(stopdata.long)>0) {
       g <- g +
-        geom_point(data=stopdata.long,aes(y=yCenter,alpha=pause.alpha,size=pause.size),color="green",shape=124,show.legend=FALSE)
+        geom_point(data=stopdata.long,
+                   aes(y=yCenter,alpha=pause.alpha,size=pause.size),
+                   color="green",shape=124,show.legend=FALSE)
     }
   }
   axischarsize <- 3
   x <- seq(0,xmax,xincrement)
   xtext <- as.character(x)
   xhjust <- c(0,rep(0.5,length(x)-1))
-  vjust <- ifelse(atTop,1.1,-0.1)
-  axisdata <- data.frame(x=x,y=yCenter,label=xtext,hjust=xhjust)
+  vjust <- ifelse(underLine,1.45,-0.45)
+  axisdata <- data.frame(x=x,y=yCenter,label=xtext,hjust=xhjust,vjust=vjust)
   g <- g +
-    geom_text(data=axisdata,aes(x=x,y=y,label=label,hjust=hjust),
-              size=axischarsize,vjust=vjust)
+    geom_text(data=axisdata,aes(x=x,y=y,label=label,hjust=hjust,vjust=vjust),
+              size=axischarsize)
   x <- seq(0,xmax,mincrement)
   axisdata2 <- data.frame(x=x,y=yCenter)
   g <- g +
     geom_point(data=axisdata2,aes(x=x,y=y),size=1,color="black",
                shape=124,show.legend=FALSE)
 
-  vjust <- ifelse(atTop,1.75,-0.75)
+  vjust <- ifelse(underLine,1.8,-1.15)
   xAxisTextFrame <- data.frame(x=xmax/2,y=yCenter,label="Distance",vjust=vjust)
   g <- g +
     geom_text(data=xAxisTextFrame,aes(x=x,y=y,label=label,vjust=vjust),
@@ -333,18 +363,21 @@ drawXAxis <- function(ggp,segment,walltime,distance,
   ggpreturn[["ymin"]] <- ymin
   return(ggpreturn)
 }
-drawXTConnect <- function(ggp,distance,walltime,segment,distPerPoint,hoursPerPoint) {
+drawXTConnect <- function(ggp,distance,walltime,segment,
+                          distPerPoint,hoursPerPoint) {
   ggpreturn <- ggp
-  yXTConnect <- ggp[["ymin"]]
-  ymin <- yXTConnect - height("connector")
   g <- ggp[["g"]]
   xmax <- ggp[["xmax"]]
   ngraphpoints <- ggp[["ngraphpoints"]]
   npoints <- ggp[["npoints"]]
   timelast <- walltime[length(walltime)]
+  yXTConnect <- ggp[["ymin"]]
+  heightFactor=ggp[["heightFactor"]]
+  ymin <- yXTConnect - height("connector",heightFactor)
+  xscale <- distPerPoint/(hoursPerPoint*3600)
 
-  #  connect at hour marks, stops longer than 5 seconds
-  stopConnectMin <- 5
+  #  stops longer than 30 seconds
+  stopConnectMin <- 30
   newseg <- segment != lag_one(segment)
   newseg[1] <- TRUE
   endseg <- segment != lead_one(segment)
@@ -359,35 +392,57 @@ drawXTConnect <- function(ggp,distance,walltime,segment,distPerPoint,hoursPerPoi
   stopspots <- segbegspot[-1]
   lenstop <- stopends - stopbegs
   #stop begin time,stop end times, stop location
-  starttimes <- stopends[lenstop>stopConnectMin]
-  startplaces <- stopspots[lenstop>stopConnectMin]
-  stoptimes <- c(stopbegs[lenstop>stopConnectMin],walltime[length(walltime)])
-  stopplaces <- c(startplaces,distance[length(distance)])
-  startcolors <- rep(30,length(starttimes))
-  stopcolors <- rep(20,length(stoptimes))
+  if (sum(lenstop>stopConnectMin)>0) {
+    starttimes <- stopends[lenstop>stopConnectMin]
+    startplaces <- stopspots[lenstop>stopConnectMin]
+    stoptimes <- c(stopbegs[lenstop>stopConnectMin],walltime[length(walltime)])
+    stopplaces <- c(startplaces,distance[length(distance)])
+    startcolors <- rep(20,length(starttimes))
+    stopcolors <- rep(20,length(stoptimes))
+    startalphas <- rep(1,length(starttimes))
+    stopalphas <- rep(1,length(stoptimes))
+    pointsStop <- data.frame(group=seq(1,length(stopplaces)),
+                              x=stopplaces,
+                              y=yXTConnect+(height("axis",heightFactor)/2))
+    pointsTimeBeg <- data.frame(group=seq(1,length(stoptimes)),
+                                x=xscale*stoptimes,
+                                y=ymin-(height("axis",heightFactor)/2))
+    pointsTimeEnd <- data.frame(group=seq(1,length(starttimes)),
+                                x=xscale*starttimes,
+                                y=ymin-(height("axis",heightFactor)/2))
+    stopData <- rbind(pointsStop,pointsTimeBeg,pointsTimeEnd)
+     g <- g +
+      geom_polygon(data=stopData,
+                   aes(x=x,y=y,group=group),fill="red",alpha=0.6,
+                   show.legend=FALSE)
+  }
   hourtimes <- seq(0,timelast,3600)
   hourcolors <- rep(40,length(hourtimes))
+  houralphas <- rep(0.5,length(hourtimes))
   if (timelast <= 7200) {
     quartertimes <- c(seq(900,timelast,3600),
                       seq(1800,timelast,3600),
                       seq(2700,timelast,3600))
-    quartercolors <- rep(8,length(quartertimes))
+    quartercolors <- rep(35,length(quartertimes))
+    quarteralphas <- rep(0.25,length(quartertimes))
     hourtimes <- c(hourtimes,quartertimes)
     hourcolors <- c(hourcolors,quartercolors)
+    houralphas <- c(houralphas,quarteralphas)
   }
   hourplaces <- approx(x=walltime,y=distance,hourtimes)[[2]]
 
-  XTConnectData <- data.frame(x=c(hourplaces,startplaces,stopplaces),
-                              xend=c(hourtimes,starttimes,stoptimes),
-                              color=c(hourcolors,startcolors,stopcolors),
-                              y=yXTConnect+(height("axis")/2),
-                              yend=ymin-(height("axis")/2),
+  XTConnectData <- data.frame(x=c(hourplaces),
+                              xend=c(hourtimes),
+                              color=c(hourcolors),
+                              alpha=c(houralphas),
+                              y=yXTConnect+(height("axis",heightFactor)/2),
+                              yend=ymin-(height("axis",heightFactor)/2),
                               stringsAsFactors=FALSE)
-  xscale <- distPerPoint/(hoursPerPoint*3600)
   XTConnectData$xend <- xscale*XTConnectData$xend
   g <- g +
     geom_segment(data=XTConnectData,
-                 aes(x=x,y=y,xend=xend,yend=yend,color=color))
+                 aes(x=x,y=y,xend=xend,yend=yend,color=color,alpha=alpha),
+                 show.legend = FALSE)
 
   ggpreturn[["g"]] <- g
   ggpreturn[["ymin"]] <- ymin

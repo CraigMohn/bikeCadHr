@@ -1,15 +1,19 @@
-continuous_bar <- function(g,legendtext,xvar,vals,lowval,hival,lowcolor,hicolor,
-                           legendwidth,y.bottom,band.height,label.height,gap.height=10,
+continuous_bar <- function(g,legendtext,xvar,vals,lowval,hival,
+                           lowcolor,hicolor,
+                           legendwidth,y.bottom,
+                           band.height,label.height,gap.height=10,
                            showlegend=TRUE) {
 
-  prtvalue <- lowcolor + (hicolor-lowcolor)*(vals-lowval)/(hival-lowval) #  map interval to color interval
+  #  map interval to color interval
+  prtvalue <- lowcolor + (hicolor-lowcolor)*(vals-lowval)/(hival-lowval)
   prtvalue[!is.na(vals) & vals<lowval] <- lowcolor
   prtvalue[!is.na(vals) & vals>hival] <- hicolor
-  prtalpha <- (prtvalue-lowcolor)/(hicolor-lowcolor)  #higher values more intense
+  prtalpha <- (prtvalue-lowcolor)/(hicolor-lowcolor) #higher vals more intense
   prtalpha[prtalpha<0.3] <- 0.3
 
   y.band <- y.bottom + gap.height + (band.height/2)
-  width.legend <- c(4,2,5,2) #  columns forlegend - description,lowvalue,colorbar,hivalue
+  #columns fo rlegend - description,lowvalue,colorbar,hivalue
+  width.legend <- c(4,2,5,2)
   column.legend <- c(0,cumsum(width.legend)[-4])*legendwidth
   if (showlegend) {
     xtext.legend <- c(0,column.legend[3],column.legend[3],column.legend[4])
@@ -52,8 +56,10 @@ continuous_bar <- function(g,legendtext,xvar,vals,lowval,hival,lowcolor,hicolor,
   }
   return(gnew)
 }
-discrete_bar <- function(g,legendtext,xvar,vals,lowval,hival,lowcolor,midcolor,hicolor,
-                         legendwidth,y.bottom,band.height,label.height,gap.height=10,
+discrete_bar <- function(g,legendtext,xvar,vals,lowval,hival,
+                         lowcolor,midcolor,hicolor,
+                         legendwidth,y.bottom,
+                         band.height,label.height,gap.height=10,
                          showlegend=TRUE) {
   if (showlegend) {
     legendlabels <- c(legendtext,
@@ -100,13 +106,15 @@ discrete_bar <- function(g,legendtext,xvar,vals,lowval,hival,lowcolor,midcolor,h
               aes(y=y.band,x=xvar,fill=prtvalue,color=prtvalue),
               height=band.height,show.legend=FALSE) +
     geom_text(data=valsTextFrame,
-              aes(x=xtext.legend,y=ytext.legend,label=legendlabels,hjust=hjust.legend),
-              size=2,fontface="italic")
+              aes(x=xtext.legend,y=ytext.legend,label=legendlabels,
+              hjust=hjust.legend),size=2,fontface="italic")
   if (showlegend) {
     gnew <- gnew +
       geom_rect(data=valsTextFrame,
-                aes(xmin=x1.legend,xmax=x2.legend,fill=legendcolors,alpha=alpha.legend),
-                ymin=y1.legend,ymax=y2.legend,inherit.aes=FALSE,show.legend=FALSE)
+                aes(xmin=x1.legend,xmax=x2.legend,fill=legendcolors,
+                    alpha=alpha.legend),
+                ymin=y1.legend,ymax=y2.legend,inherit.aes=FALSE,
+                show.legend=FALSE)
   }
   return(gnew)
 }
@@ -118,8 +126,8 @@ numPointsXAxis <- function(dist,ppm,imperial) {
   if (!is.na(ppm)&ppm>=10) {
     return(ceiling(ppm*miles))
   } else {
-    distbends <- c(0,10,35,85,200,100000000)       # begin at 0, end at max distance imaginable
-    pointsbends <- c(0,2000,4000,6500,10000,10000) # begin at 0, end at maximum number of points
+    distbends <- c(0,10,35,85,200,Inf)       # begin at 0, end at max distance
+    pointsbends <- c(0,2000,4000,6500,10000,10000) # begin at 0, end at max
     return(ceiling(pointsbends[which(distbends>miles)[1]-1] +
                      ( (pointsbends[which(distbends>miles)[1]]-
                           pointsbends[which(distbends>miles)[1]-1])/
@@ -131,8 +139,8 @@ numPointsXAxis <- function(dist,ppm,imperial) {
 #  return vertical scaling factor for profile
 verticalMult <- function(dist,imperial) {
   miles <- ifelse(imperial,dist,milesFromMeters(1000*dist))
-  distbends <- c(0,10,35,85,200,100000000) # begin at 0, end at max distance imaginable
-  vertbends <- c(25,25,35,45,55,60)        # begin at 0, end at maximum number of points
+  distbends <- c(0,10,35,85,200,Inf) # begin at 0, end max distance
+  vertbends <- c(25,25,35,45,55,60)  # begin at 25, end 60
   vm <-
     ceiling(vertbends[which(distbends>miles)[1]-1] +
                         ( (vertbends[which(distbends>miles)[1]]-
@@ -140,28 +148,34 @@ verticalMult <- function(dist,imperial) {
                           (distbends[which(distbends>miles)[1]]-
                            distbends[which(distbends>miles)[1]-1]) ) *
                         (miles-distbends[which(distbends>miles)[1]-1]) )
-  return(35)
+  return(vm)
 }
-heightWith <- function(hrDistance,cadDistance,hrTime,cadTime,headerTime,totalCall=FALSE) {
-  topGaps <- 1
-  itemH <- height("gap") + height("band") + height("gap") +
-            height("label") + topGaps*height("gap")
-  headerH <- 2*height("axis") + height("connector")
-  axisH <- height("axis")
+heightWith <- function(hrDistance,cadDistance,hrTime,
+                       cadTime,headerTime,totalCall=FALSE,scale) {
+  itemH <- heightItem(scale)
+  headerH <- 2*height("axis",scale) + height("connector",scale)
+  axisH <- height("axis",scale)
   return( ifelse((!headerTime)&totalCall,axisH,0) +
-          ifelse(hrDistance,itemH,0) +
-          ifelse(cadDistance,itemH,0) +
-          ifelse(headerTime,headerH,0) +
-          ifelse(hrTime,itemH,0) +
-          ifelse(cadTime,itemH,0)
+            ifelse(hrDistance,itemH,0) +
+            ifelse(cadDistance,itemH,0) +
+            ifelse(headerTime,headerH,0) +
+            ifelse(hrTime,itemH,0) +
+            ifelse(cadTime,itemH,0)
   )
 }
-height <- function(what) {
-  if (what=="label") return(50)
-  else if (what=="band") return(85)
-  else if (what=="gap") return(5)
-  else if (what=="axis") return(175)
-  else if (what=="connector") return(50)
+heightItem <- function(scale) {
+  topGaps <- 1
+  return(height("gap",scale) + height("band",scale) +
+         height("gap",scale) +
+         height("label",scale) + topGaps*height("gap",scale))
+}
+height <- function(what,scale) {
+  if (what=="label") return(40/scale)
+  else if (what=="band") return(85/scale)
+  else if (what=="gap") return(8/scale)
+  else if (what=="axis") return(170/scale)
+  else if (what=="connector") return(40/scale)
+  else if (what=="summary") return(180/scale)
   else return(NA)
 }
 cadenceSmooth <- function(timevec,cadencevec,segment,cadSmoothNN,cadSmoothBW) {

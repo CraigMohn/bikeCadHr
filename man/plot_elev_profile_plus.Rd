@@ -27,8 +27,8 @@ extension specified, .pdf, .png or .jpg}
 
 \item{title}{title printed over top center of map}
 
-\item{palette}{palette to use in graphic (\code{"plasma"} or \code{"magma"} or
-\code{"inferno"} or \code{"viridis"})}
+\item{palette}{palette to use in graphic (\code{"plasma"} or \code{"magma"}
+or \code{"inferno"} or \code{"viridis"})}
 
 \item{vertical.multiplier}{default vertical exaggeration factor.  Default
 ranges from 25 to 60 depending on the length being plotted}
@@ -52,7 +52,7 @@ ranges from 25 to 60 depending on the length being plotted}
 \item{hr.color.low}{set color for hr.low and lower}
 
 \item{hr.color.high}{set color for hr.highand higher
-colors are from same palette as speeds, number is the speed corresponding
+colors are from same palette as speeds, number is speed corresponding
 to the desired limit on the range of heartrates}
 
 \item{cad.low}{low cadence limit}
@@ -89,7 +89,7 @@ smoothing kernel for cadence data}
 a ggplot object
 }
 \description{
-\code{plot_elev_profile_plus} creates a plot which uses the elevation profile
+\code{plot_elev_profile_plus} creates a plot using the elevation profile
   and colored bands to compactly display the relationship between terrain,
   speed, cadence and heartrate on a given ride
 }
