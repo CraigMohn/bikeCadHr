@@ -7,13 +7,13 @@
 \usage{
 plot_profile(track, summary, savefn, title = "Ride", palette = "plasma",
   verticalMultiplier = NA, ppm = NA, elevationShape = 46,
-  hrDistance = FALSE, cadDistance = FALSE, hrTime = TRUE,
-  cadTime = TRUE, showTime = TRUE, showSummary = TRUE, showStops = TRUE,
-  hrLow = 100, hrHigh = 170, hrColorLow = 9, hrColorHigh = 31,
-  cadLow = 65, cadTarget = 88, cadCont = TRUE, cadContLow = 60,
-  cadContHigh = 100, cadColorLow = 3, cadColorMid = 9,
-  cadColorHigh = 15, hrSmoothBW = 6, hrSmoothNN = 5, cadSmoothBW = 20,
-  cadSmoothNN = 15, minNumPoints = 1000, imperial = TRUE)
+  hrDistance = TRUE, cadDistance = TRUE, hrTime = TRUE, cadTime = TRUE,
+  showTime = TRUE, showSummary = TRUE, showStops = TRUE, hrLow = 100,
+  hrHigh = 170, hrColorLow = 9, hrColorHigh = 31, cadLow = 65,
+  cadTarget = 88, cadCont = TRUE, cadContLow = 60, cadContHigh = 100,
+  cadColorLow = 3, cadColorMid = 9, cadColorHigh = 15, hrSmoothBW = 6,
+  hrSmoothNN = 5, cadSmoothBW = 20, cadSmoothNN = 15,
+  minNumPoints = 1000, imperial = TRUE)
 }
 \arguments{
 \item{track}{data frame or tibble containing track details including
