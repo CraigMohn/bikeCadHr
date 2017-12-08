@@ -72,6 +72,7 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
     ggplot2::theme(axis.title.x=element_blank(),
                    axis.text.x=element_blank(),
                    axis.ticks.x=element_blank()) +
+    ggplot2::theme(axis.title.y=element_text(hjust=0.8)) +
     viridis::scale_color_viridis(option=palette,limits=c(0,40),
                                  na.value="white",direction=-1) +
     viridis::scale_fill_viridis(option=palette,limits=c(0,40),
@@ -82,6 +83,7 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
     ggplot2::geom_point(ggplot2::aes(color=speed),shape=elevationShape,
                         size=1.25*heightFactor,
                         position=ggplot2::position_nudge(y=1.2))
+
     return(list(g=g,xmin=xmin,xmax=xmax,xlast=distPerPoint*npoints,
               ymin=elevMinInt,ymax=ymax,vertmult=vertMult,
               distPerPoint=distPerPoint,heightFactor=heightFactor,
@@ -243,7 +245,7 @@ drawTAxis <- function(ggp,segment,walltime,distPerPoint,hoursPerPoint) {
   tAxisLabels$hjust <- c(0,rep(0.5,nrow(tAxisLabels)-1))
   g <- g +
     geom_text(data=tAxisLabels,aes(x=x,y=y,label=ttext,hjust=hjust),
-              size=axischarsize,vjust=1.2,show.legend = FALSE)
+              size=axischarsize,vjust=1.3,show.legend = FALSE)
   if (tmax <3 & tmax >= 0.25) {
     df15 <- data.frame(x=seq(900,tmax*3600,3600),y=yCenter,ttext="1/4")
     if (tmax >= 0.5)
@@ -264,7 +266,7 @@ drawTAxis <- function(ggp,segment,walltime,distPerPoint,hoursPerPoint) {
     geom_point(data=axisdata2,aes(x=x,y=y),size=1,color="black",
                shape=124,show.legend=FALSE)
 
-  tAxisTextFrame <- data.frame(x=xmax/2,y=yCenter,label="Time")
+  tAxisTextFrame <- data.frame(x=xmax/2,y=yCenter,label="Time(hrs)")
   g <- g +
     geom_text(data=tAxisTextFrame,aes(x=x,y=y,label=label),
               size=1.10*axischarsize,vjust=2.05,hjust=0.5,
@@ -387,6 +389,7 @@ drawXTConnect <- function(ggp,distance,walltime,segment,
   yXTConnect <- ggp[["ymin"]]
   heightFactor=ggp[["heightFactor"]]
   ymin <- yXTConnect - height("connector",heightFactor)
+  yCenter <- (yXTConnect + ymin)/2
   xscale <- distPerPoint/(hoursPerPoint*3600)
 
   #  stops longer than 30 seconds
@@ -426,8 +429,13 @@ drawXTConnect <- function(ggp,distance,walltime,segment,
     stopData <- rbind(pointsStop,pointsTimeBeg,pointsTimeEnd)
      g <- g +
       geom_polygon(data=stopData,
-                   aes(x=x,y=y,group=group),fill="red",alpha=0.6,
+                   aes(x=x,y=y,group=group),fill="red3",alpha=0.3,
                    show.legend=FALSE)
+     XTConnTextFrame <- data.frame(x=xmax/2,y=yCenter,label="Stops")
+     g <- g +
+       geom_text(data=XTConnTextFrame,aes(x=x,y=y,label=label),
+                 size=3.3,hjust=0.5,vjust=0.5,
+                 color="red",show.legend = FALSE)
   }
   hourtimes <- seq(0,timelast,3600)
   hourcolors <- rep(40,length(hourtimes))
