@@ -74,6 +74,6 @@ tedious <- utils::globalVariables(c("alphachar","alphahour","distlegend",
                                     "startbutton.date","stoplabels","timestamp.s",
                                     "x","xtext.stop","y","xend","xcol",
                                     "verticalMultiplier","color","hjust","label",
-                                    "yend"))
+                                    "yend","group"))
 
 

@@ -45,7 +45,7 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
   elevMinInt <- min(0,elevround*floor(elevMin/elevround))
   elevMax <- max(elevation)
   elevMaxInt <- elevround*ceiling(elevMax/elevround)
-  ymin <- elevMinInt - heightBelow - 200
+  ymin <- elevMinInt - heightBelow - 100
   ymax <- elevMaxInt + height("summary",heightFactor)
   xmin <- 0
   xmax <- distPerPoint*ngraphpoints
@@ -68,7 +68,7 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
                      ggplot2::element_text(colour="lightsteelblue",size=6)) +
     ggplot2::theme(legend.key.size=unit(10,"points")) +
     ggplot2::theme(legend.justification="top") +
- #  suppress x axis, add manually
+ #  suppress x axis, add it manually
     ggplot2::theme(axis.title.x=element_blank(),
                    axis.text.x=element_blank(),
                    axis.ticks.x=element_blank()) +
@@ -137,12 +137,11 @@ drawCadence <- function(ggp,cadence,xvar,
   g <- ggp[["g"]]
   npoints <- ggp[["npoints"]]
   heightFactor=ggp[["heightFactor"]]
+  distPerPoint=ggp[["distPerPoint"]]
   yCadTop <- ggp[["ymin"]]
   ymin <- yCadTop - heightItem(scale=heightFactor)
   # column width vectors sum to 13 in bar functionsd
-  hrCadLegendWidth <- (xend/npoints)*
-    min(npoints,2*minNumPoints)/(13*2)
-
+  cadLegendWidth <- hrCadLegendWidth(npoints,distPerPoint,minNumPoints)
   drawpts <- stats::approx(xvar,cadence,n=npoints)
   xvardraw <- drawpts[[1]]*(xend/max(drawpts[[1]]))
   caddraw <- drawpts[[2]]
@@ -150,7 +149,7 @@ drawCadence <- function(ggp,cadence,xvar,
     g <- continuous_bar(g,legendtext="Cadence",xvar=xvardraw,vals=caddraw,
                         lowval=cadContLow,hival=cadContHigh,
                         lowcolor=cadColorLow,hicolor=cadColorHigh,
-                        legendwidth=hrCadLegendWidth,y.bottom=ymin,
+                        legendwidth=cadLegendWidth,y.bottom=ymin,
                         band.height=height("band",heightFactor),
                         label.height=height("label",heightFactor),
                         gap.height=height("gap",heightFactor),showlegend)
@@ -159,7 +158,7 @@ drawCadence <- function(ggp,cadence,xvar,
                       lowval=cadLow,hival=cadTarget,
                       lowcolor=cadColorLow,midcolor=cadColorMid,
                       hicolor=cadColorHigh,
-                      legendwidth=hrCadLegendWidth,y.bottom=ymin,
+                      legendwidth=cadLegendWidth,y.bottom=ymin,
                       band.height=height("band",heightFactor),
                       label.height=height("label",heightFactor),
                       gap.height=height("gap",heightFactor),showlegend)
@@ -178,12 +177,11 @@ drawHr <- function(ggp,hr,xvar,
   g <- ggp[["g"]]
   npoints <- ggp[["npoints"]]
   heightFactor=ggp[["heightFactor"]]
+  distPerPoint=ggp[["distPerPoint"]]
   yHrTop <- ggp[["ymin"]]
   ymin <- yHrTop - heightItem(scale=heightFactor)
   # column width vectors sum to 13 in bar functionsd
-  hrCadLegendWidth <- (xend/npoints)*
-    min(npoints,2*minNumPoints)/(13*2)
-
+  hrLegendWidth <- hrCadLegendWidth(npoints,distPerPoint,minNumPoints)
   drawpts <- stats::approx(xvar,hr,n=npoints)
   xvardraw <- drawpts[[1]]*(xend/max(drawpts[[1]]))
   hrdraw <- drawpts[[2]]
@@ -192,7 +190,7 @@ drawHr <- function(ggp,hr,xvar,
   g <- continuous_bar(g,legendtext="Heart Rate",xvar=xvardraw,vals=hrdraw,
                       lowval=hrLow,hival=hrHigh,
                       lowcolor=hrColorLow,hicolor=hrColorHigh,
-                      legendwidth=hrCadLegendWidth,y.bottom=ymin,
+                      legendwidth=hrLegendWidth,y.bottom=ymin,
                       band.height=height("band",heightFactor),
                       label.height=height("label",heightFactor),
                       gap.height=height("gap",heightFactor),showlegend)
@@ -220,6 +218,7 @@ drawTAxis <- function(ggp,segment,walltime,distPerPoint,hoursPerPoint) {
   stopbegs <- segends[-length(segbegs)]
   stopends <- segbegs[-1]
 
+  #  axis line - color coded for stops
   xscale <- distPerPoint/hoursPerPoint
   tAxisSegData <- data.frame(x=segbegs,xend=segends,xcol=40,y=yCenter)
   tAxisStopData <- data.frame(x=stopbegs,xend=stopends,xcol=15,y=yCenter)
@@ -232,6 +231,7 @@ drawTAxis <- function(ggp,segment,walltime,distPerPoint,hoursPerPoint) {
   tmax <- (xmax/xscale)
   tincr <- round(exp(log(10)*floor(log10(tmax))))
 
+  # axis numbers for hours and fractions
   axischarsize <- 3
   if (tincr > 0) {
     t <- seq(0,tmax,tincr)
@@ -242,10 +242,15 @@ drawTAxis <- function(ggp,segment,walltime,distPerPoint,hoursPerPoint) {
     tAxisLabels <- data.frame(x=0,y=yCenter,ttext="0")
   }
   tAxisLabels$x <- (xscale/3600)*tAxisLabels$x
-  tAxisLabels$hjust <- c(0,rep(0.5,nrow(tAxisLabels)-1))
+  tAxisLabels$y <- yCenter - 0.8*height("label",heightFactor)
+  if (nrow(tAxisLabels) >= 2) {
+    tAxisLabels$hjust <- c(0,rep(0.5,nrow(tAxisLabels)-2),1)
+  } else {
+    tAxisLabels$hjust <- c(0,rep(0,nrow(tAxisLabels)-1))
+  }
   g <- g +
     geom_text(data=tAxisLabels,aes(x=x,y=y,label=ttext,hjust=hjust),
-              size=axischarsize,vjust=1.3,show.legend = FALSE)
+              size=axischarsize,show.legend = FALSE)
   if (tmax <3 & tmax >= 0.25) {
     df15 <- data.frame(x=seq(900,tmax*3600,3600),y=yCenter,ttext="1/4")
     if (tmax >= 0.5)
@@ -255,21 +260,25 @@ drawTAxis <- function(ggp,segment,walltime,distPerPoint,hoursPerPoint) {
       df15 <- rbind(df15,
                     data.frame(x=seq(2700,tmax*3600,3600),y=yCenter,ttext="3/4"))
     df15$x <- (xscale/3600)*df15$x
+    df15$y <- yCenter - .75*height("label",heightFactor)
     g <- g +
       geom_text(data=df15,aes(x=x,y=y,label=ttext),hjust=0.5,
-                size=0.75*axischarsize,vjust=1.2,show.legend = FALSE)
+                size=0.75*axischarsize,show.legend = FALSE)
   }
+  #  axis ticks
   incr <- ifelse(tmax > 6,xscale,xscale/4)
   t <- seq(0,xscale*tmax,incr)
   axisdata2 <- data.frame(x=t,y=yCenter)
   g <- g +
-    geom_point(data=axisdata2,aes(x=x,y=y),size=1,color="black",
+    geom_point(data=axisdata2,aes(x=x,y=y),size=1.2,color="black",
                shape=124,show.legend=FALSE)
-
-  tAxisTextFrame <- data.frame(x=xmax/2,y=yCenter,label="Time(hrs)")
+  # axis label
+  tAxisTextFrame <- data.frame(x=xmax/2,
+                               y=yCenter-1.6*height("label",heightFactor),
+                               label="Time(hrs)")
   g <- g +
     geom_text(data=tAxisTextFrame,aes(x=x,y=y,label=label),
-              size=1.10*axischarsize,vjust=2.05,hjust=0.5,
+              size=1.10*axischarsize,hjust=0.5,
               color="black",show.legend = FALSE)
 
   ggpreturn[["g"]] <- g
@@ -314,6 +323,7 @@ drawXAxis <- function(ggp,segment,walltime,distance,
     xincrement <- 20
     mincrement <- 5
   }
+  #  axis line
   distancegraphends <- c(0,npoints*distPerPoint)
   xAxisData <- data.frame(x=distancegraphends,y=yCenter)
   g <- g + geom_line(data=xAxisData,aes(x=x,y=y),alpha=1)
@@ -352,25 +362,33 @@ drawXAxis <- function(ggp,segment,walltime,distance,
                    color="green",shape=124,show.legend=FALSE)
     }
   }
+  # axis labels
   axischarsize <- 3
   x <- seq(0,xmax,xincrement)
   xtext <- as.character(x)
   xhjust <- c(0,rep(0.5,length(x)-1))
-  vjust <- ifelse(underLine,1.45,-0.45)
-  axisdata <- data.frame(x=x,y=yCenter,label=xtext,hjust=xhjust,vjust=vjust)
+  y <- yCenter + ifelse(underLine,
+                        -0.8*height("label",heightFactor),
+                        +0.8*height("label",heightFactor))
+  axisdata <- data.frame(x=x,y=y,label=xtext,hjust=xhjust)
   g <- g +
-    geom_text(data=axisdata,aes(x=x,y=y,label=label,hjust=hjust,vjust=vjust),
+    geom_text(data=axisdata,aes(x=x,y=y,label=label,hjust=hjust),
               size=axischarsize)
+  # axis ticks
   x <- seq(0,xmax,mincrement)
   axisdata2 <- data.frame(x=x,y=yCenter)
   g <- g +
-    geom_point(data=axisdata2,aes(x=x,y=y),size=1,color="black",
+    geom_point(data=axisdata2,aes(x=x,y=y),size=1.2,color="black",
                shape=124,show.legend=FALSE)
-
-  vjust <- ifelse(underLine,1.8,-1.20)
-  xAxisTextFrame <- data.frame(x=xmax/2,y=yCenter,label="Distance",vjust=vjust)
+  # axis title
+  xAxisTextFrame <- data.frame(x=xmax/2,
+                               y=yCenter +
+                                 ifelse(underLine,
+                                        -1.65*height("label",heightFactor),
+                                        +1.65*height("label",heightFactor))
+                               ,label="Distance")
   g <- g +
-    geom_text(data=xAxisTextFrame,aes(x=x,y=y,label=label,vjust=vjust),
+    geom_text(data=xAxisTextFrame,aes(x=x,y=y,label=label),
               size=1.10*axischarsize,hjust=0.5,
               color="black",show.legend = FALSE)
 

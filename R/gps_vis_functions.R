@@ -1,7 +1,7 @@
 continuous_bar <- function(g,legendtext,xvar,vals,lowval,hival,
                            lowcolor,hicolor,
                            legendwidth,y.bottom,
-                           band.height,label.height,gap.height=10,
+                           band.height,label.height,gap.height,
                            showlegend=TRUE) {
 
   #  map interval to color interval
@@ -38,7 +38,14 @@ continuous_bar <- function(g,legendtext,xvar,vals,lowval,hival,
   valsLegendFrame <- data.frame(x.legend,y.legend,prtlegend,label.height)
   valsTextFrame <- data.frame(xtext.legend,ytext.legend,
                               legendlabels,alpha.legend,hjust.legend)
-  gnew <- g +
+  if (showlegend) {
+    g <- g +
+      geom_tile(data=valsLegendFrame,
+                aes(y=y.legend,x=x.legend,fill=prtlegend,
+                    color=prtlegend),
+                height=label.height,alpha=1,show.legend = FALSE)
+  }
+  g <- g +
     geom_tile(data=valsDataFrame,
               aes(y=y.band,x=xvar,fill=prtvalue,color=prtvalue,
                   alpha=prtalpha),
@@ -47,19 +54,12 @@ continuous_bar <- function(g,legendtext,xvar,vals,lowval,hival,
               aes(x=xtext.legend,y=ytext.legend,label=legendlabels,
                   hjust=hjust.legend,alpha=alpha.legend),
               size=2,color="black",fontface="italic",show.legend = FALSE)
-  if (showlegend) {
-    gnew <- gnew +
-     geom_tile(data=valsLegendFrame,
-               aes(y=y.legend,x=x.legend,fill=prtlegend,
-                    color=prtlegend),
-               height=label.height,alpha=1,show.legend = FALSE)
-  }
-  return(gnew)
+  return(g)
 }
 discrete_bar <- function(g,legendtext,xvar,vals,lowval,hival,
                          lowcolor,midcolor,hicolor,
                          legendwidth,y.bottom,
-                         band.height,label.height,gap.height=10,
+                         band.height,label.height,gap.height,
                          showlegend=TRUE) {
   if (showlegend) {
     legendlabels <- c(legendtext,
@@ -101,25 +101,27 @@ discrete_bar <- function(g,legendtext,xvar,vals,lowval,hival,
   valsTextFrame <- data.frame(x1.legend,x2.legend,y1.legend,y2.legend,
                               xtext.legend,ytext.legend,legendlabels,
                               legendcolors,alpha.legend,hjust.legend)
-  gnew <- g +
-    geom_tile(data=valsDataFrame,
-              aes(y=y.band,x=xvar,fill=prtvalue,color=prtvalue),
-              height=band.height,show.legend=FALSE) +
-    geom_text(data=valsTextFrame,
-              aes(x=xtext.legend,y=ytext.legend,label=legendlabels,
-              hjust=hjust.legend),size=2,fontface="italic")
   if (showlegend) {
-    gnew <- gnew +
+    g <- g +
       geom_rect(data=valsTextFrame,
                 aes(xmin=x1.legend,xmax=x2.legend,fill=legendcolors,
                     alpha=alpha.legend),
                 ymin=y1.legend,ymax=y2.legend,inherit.aes=FALSE,
                 show.legend=FALSE)
   }
-  return(gnew)
+  g <- g +
+    geom_tile(data=valsDataFrame,
+              aes(y=y.band,x=xvar,fill=prtvalue,color=prtvalue),
+              height=band.height,show.legend=FALSE) +
+    geom_text(data=valsTextFrame,
+              aes(x=xtext.legend,y=ytext.legend,label=legendlabels,
+              hjust=hjust.legend),size=2,fontface="italic")
+  return(g)
 }
-
-
+#  return hr/cad legend width
+hrCadLegendWidth <- function(npoints,distPerPoint,minNumPoints) {
+  return( distPerPoint*min(npoints,3*minNumPoints)/(2*13) )
+}
 # return the number of points on the x-axis for data
 numPointsXAxis <- function(dist,ppm,imperial) {
   miles <- ifelse(imperial,dist,milesFromMeters(1000*dist))
@@ -128,6 +130,7 @@ numPointsXAxis <- function(dist,ppm,imperial) {
   } else {
     distbends <- c(0,5,10,35,85,200,Inf)       # begin at 0, end at max distance
     pointsbends <- c(0,2000,3000,4500,6500,10000,10000) # begin at 0, end at max
+    pointsbends <- c(0,800,1600,5600,13600,15000,15000) # begin at 0, end at max
     return(ceiling(pointsbends[which(distbends>miles)[1]-1] +
                      ( (pointsbends[which(distbends>miles)[1]]-
                           pointsbends[which(distbends>miles)[1]-1])/
@@ -140,7 +143,7 @@ numPointsXAxis <- function(dist,ppm,imperial) {
 verticalMult <- function(dist,imperial) {
   miles <- ifelse(imperial,dist,milesFromMeters(1000*dist))
   distbends <- c(0,10,35,85,200,Inf) # begin at 0, end max distance
-  vertbends <- c(25,25,30,40,50,50)  # begin at 25, end 50
+  vertbends <- c(25,25,30,40,40,40)  # begin at 25, end 50
   vm <-
     ceiling(vertbends[which(distbends>miles)[1]-1] +
                         ( (vertbends[which(distbends>miles)[1]]-
