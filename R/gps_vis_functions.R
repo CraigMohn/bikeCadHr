@@ -13,7 +13,7 @@ continuous_bar <- function(g,legendtext,xvar,vals,lowval,hival,
 
   y.band <- y.bottom + gap.height + (band.height/2)
   #columns fo rlegend - description,lowvalue,colorbar,hivalue
-  width.legend <- c(4,2,5,2)
+  width.legend <- c(5,2,4,2)
   column.legend <- c(0,cumsum(width.legend)[-4])*legendwidth
   if (showlegend) {
     xtext.legend <- c(0,column.legend[3],column.legend[3],column.legend[4])
@@ -120,7 +120,7 @@ discrete_bar <- function(g,legendtext,xvar,vals,lowval,hival,
 }
 #  return hr/cad legend width
 hrCadLegendWidth <- function(npoints,distPerPoint,minNumPoints) {
-  return( distPerPoint*min(npoints,3*minNumPoints)/(2*13) )
+  return( distPerPoint*min(npoints,3*minNumPoints)/(1.65*13) )
 }
 # return the number of points on the x-axis for data
 numPointsXAxis <- function(dist,ppm,imperial) {

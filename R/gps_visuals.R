@@ -389,7 +389,7 @@ plot_profile <- function(track,summary,savefn,title="Ride",palette="plasma",
                                   cadColorLow=3,cadColorMid=9,cadColorHigh=15,
                                   hrSmoothBW=6,hrSmoothNN=5,
                                   cadSmoothBW=20,cadSmoothNN=15,
-                                  minNumPoints=3600,
+                                  minNumPoints=3000,
                                   imperial=TRUE) {
   ##  what will we add below the profile
   cadDistance <- cadDistance & any(!is.na(track$cadence.rpm))
@@ -489,12 +489,12 @@ plot_profile <- function(track,summary,savefn,title="Ride",palette="plasma",
   ngraphpoints <- grlist[["ngraphpoints"]]
   g <- grlist[["g"]]
 
-  plot.width <- (ngraphpoints/600)+0.75
-  plot.height <- (((ymax-ymin)*vertmult/(5280*distPerPoint))/600)*1.2 + 2.5
+  plot.width <- 0.5*(ngraphpoints/600)+0.75
+  plot.height <- 0.5*(((ymax-ymin)*vertmult/(5280*distPerPoint))/600)*1.1 + 2
 
   if (!missing(savefn))
     ggsave(savefn,width=plot.width,height=plot.height,
-           units="in",dpi=600,limitsize=FALSE)
+           units="in",dpi=600,scale=1.3,limitsize=FALSE)
   return(g)
 }
 

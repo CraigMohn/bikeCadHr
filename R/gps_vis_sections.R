@@ -100,7 +100,7 @@ drawSummary <- function(ggp,summary,title){
   headerWidth <- min(xmax,25)
   ycenterSum <- seq(1,3) #rows
   ycenterSum <- ymax - (60/heightFactor)*ycenterSum
-  xcenterSum <- c(headerWidth*0.10,headerWidth*0.60)
+  xcenterSum <- c(headerWidth*0.05,headerWidth*0.55)
   xposSum <- c(rep(xcenterSum[1],3),rep(xcenterSum[2],3))
   yposSum <- c(ycenterSum,ycenterSum)
   summarylabels <-
