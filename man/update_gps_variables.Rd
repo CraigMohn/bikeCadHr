@@ -8,8 +8,8 @@ update_gps_variables(outdir, fitrootdir, gpxrootdir, merge.files = list(c(NA,
   NA)), fitexcludes = c("bad", "short"), gpxexcludes = c("bad", "short",
   "nosegs"), prefer.gpx = c(""), rebuild.all.fit = FALSE,
   rebuild.all.gpx = FALSE, drawprofile = TRUE, drawprofile.both = FALSE,
-  elevationChar = "|", drawmap = TRUE, drawmap.both = FALSE, cores = 4,
-  ...)
+  elevationChar = "|", cadCont = TRUE, drawmap = TRUE,
+  drawmap.both = FALSE, cores = 4, ...)
 }
 \arguments{
 \item{outdir}{string containing location of output data pair files}
@@ -45,6 +45,8 @@ the ride}
 the ride for both the .fit files and .gpx files}
 
 \item{elevationChar}{character to use when printing the elevation profile}
+
+\item{cadCont}{display cadence as continuous rather than categorical}
 
 \item{drawmap}{create a .tiff file in the output directory mapping
 the ride with speed-varying color}

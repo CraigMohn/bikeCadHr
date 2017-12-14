@@ -8,6 +8,7 @@ continuous_bar <- function(g,legendtext,xvar,vals,lowval,hival,
   prtvalue <- lowcolor + (hicolor-lowcolor)*(vals-lowval)/(hival-lowval)
   prtvalue[!is.na(vals) & vals<lowval] <- lowcolor
   prtvalue[!is.na(vals) & vals>hival] <- hicolor
+  prtvalue[vals==0] <- NA
   prtalpha <- (prtvalue-lowcolor)/(hicolor-lowcolor) #higher vals more intense
   prtalpha[prtalpha<0.3] <- 0.3
 
@@ -63,19 +64,18 @@ discrete_bar <- function(g,legendtext,xvar,vals,lowval,hival,
                          showlegend=TRUE) {
   if (showlegend) {
     legendlabels <- c(legendtext,
-                      paste0("   < ",lowval,"  "),
-                      paste0("   ",lowval,"-",hival," "),
-                      paste0("   >= ",hival," "))
+                      paste0(" < ",lowval,"  "),
+                      paste0(" ",lowval,"-",hival," "),
+                      paste0(" >= ",hival," "))
     legendcolors <- c(NA,lowcolor,midcolor,hicolor)
-    prtvalue  <-  rep(NA,length(vals))
-    prtvalue[!is.na(vals) & vals>0 & vals<lowval] <- legendcolors[2]
-    prtvalue[!is.na(vals) & vals>=lowval & vals<hival] <- legendcolors[3]
-    prtvalue[!is.na(vals) & vals>=hival] <- legendcolors[4]
   } else {
     legendlabels <- c(legendtext)
     legendcolors <- NA
-    prtvalue <- NA
   }
+  prtvalue  <-  rep(NA,length(vals))
+  prtvalue[!is.na(vals) & vals>0 & vals<lowval] <- lowcolor
+  prtvalue[!is.na(vals) & vals>=lowval & vals<hival] <- midcolor
+  prtvalue[!is.na(vals) & vals>=hival] <- hicolor
 
 
   y.band <- y.bottom + gap.height + (band.height/2)
@@ -86,10 +86,10 @@ discrete_bar <- function(g,legendtext,xvar,vals,lowval,hival,
   y2.legend <- y1.legend+label.height
 
   if (showlegend) {
-    xtext.legend <- x1.legend
+    xtext.legend <- c(0,(x1.legend[2:4]+x2.legend[2:4])/2)
     ytext.legend <- rep(y.band+(band.height/2)+gap.height+(label.height/2),4)
     alpha.legend <- c(0,1,1,1)
-    hjust.legend <- c(0,0,0,0)
+    hjust.legend <- c(0,0.5,0.5,0.5)
   } else {
     xtext.legend <- 0
     ytext.legend <- y.band+(band.height/2)+gap.height+(label.height/2)
@@ -102,7 +102,7 @@ discrete_bar <- function(g,legendtext,xvar,vals,lowval,hival,
                               xtext.legend,ytext.legend,legendlabels,
                               legendcolors,alpha.legend,hjust.legend)
   if (showlegend) {
-    g <- g +
+      g <- g +
       geom_rect(data=valsTextFrame,
                 aes(xmin=x1.legend,xmax=x2.legend,fill=legendcolors,
                     alpha=alpha.legend),
@@ -112,7 +112,7 @@ discrete_bar <- function(g,legendtext,xvar,vals,lowval,hival,
   g <- g +
     geom_tile(data=valsDataFrame,
               aes(y=y.band,x=xvar,fill=prtvalue,color=prtvalue),
-              height=band.height,show.legend=FALSE) +
+              height=band.height,show.legend=FALSE)  +
     geom_text(data=valsTextFrame,
               aes(x=xtext.legend,y=ytext.legend,label=legendlabels,
               hjust=hjust.legend),size=2,fontface="italic")
@@ -177,7 +177,7 @@ height <- function(what,scale) {
   else if (what=="band") return(75/scale)
   else if (what=="gap") return(9/scale)
   else if (what=="axis") return(180/scale)
-  else if (what=="connector") return(40/scale)
+  else if (what=="connector") return(10/scale)
   else if (what=="summary") return(180/scale)
   else return(NA)
 }

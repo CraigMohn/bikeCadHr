@@ -34,6 +34,7 @@
 #' @param drawprofile.both create a .png file in the output directory profiling
 #'    the ride for both the .fit files and .gpx files
 #' @param elevationChar character to use when printing the elevation profile
+#' @param cadCont display cadence as continuous rather than categorical
 #' @param drawmap create a .tiff file in the output directory mapping
 #'    the ride with speed-varying color
 #' @param drawmap.both create a .tiff file in the output directory mapping
@@ -52,6 +53,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
                   fitexcludes=c("bad","short"),gpxexcludes=c("bad","short","nosegs"),prefer.gpx=c(""),
                   rebuild.all.fit=FALSE,rebuild.all.gpx=FALSE,
                   drawprofile=TRUE,drawprofile.both=FALSE,elevationChar="|",
+                  cadCont=TRUE,
                   drawmap=TRUE,drawmap.both=FALSE,cores=4,...) {
 
   num_drawn <- 0
@@ -116,7 +118,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
           plot_profile(fittracks[fittracks$startbutton.date==idate&
                                  fittracks$startbutton.time==itime,],
                        fitsummary[fitsummary$sourcefile==ridefn,],
-                       elevationShape=elevationChar,
+                       elevationShape=elevationChar,cadCont=cadCont,
                        savefn=paste0(outdir,"/",ridefn,"profile.pdf"))
           num_drawn <- 1
         }
@@ -186,11 +188,12 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
         idate <- gpxsummary[gpxsummary$sourcefile==ridefn,]$startbutton.date
         itime <- gpxsummary[gpxsummary$sourcefile==ridefn,]$startbutton.time
         if (drawprofile &(num_drawn==0 | drawprofile.both))
-          rideprofile <- plot_elev_profile_plus(gpxtracks[gpxtracks$startbutton.date==idate&
+          rideprofile <- plot_profile(gpxtracks[gpxtracks$startbutton.date==idate&
                                                 gpxtracks$startbutton.time==itime,],
-                                                gpxsummary[gpxsummary$sourcefile==ridefn,],
-                                                elevation.shape=elevationChar,
-                                                savefn=paste0(outdir,"/",ridefn,"profile.png"))
+                                      gpxsummary[gpxsummary$sourcefile==ridefn,],
+                                      elevationShape=elevationChar,
+                                      cadCont=cadCont,
+                                      savefn=paste0(outdir,"/",ridefn,"profile.png"))
         if (drawmap &(num_mapped==0 | drawmap.both))
           map_rides(gpxtracks[gpxtracks$startbutton.date==idate&
                               gpxtracks$startbutton.time==itime,],

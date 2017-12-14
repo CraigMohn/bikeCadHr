@@ -446,7 +446,7 @@ plot_profile <- function(track,summary,savefn,title="Ride",palette="plasma",
   if (!showTime) {
     grlist <- drawXAxis(grlist,segment=track$segment,
                         walltime,distance,showStops,distPerPoint,
-                        underLine=TRUE)
+                        imperial=imperial,underLine=TRUE)
 #  } else {
 #    grlist[["ymin"]] <- grlist[["ymin"]] - 20
   }
@@ -464,7 +464,7 @@ plot_profile <- function(track,summary,savefn,title="Ride",palette="plasma",
   if (showTime) {
     grlist <- drawXAxis(grlist,segment=track$segment,
                         walltime,distance,showStops=FALSE,distPerPoint,
-                        lineAtZero=!(cadDistance|hrDistance))
+                        imperial=imperial,lineAtZero=!(cadDistance|hrDistance))
     grlist <- drawXTConnect(grlist,distance,walltime,segment=track$segment,
                             distPerPoint,hoursPerPoint)
     grlist <- drawTAxis(grlist,segment=track$segment,

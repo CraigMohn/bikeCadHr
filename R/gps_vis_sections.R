@@ -72,6 +72,8 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
     ggplot2::theme(axis.title.x=element_blank(),
                    axis.text.x=element_blank(),
                    axis.ticks.x=element_blank()) +
+    ggplot2::labs(y=paste0("Elevation (",
+                           ifelse(imperial,"ft)","m)"))) +
     ggplot2::theme(axis.title.y=element_text(hjust=0.8)) +
     viridis::scale_color_viridis(option=palette,limits=c(0,40),
                                  na.value="white",direction=-1) +
@@ -275,7 +277,7 @@ drawTAxis <- function(ggp,segment,walltime,distPerPoint,hoursPerPoint) {
   # axis label
   tAxisTextFrame <- data.frame(x=xmax/2,
                                y=yCenter-1.6*height("label",heightFactor),
-                               label="Time(hrs)")
+                               label="Time (hrs)")
   g <- g +
     geom_text(data=tAxisTextFrame,aes(x=x,y=y,label=label),
               size=1.10*axischarsize,hjust=0.5,
@@ -286,7 +288,7 @@ drawTAxis <- function(ggp,segment,walltime,distPerPoint,hoursPerPoint) {
   return(ggpreturn)
 }
 drawXAxis <- function(ggp,segment,walltime,distance,
-                      showStops,distPerPoint,
+                      showStops,distPerPoint,imperial=TRUE,
                       underLine=FALSE,lineAtZero=FALSE) {
   ggpreturn <- ggp
   g <- ggp[["g"]]
@@ -385,8 +387,10 @@ drawXAxis <- function(ggp,segment,walltime,distance,
                                y=yCenter +
                                  ifelse(underLine,
                                         -1.65*height("label",heightFactor),
-                                        +1.65*height("label",heightFactor))
-                               ,label="Distance")
+                                        +1.65*height("label",heightFactor)),
+                               label=ifelse(imperial,
+                                            "Distance (mi)",
+                                            "Distance (km)"))
   g <- g +
     geom_text(data=xAxisTextFrame,aes(x=x,y=y,label=label),
               size=1.10*axischarsize,hjust=0.5,
