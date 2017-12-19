@@ -120,7 +120,7 @@ discrete_bar <- function(g,legendtext,xvar,vals,lowval,hival,
 }
 #  return hr/cad legend width
 hrCadLegendWidth <- function(npoints,distPerPoint,minNumPoints) {
-  return( distPerPoint*min(npoints,3*minNumPoints)/(1.65*13) )
+  return( distPerPoint*min(npoints,2000)/13 )
 }
 # return the number of points on the x-axis for data
 numPointsXAxis <- function(dist,ppm,imperial) {

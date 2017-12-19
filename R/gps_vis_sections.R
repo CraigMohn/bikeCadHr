@@ -142,10 +142,12 @@ drawCadence <- function(ggp,cadence,xvar,
   distPerPoint=ggp[["distPerPoint"]]
   yCadTop <- ggp[["ymin"]]
   ymin <- yCadTop - heightItem(scale=heightFactor)
+  bigx <- max(xvar)
   # column width vectors sum to 13 in bar functionsd
   cadLegendWidth <- hrCadLegendWidth(npoints,distPerPoint,minNumPoints)
   drawpts <- stats::approx(xvar,cadence,n=npoints)
   xvardraw <- drawpts[[1]]*(xend/max(drawpts[[1]]))
+  xvardraw[xvardraw>bigx] <- bigx
   caddraw <- drawpts[[2]]
   if (cadCont) {
     g <- continuous_bar(g,legendtext="Cadence",xvar=xvardraw,vals=caddraw,
@@ -182,10 +184,12 @@ drawHr <- function(ggp,hr,xvar,
   distPerPoint=ggp[["distPerPoint"]]
   yHrTop <- ggp[["ymin"]]
   ymin <- yHrTop - heightItem(scale=heightFactor)
+  bigx <- max(xvar)
   # column width vectors sum to 13 in bar functionsd
   hrLegendWidth <- hrCadLegendWidth(npoints,distPerPoint,minNumPoints)
   drawpts <- stats::approx(xvar,hr,n=npoints)
   xvardraw <- drawpts[[1]]*(xend/max(drawpts[[1]]))
+  xvardraw[xvardraw>bigx] <- bigx
   hrdraw <- drawpts[[2]]
   g <- g +
     geom_blank()
@@ -217,14 +221,18 @@ drawTAxis <- function(ggp,segment,walltime,distPerPoint,hoursPerPoint) {
   endseg[length(endseg)] <- TRUE
   segbegs <- walltime[newseg]
   segends <- walltime[endseg]
-  stopbegs <- segends[-length(segbegs)]
-  stopends <- segbegs[-1]
-
+  numsegs <- sum(newseg)
   #  axis line - color coded for stops
   xscale <- distPerPoint/hoursPerPoint
   tAxisSegData <- data.frame(x=segbegs,xend=segends,xcol=40,y=yCenter)
-  tAxisStopData <- data.frame(x=stopbegs,xend=stopends,xcol=15,y=yCenter)
-  tAxisData <- rbind(tAxisSegData,tAxisStopData)
+  if (numsegs > 1) {
+    stopbegs <- segends[-length(segbegs)]
+    stopends <- segbegs[-1]
+    tAxisStopData <- data.frame(x=stopbegs,xend=stopends,xcol=15,y=yCenter)
+    tAxisData <- rbind(tAxisSegData,tAxisStopData)
+  } else {
+    tAxisData <- tAxisSegData
+  }
   tAxisData$x <- (xscale/3600)*tAxisData$x
   tAxisData$xend <- (xscale/3600)*tAxisData$xend
   g <- g +
