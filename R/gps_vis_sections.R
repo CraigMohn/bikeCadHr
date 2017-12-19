@@ -139,15 +139,16 @@ drawCadence <- function(ggp,cadence,xvar,
   g <- ggp[["g"]]
   npoints <- ggp[["npoints"]]
   heightFactor=ggp[["heightFactor"]]
+  npoints <- ggp[["npoints"]]
   distPerPoint=ggp[["distPerPoint"]]
   yCadTop <- ggp[["ymin"]]
   ymin <- yCadTop - heightItem(scale=heightFactor)
-  bigx <- max(xvar)
   # column width vectors sum to 13 in bar functionsd
   cadLegendWidth <- hrCadLegendWidth(npoints,distPerPoint,minNumPoints)
   drawpts <- stats::approx(xvar,cadence,n=npoints)
   xvardraw <- drawpts[[1]]*(xend/max(drawpts[[1]]))
-  xvardraw[xvardraw>bigx] <- bigx
+  xvardraw[xvardraw>distPerPoint*npoints] <- distPerPoint*npoints
+  xvardraw[xvardraw<0] <- 0
   caddraw <- drawpts[[2]]
   if (cadCont) {
     g <- continuous_bar(g,legendtext="Cadence",xvar=xvardraw,vals=caddraw,
@@ -181,15 +182,16 @@ drawHr <- function(ggp,hr,xvar,
   g <- ggp[["g"]]
   npoints <- ggp[["npoints"]]
   heightFactor=ggp[["heightFactor"]]
+  npoints <- ggp[["npoints"]]
   distPerPoint=ggp[["distPerPoint"]]
   yHrTop <- ggp[["ymin"]]
   ymin <- yHrTop - heightItem(scale=heightFactor)
-  bigx <- max(xvar)
   # column width vectors sum to 13 in bar functionsd
   hrLegendWidth <- hrCadLegendWidth(npoints,distPerPoint,minNumPoints)
   drawpts <- stats::approx(xvar,hr,n=npoints)
   xvardraw <- drawpts[[1]]*(xend/max(drawpts[[1]]))
-  xvardraw[xvardraw>bigx] <- bigx
+  xvardraw[xvardraw>distPerPoint*npoints] <- distPerPoint*npoints
+  xvardraw[xvardraw<0] <- 0
   hrdraw <- drawpts[[2]]
   g <- g +
     geom_blank()
