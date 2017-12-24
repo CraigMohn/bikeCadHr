@@ -144,7 +144,6 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
   }
   if (substr(ridefile,nchar(ridefile)-3,nchar(ridefile))==".fit") {
     temp <- read_fittrack(ridefile)
-#fit.track <<- temp[["track"]]
     time.fn.string <- basename(ridefile)
     fit.fn.time.parse <- getOption("bCadHr.fit.fn.time.parse")
     fit.fn.lead <- getOption("bCadHr.fit.fn.lead")

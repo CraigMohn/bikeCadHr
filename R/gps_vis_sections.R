@@ -36,17 +36,21 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
     speed[speed>67] <- 67
     elevalpha <-
       0.4 + 0.6*(ifelse(speed > 25,ifelse(speed<67,(speed-12)/25,1),0))
-    elevround <- 200
+    elevround <- 100
   }
   elevprtchar <- rep("|",length(distance))
 
 # set limits for plots
-  elevMin <- min(elevation)
-  elevMinInt <- min(0,elevround*floor(elevMin/elevround))
+  elevMin <- min(elevation)-75
+  if (elevMin < 0) {
+    elevMinInt <- 100*floor(elevround*floor(elevMin/elevround)/100)
+  } else {
+    elevMinInt <- 500*floor(elevround*floor(elevMin/elevround)/500)
+  }
   elevMax <- max(elevation)
-  elevMaxInt <- elevround*ceiling(elevMax/elevround)
+  elevMaxInt <- elevround*round(elevMax/elevround)
   ymin <- elevMinInt - heightBelow - 100
-  ymax <- elevMaxInt + height("summary",heightFactor)
+  ymax <- 500*ceiling((elevMaxInt + height("summary",heightFactor))/500)
   xmin <- 0
   xmax <- distPerPoint*ngraphpoints
 
@@ -69,9 +73,20 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
     ggplot2::theme(legend.key.size=unit(10,"points")) +
     ggplot2::theme(legend.justification="top") +
  #  suppress x axis, add it manually
-    ggplot2::theme(axis.title.x=element_blank(),
-                   axis.text.x=element_blank(),
-                   axis.ticks.x=element_blank()) +
+    ggplot2::theme(axis.title.x=ggplot2::element_blank(),
+                   axis.text.x=ggplot2::element_blank(),
+                   axis.ticks.x=ggplot2::element_blank(),
+                   axis.line.x=ggplot2::element_blank(),
+                   axis.line.y=ggplot2::element_blank(),
+                   panel.background=ggplot2::element_rect(fill="lightskyblue1",
+                                                  colour="lightskyblue1",
+                                                  size=0.5,linetype="solid"),
+                   panel.grid.major=ggplot2::element_line(size=0.3,
+                                                  linetype='solid',
+                                                  colour="lightskyblue2"),
+                   panel.grid.minor=ggplot2::element_line(size=0.15,
+                                                  linetype='solid',
+                                                  colour="lightskyblue2")) +
     ggplot2::labs(y=paste0("Elevation (",
                            ifelse(imperial,"ft)","m)"))) +
     ggplot2::theme(axis.title.y=element_text(hjust=0.8)) +
@@ -79,12 +94,16 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
                                  na.value="white",direction=-1) +
     viridis::scale_fill_viridis(option=palette,limits=c(0,40),
                                 na.value="white",direction=-1) +
-    ggplot2::geom_rect(ggplot2::aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=0),
-                       fill="white",color="white") +
-    ggplot2::geom_area(color="white",fill="white") +
+    ggplot2::geom_ribbon(ggplot2::aes(ymax=elevation,ymin=ymin),
+                         color="white",fill="white") +
     ggplot2::geom_point(ggplot2::aes(color=speed),shape=elevationShape,
                         size=1.25*heightFactor,
                         position=ggplot2::position_nudge(y=1.2))
+    if (npoints < ngraphpoints) {
+      g <- g +
+        ggplot2::geom_rect(xmin=npoints*distPerPoint,xmax=xmax,
+                           ymin=ymin,ymax=ymax,color="white",fill="white")
+    }
 
     return(list(g=g,xmin=xmin,xmax=xmax,xlast=distPerPoint*npoints,
               ymin=elevMinInt,ymax=ymax,vertmult=vertMult,
@@ -122,14 +141,14 @@ drawSummary <- function(ggp,summary,title){
     ggtitle(paste0(title,"  ",summary$start.time[1])) +
     geom_text(data=summaryTextFrame,
               aes(x=xposSum,y=yposSum,label=summarylabels),
-              size=3,hjust=0,alpha=1,color="slategray4") +
+              size=3,hjust=0,alpha=1,color="midnightblue") +
     theme(plot.title=element_text(color="Black",face="bold",size=15,hjust=0.5))
   ggpreturn[["g"]] <- g
   return(ggpreturn)
 
 }
 #  draw cadence bar graph
-drawCadence <- function(ggp,cadence,xvar,
+drawCadence <- function(ggp,cadence,xvar,segment,
                         cadLow,cadTarget,
                         cadCont,cadContLow,cadContHigh,
                         cadColorLow,cadColorMid,cadColorHigh,
@@ -172,7 +191,7 @@ drawCadence <- function(ggp,cadence,xvar,
   ggpreturn[["ymin"]] <- ymin
   return(ggpreturn)
 }
-drawHr <- function(ggp,hr,xvar,
+drawHr <- function(ggp,hr,xvar,segment,
                    hrLow,hrHigh,
                    hrColorLow,hrColorHigh,
                    minNumPoints,showlegend=TRUE) {

@@ -375,7 +375,7 @@ plot_elev_profile_plus <- function(track,summary,savefn,title="Ride",
 #' @return a ggplot object
 #'
 #' @export
-plot_profile <- function(track,summary,savefn,title="Ride",palette="plasma",
+plot_profile <- function(track,summary,savefn,title="Ride starting ",palette="plasma",
                                   verticalMultiplier=NA,ppm=NA,
                                   elevationShape=46,
                                   hrDistance=TRUE,cadDistance=TRUE,
@@ -451,12 +451,14 @@ plot_profile <- function(track,summary,savefn,title="Ride",palette="plasma",
 #    grlist[["ymin"]] <- grlist[["ymin"]] - 20
   }
   if (cadDistance) grlist <- drawCadence(grlist,cadencesm,distance,
+                                         segment=track$segment,
                                          cadLow,cadTarget,
                                          cadCont,cadContLow,cadContHigh,
                                          cadColorLow,cadColorMid,cadColorHigh,
                                          minNumPoints,showlegend=TRUE)
 
   if (hrDistance) grlist <- drawHr(grlist,hrsm,distance,
+                                   segment=track$segment,
                                    hrLow,hrHigh,
                                    hrColorLow,hrColorHigh,
                                    minNumPoints,showlegend=TRUE)
@@ -472,11 +474,13 @@ plot_profile <- function(track,summary,savefn,title="Ride",palette="plasma",
   }
 
   if (cadTime) grlist <- drawCadence(grlist,cadencesm,walltime,
+                                     segment=track$segment,
                                      cadLow,cadTarget,
                                      cadCont,cadContLow,cadContHigh,
                                      cadColorLow,cadColorMid,cadColorHigh,
                                      minNumPoints,showlegend=!cadDistance)
   if (hrTime) grlist <- drawHr(grlist,hrsm,walltime,
+                               segment=track$segment,
                                hrLow,hrHigh,
                                hrColorLow,hrColorHigh,
                                minNumPoints,showlegend=!hrDistance)
