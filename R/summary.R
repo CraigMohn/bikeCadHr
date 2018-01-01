@@ -49,6 +49,8 @@
 #'  \item{session.total.calories - fit file only - kCals burned as calculated by GPS}
 #'  \item{session.avg.speed - fit file only - speed as calculated by GPS}
 #'  \item{session.max.speed - fit file only - speed as calculated by GPS}
+#'  \item{session.avg.power - fit file only - average power if power data present}
+#'  \item{session.max.power - fit file only - max power if power data present}
 #'  \item{session.total.ascent - fit file only - climb as calculated by GPS}
 #'  \item{session.total.descent - fit file only - descent as calculated by GPS}
 #'  \item{session.avg.cadence - fit file only - cadence as calculated by GPS, depending

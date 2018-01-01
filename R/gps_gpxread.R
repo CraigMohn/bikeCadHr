@@ -1,49 +1,61 @@
 read_gpxtrack <- function(gpxfile)  {
 
-    gpxtrack <- readGPXhrcad(paste0(gpxfile))
+  gpxtrack <- readGPXhrcad(paste0(gpxfile))
 
-    segment <- c()
-    timestamp.s <- c()
-    position_lat.dd <- c()
-    position_lon.dd <- c()
-    altitude.m <- c()
-    heart_rate.bpm <- c()
-    cadence.rpm <- c()
-    distance.m <- c()
-    speed.m.s <- c()
+  ntrackpoints <- 0
+  for (i in 1:length(gpxtrack)) {
+      ntrackpoints <- ntrackpoints + sum(sapply(gpxtrack[[i]],nrow))
+  }
 
-    nsegments <- 0
-    distcum <- 0
-    for (i in 1:length(gpxtrack)) {
-      for (subtrack in gpxtrack[[i]]) {
-        nwaypoints <- nrow(subtrack)
-        nsegments <- nsegments + 1
-      	tempdtime <- as.numeric(difftime(lubridate::ymd_hms(gsub("T"," ",subtrack$time)),
-      	                                 lag_one(lubridate::ymd_hms(gsub("T"," ",subtrack$time))),
-      	                                 units="secs"))
-      	tempdspace <- raster::pointDistance(cbind(subtrack$lon,subtrack$lat),
-      	                                    cbind(lag_one(subtrack$lon),
-      	                                          lag_one(subtrack$lat)),lonlat=TRUE)
-      	tempspeed <- (tempdspace/tempdtime)
-        tempspeed[tempdtime<=0] <- tempdtime[tempdtime<=0]
+  segment <- vector("numeric",ntrackpoints)
+  timestamp.s <- vector("character",ntrackpoints)
+  position_lat.dd <- vector("numeric",ntrackpoints)
+  position_lon.dd <- vector("numeric",ntrackpoints)
+  altitude.m <- vector("numeric",ntrackpoints)
+  heart_rate.bpm <- vector("numeric",ntrackpoints)
+  cadence.rpm <- vector("numeric",ntrackpoints)
+  distance.m <- vector("numeric",ntrackpoints)
+  speed.m.s <- vector("numeric",ntrackpoints)
+  power.watts <- vector("numeric",ntrackpoints)
+  power.watts <- NA
 
-        segment <- c(segment, rep(nsegments,nwaypoints))
-        timestamp.s <- c(timestamp.s,subtrack$time)
-        position_lat.dd <- c(position_lat.dd, subtrack$lat)
-        position_lon.dd <- c(position_lon.dd, subtrack$lon)
-      	altitude.m <- c(altitude.m, as.numeric(subtrack$ele))
-      	cadence.rpm <- c(cadence.rpm,subtrack$cad)
-      	heart_rate.bpm <- c(heart_rate.bpm,subtrack$hr)
-      	distance.m <- c(distance.m,distcum + cumsum(tempdspace))
-      	speed.m.s <- c(speed.m.s,tempspeed)
-      	distcum <- distance.m[length(distance.m)]
-      }
+  nsegments <- 0
+  distcum <- 0
+  segbeg <- 1
+  for (i in 1:length(gpxtrack)) {
+    for (subtrack in gpxtrack[[i]]) {
+      nwaypoints <- nrow(subtrack)
+      segend <- segbeg + nwaypoints - 1
+      nsegments <- nsegments + 1
+    	tempdtime <- as.numeric(difftime(lubridate::ymd_hms(gsub("T"," ",subtrack$time)),
+      	                               lag_one(lubridate::ymd_hms(gsub("T"," ",subtrack$time))),
+      	                               units="secs"))
+     	tempdspace <- raster::pointDistance(cbind(subtrack$lon,subtrack$lat),
+      	                                  cbind(lag_one(subtrack$lon),
+      	                                        lag_one(subtrack$lat)),lonlat=TRUE)
+    	tempspeed <- (tempdspace/tempdtime)
+      tempspeed[tempdtime<=0] <- tempdtime[tempdtime<=0]
+
+      segment[segbeg:segend] <- rep(nsegments,nwaypoints)
+      timestamp.s[segbeg:segend] <- subtrack$time
+      position_lat.dd[segbeg:segend] <- subtrack$lat
+      position_lon.dd[segbeg:segend] <- subtrack$lon
+      altitude.m[segbeg:segend] <- as.numeric(subtrack$ele)
+      cadence.rpm[segbeg:segend] <- subtrack$cad
+      heart_rate.bpm[segbeg:segend] <- subtrack$hr
+      distance.m[segbeg:segend] <- distcum + cumsum(tempdspace)
+      speed.m.s[segbeg:segend] <- tempspeed
+      # power.watts already initialized to NA
+
+      distcum <- distance.m[segend]
+      segbeg <- segend + 1
     }
-    timestamp.s <- as.POSIXct(strptime(timestamp.s,"%Y-%m-%dT%H:%M:%SZ",tz="UTC"))
+  }
+  timestamp.s <- as.POSIXct(strptime(timestamp.s,"%Y-%m-%dT%H:%M:%SZ",tz="UTC"))
     #arrange by timestamp
     track <- data_frame(segment,timestamp.s,
                         position_lat.dd,position_lon.dd,altitude.m,
-                        cadence.rpm,heart_rate.bpm,distance.m,speed.m.s)
+                        cadence.rpm,heart_rate.bpm,distance.m,speed.m.s,power.watts)
     return(list(track=track,recovery_hr=NULL,session=NULL))
 }
 

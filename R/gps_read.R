@@ -188,7 +188,7 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
   trackdata$startbutton.time <- startbutton.time
 
 
-  ##  if no distance in an observation, then no cadence sensor and no gps signal to give location, waypoints contain no info, so delete
+  ##  if no distance in an observation, then no speed sensor and no gps signal to give location, waypoints contain no info, so delete
   if (length(which(is.na(trackdata$distance.m)))>0) {
     first.move <- min(which(!is.na(trackdata$distance.m)))
     if (first.move > 1 ) {
@@ -439,6 +439,10 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
                            session$avg_heart_rate[1],NA)
   session.max.hr <- ifelse("max_heart_rate" %in% colnames(session),
                            session$max_heart_rate[1],NA)
+  session.avg.power <- ifelse("avg_power" %in% colnames(session),
+                           session$avg_power[1],NA)
+  session.max.power <- ifelse("max_power" %in% colnames(session),
+                           session$max_power[1],NA)
   sourcefile <- basename(ridefile)
   processed.time <- Sys.time()
 
@@ -504,20 +508,22 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
     low.gear2 <- NA
   }
 
-  track.cleaned <- data_frame(date=ride.date,start.time,start.hour,nwaypoints,numsegs,
-          distance,total.time,rolling.time,pedal.time,startline.time,pedal.strokes,
-          avgcadence.nozeros,avgcadence.withzeros,avgcadence.midsegment,
-          hr.at.stop,hr.recovery,speed.rolling.m.s,speed.all.m.s,speed.max.m.s,
-          ascent,descent,distance.ascending,distance.descending,
-          grade.ascending.steepest,grade.descending.steepest,
-          pct.trkpts.hr,pct.trkpts.cad,ride.loop,
-          pct.low.gear,low.gear,pct.low.gear2,low.gear2,
-          stops.subminute,stops.1to10minutes,stops.10to30minutes,stops.long,
-          session.distance,session.elapsed.time,session.timer.time,session.pedal.strokes,
-          session.total.calories,session.avg.speed,session.max.speed,
-          session.total.ascent,session.total.descent,
-          session.avg.cadence,session.avg.hr,session.max.hr,
-          sourcefile,processed.time,startbutton.date,startbutton.time)
+  track.cleaned <- data_frame(date=ride.date,start.time,start.hour,
+      nwaypoints,numsegs,
+      distance,total.time,rolling.time,pedal.time,startline.time,pedal.strokes,
+      avgcadence.nozeros,avgcadence.withzeros,avgcadence.midsegment,
+      hr.at.stop,hr.recovery,speed.rolling.m.s,speed.all.m.s,speed.max.m.s,
+      ascent,descent,distance.ascending,distance.descending,
+      grade.ascending.steepest,grade.descending.steepest,
+      pct.trkpts.hr,pct.trkpts.cad,ride.loop,
+      pct.low.gear,low.gear,pct.low.gear2,low.gear2,
+      stops.subminute,stops.1to10minutes,stops.10to30minutes,stops.long,
+      session.distance,session.elapsed.time,session.timer.time,
+      session.pedal.strokes,session.avg.power,session.max.power,
+      session.total.calories,session.avg.speed,session.max.speed,
+      session.total.ascent,session.total.descent,
+      session.avg.cadence,session.avg.hr,session.max.hr,
+      sourcefile,processed.time,startbutton.date,startbutton.time)
   return(list(summary=track.cleaned,trackpoints=trackdata,session=session))
 }
 

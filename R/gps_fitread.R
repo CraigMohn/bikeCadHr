@@ -19,6 +19,7 @@ read_fittrack <- function(fitfile) {
   records <- dplyr::bind_rows(lapply(records, merge_lists, empty))
   if (!"cadence.rpm" %in% colnames(records)) records$cadence.rpm <- NA
   if (!"heart_rate.bpm" %in% colnames(records)) records$heart_rate.bpm <- NA
+  if (!"power.watts" %in% colnames(records)) records$power.watts <- NA
   colnames(records) <- gsub("m/s","m.s",colnames(records))
 
   events <- Filter(is_event, data_mesgs)
@@ -39,15 +40,20 @@ read_fittrack <- function(fitfile) {
     print(paste0("file has ",length(session)," session records, returning NULL for session variables"))
     session <- NULL
   }
-  if (length(which(events$timer_trigger. == "auto"))==0) {
-    # patch together situation for no auto-on/off - typical of no cadence sensor paired
-    records <- records[!is.na(records$distance.m),]
-    no.move <- (records$distance.m == lag_one(records$distance.m)) & (records$distance.m == lead_one(records$distance.m))
-    no.gps <- !("position_lat.semicircles" %in% colnames(records))
-    records <- records[!(no.move|no.gps),]
+#session <<- session
+#events <<- events
+#records <<- records
+  #  drop records with no distance measure, they are beyond salvage
+  records <- records[!is.na(records$distance.m),]
+  #  put in check that assumption of 1 record per timestamp holds...
 
-    seg.stop <- records$distance.m == lead_one(records$distance.m)
-    seg.start <- records$distance.m == lag_one(records$distance.m)
+  #  add auto start/stop if GPS not set to auto on/off, but only if lat/lon
+  if ((length(which(events$timer_trigger. == "auto"))==0) &
+      ("position_lat.semicircles" %in% colnames(records))){
+
+    seg.start <- (records$distance.m == lag_one(records$distance.m)) &
+                 (records$distance.m != lead_one(records$distance.m))
+    seg.stop <- c(seg.start[-1],TRUE)
 
     timestamp.s <- records$timestamp.s[seg.start]
     event. <- rep("timer",length(timestamp.s))
@@ -69,72 +75,92 @@ read_fittrack <- function(fitfile) {
   recovery_hr <- events[events$event. == "recovery_hr",]
   recovery_hr <- recovery_hr[,c("timestamp.s","data.")]
 
-  # to thin out breaks, we need distance in the event frame
-  #   put in check that assumption of 1 record per timestamp holds...
+  #############################################################################
+  # clean up events file to handle unusual power-on/off sequences
+  #   delete/change affected events data
+  #   generally do not touch records data except for too-early and too-late obs
   events <- events[events$event. %in% c("timer","power_down","power_up"),]
-  events <- dplyr::arrange(left_join(events,records,by="timestamp.s"),timestamp.s,event.,event_type.)
-  # knock out events and records before any early power-off-power-on pairs
+  events <- dplyr::arrange(left_join(events,records,by="timestamp.s"),
+                           timestamp.s,event.,event_type.)
+  # drop events and records before any early (< 10m) power-off-power-on pairs
   power.on.event <- events$event. == "power_up" &
                     (lag_n(events$event.,1) == "power_down" |
                      lag_n(events$event.,2) == "power_down") &
-                        cumsum(ifelse(is.na(events$distance.m), 0, events$distance.m)) < 10
+                    cumsum(ifelse(is.na(events$distance.m),
+                                  0,events$distance.m)) < 10
 
-   if (sum(power.on.event)>0){
+  if (sum(power.on.event)>0){
     last.power.on <- max(which(power.on.event))
     first.time <- events$timestamp.s[last.power.on]
     events <- events[events$timestamp.s>first.time,]
     records <- records[records$timestamp.s>first.time,]
-   }
+  }
   #  remove manual stops and starts in track
-  #  assume auto stop without speed is an event immediately after manual start during pause, drop it
-  astop.nospeed <-   (events$timer_trigger. == "auto" & !is.na(events$timer_trigger.)) &
-          events$event_type. == "stop_all" & is.na(events$speed.m.s)
+  #  assume auto stop without speed is an event immediately after
+  #       manual start during pause, drop it
+  astop.nospeed <- (events$timer_trigger. == "auto" &
+                    !is.na(events$timer_trigger.))   &
+                   events$event_type. == "stop_all"  &
+                   is.na(events$speed.m.s)
   events <- events[!astop.nospeed,]
-  ## remove second and third of power_down=manual.stop_all,power_up,manual.start
-  event.seq.beg <- events$event.=="power_down" &
-    !is.na(lead_one(events$timer_trigger.)) &  lead_one(events$timer_trigger.)=="manual" &
-    lead_one(events$event_type.)=="stop_all" &
-    !is.na(lead_n(events$event.,2)) &  lead_n(events$event.,2)=="power_up" &
-    lead_n(events$event_type.,3)=="start" &
-    events$timestamp.s==lead_one(events$timestamp.s)
+  # remove second and third of power_down=manual.stop_all,power_up,manual.start
+  event.seq.beg <-  events$event.=="power_down" &
+                    !is.na(lead_one(events$timer_trigger.)) &
+                    lead_one(events$timer_trigger.)=="manual" &
+                    lead_one(events$event_type.)=="stop_all" &
+                    !is.na(lead_n(events$event.,2)) &
+                    lead_n(events$event.,2)=="power_up" &
+                    lead_n(events$event_type.,3)=="start" &
+                    events$timestamp.s==lead_one(events$timestamp.s)
   drop.powerdown <- lag_one(event.seq.beg)
   drop.powerup <- lag_one(drop.powerdown)
   events <- events[!(drop.powerdown|drop.powerup),]
-  ## remove first,second and third of manual.stop_all,power_down,power_up,manual.start if preceding event was a stop
-  event.seq.beg <- !is.na(events$timer_trigger.) & events$timer_trigger.=="manual" &  events$event_type. == "stop_all" &
-    lead_one(events$event.)=="power_down" &
-    lead_n(events$event.,2)=="power_up" &
-    lead_n(events$event_type.,3)=="start" &
-    lag_one(events$event_type.)=="stop_all"
+  # remove first,second and third of manual.stop_all,power_down,power_up,
+  #             manual.start if preceding event was a stop
+  event.seq.beg <-  !is.na(events$timer_trigger.) &
+                    events$timer_trigger.=="manual" &
+                    events$event_type. == "stop_all" &
+                    lead_one(events$event.)=="power_down" &
+                    lead_n(events$event.,2)=="power_up" &
+                    lead_n(events$event_type.,3)=="start" &
+                    lag_one(events$event_type.)=="stop_all"
   drop.powerdown <- lag_one(event.seq.beg)
   drop.powerup <- lag_one(drop.powerdown)
   events <- events[!(event.seq.beg|drop.powerdown|drop.powerup),]
-  ##if timer_trigger is missing and power_up+stop_all is followed by power_down+stop_all then power_up+stop_all, delete last pair
-
-  ## manual stop which immediately follows: a stop or
-  ##                                        precedes a stop with the same timestamp and follows a start
-  mstop.delete <-  events$timer_trigger. == "manual" & events$event_type. == "stop_all" &
-                             (lag_one(events$event_type.) == "stop_all" |
-                              ( lead_one(events$event_type.) == "stop_all" &
-                                lead_one(events$timestamp.s) == events$timestamp.s &
-                                !is.na(lead_n(events$timestamp.s,1)) &
-                                lag_one(events$event_type.) == "start"))
+  # if timer_trigger is missing and power_up+stop_all is followed by
+  #   power_down+stop_all then power_up+stop_all, delete last pair
+  # manual stop which immediately follows: a stop or
+  #      precedes a stop with the same timestamp and follows a start
+  mstop.delete <- events$timer_trigger. == "manual" &
+                  events$event_type. == "stop_all" &
+                  (lag_one(events$event_type.) == "stop_all" |
+                   (lead_one(events$event_type.) == "stop_all" &
+                    lead_one(events$timestamp.s) == events$timestamp.s &
+                    !is.na(lead_n(events$timestamp.s,1)) &
+                    lag_one(events$event_type.) == "start"))
   ## manual start which precedes an auto start a stop with the same timestamp
-  mstart.delete <- events$timer_trigger. == "manual" & events$event_type. == "start" &
-                     (lead_one(events$event_type.) == "start" |
-                        (lag_one(events$event_type.) == "stop_all" & lag_one(events$timestamp.s) == events$timestamp.s))
+  mstart.delete <-  events$timer_trigger. == "manual" &
+                    events$event_type. == "start" &
+                    (lead_one(events$event_type.) == "start" |
+                     (lag_one(events$event_type.) == "stop_all" &
+                      lag_one(events$timestamp.s) == events$timestamp.s))
   events <- events[!(mstop.delete | mstart.delete),]
 
   last.start <- max(which(events$event_type. == "start"))
   if (length(events$event_type.) > last.start) {
-    if (events$event_type.[last.start+1] != "stop_all") stop("fitfile problem - event after last start not a stop")
+    if (events$event_type.[last.start+1] != "stop_all")
+      stop("fitfile problem - event after last start not a stop")
     events <- events[(1:(last.start+1)),]
   }
-  #   drop events where distance is missing (those before and after collected location data) keep last start if needed
+  #   drop events where distance is missing (those before and after
+  #          collected location data) keep last start if needed
   drop.events <- is.na(events$distance.m)
-  drop.events <- drop.events & !(events$timer_trigger. == "manual" & events$event_type. == "start" &
-                                 !lead_one(drop.events) & lead_one(events$event_type.) == "stop_all") &
-                             !(events$event.=="power_down" | events$event.=="power_up")
+  drop.events <- drop.events &
+                 !(events$timer_trigger. == "manual" &
+                   events$event_type. == "start" &
+                   !lead_one(drop.events) &
+                   lead_one(events$event_type.) == "stop_all") &
+                 !(events$event.=="power_down" | events$event.=="power_up")
   events <- events[!drop.events,]
 
   segment.start.times <- events$timestamp.s[events$event_type. == "start"]
@@ -151,7 +177,7 @@ read_fittrack <- function(fitfile) {
   ##  snip off any short very delayed final records
   if (nsegments > 1) {
     if (sum(records$segment==nsegments)<3 &
-       (as.numeric(segment.start.times[nsegments])-as.numeric(segment.end.times[nsegments-1])>120)){
+       (as.numeric(segment.start.times[nsegments])-as.numeric(segment.end.times[nsegments-1])>240)){
       records <- records[records$segment!=nsegments,]
       nsegments <- nsegments-1
       segment.start.times <- segment.start.times[1:nsegments]

@@ -16,6 +16,7 @@ Data fields for each trackpoint:
  \item{speed.m.s - speed at trackpoint either speed sensor or gps coordinates}
  \item{heart_rate.bpm - heartrate recorded at the trackpoint}
  \item{cadence.rpm - (possibly corrected) cadence recorded at the trackpoint}
+ \item{power.watts - power at trackpoint as reported to GPS from power meter}
  \item{gearratio - speed divided by cadence, uncorrected values, may contain Inf and NA}
  \item{temperature - temperature recorded at the trackpoint}
  \item{segment - segment identifier for the trackpoint}
