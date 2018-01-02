@@ -302,10 +302,12 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
   trackdeltaelev <- trackdata$altitude.m - lag_one(trackdata$altitude.m)
   trackdeltadistance <- trackdata$distance.m - lag_one(trackdata$distance.m)
   time.from.start <- cumsum(trackdeltatime)
-  elev.smoothed <- smoothEpanechnikov(trackdata$distance.m,trackdata$altitude.m,
+  elev.smoothed <- smoothDataSegments(yvec=trackdata$altitude.m,
+                                      xvar=trackdata$distance.m,
                                       segment=trackdata$segment,
+                                      bw=grade.smooth.bw,
                                       nneighbors=grade.smooth.window,
-                                      bw=grade.smooth.bw)
+                                      kernel="epanechnikov")
   deltaelev.smoothed <- elev.smoothed - lag_one(elev.smoothed)
   trackgrade <- deltaelev.smoothed/trackdeltadistance
   trackgrade[trackdeltadistance<1] <- NA
@@ -320,7 +322,12 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
   if (sum(cadence.error,na.rm=TRUE) > 0) {
     if (cadence.correct.errors) {
       trackdata$cadence.rpm[cadence.error] <- NA
-      cadence.smoothed <- smoothTriangular(time.from.start,trackdata$cadence.rpm,segment=trackdata$segment,nneighbors=cadence.correct.window,bw=cadence.correct.window)
+      cadence.smoothed <- smoothDataSegments(yvec=trackdata$cadence.rpm,
+                                             xvar=time.from.start,
+                                             segment=trackdata$segment,
+                                             bw=cadence.correct.window,
+                                             nneighbors=cadence.correct.window,
+                                             kernel="triangular")
       trackdata$cadence.rpm[cadence.error] <- cadence.smoothed[cadence.error]
     } else {
       trackdata$cadence.rpm[cadence.error] <- NA
@@ -329,7 +336,12 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
   if (cadence.correct.nas) {
     cadence.na <- is.na(trackdata$cadence.rpm)
     if (sum(cadence.na,na.rm=TRUE) > 0) {
-      cadence.smoothed <- smoothTriangular(time.from.start,trackdata$cadence.rpm,segment=trackdata$segment,nneighbors=cadence.correct.window,bw=cadence.correct.window)
+      cadence.smoothed <- smoothDataSegments(yvec=trackdata$cadence.rpm,
+                                             xvar=time.from.start,
+                                             segment=trackdata$segment,
+                                             bw=cadence.correct.window,
+                                             nneighbors=cadence.correct.window,
+                                             kernel="triangular")
       trackdata$cadence.rpm[cadence.na] <- cadence.smoothed[cadence.na]
     }
   }

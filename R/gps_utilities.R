@@ -52,7 +52,7 @@ smoothDataSegments <- function(yvec,xvar,segment,
                                 bw=bw,nneighbors=nneighbors,
                                 kernel=kernel)
     } else {
-      xret[inseg] <- x[inseg]
+      xret[inseg] <- xvar[inseg]
     }
   }
   return(xret)
