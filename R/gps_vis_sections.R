@@ -4,16 +4,16 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
                         distPerPoint,palette,
                         vertMult,npoints,minNumPoints,
                         elevationShape,imperial,
-                        hrDistance,cadDistance,
-                        hrTime,cadTime,showTime) {
+                        hrDistance,cadDistance,powerDistance,
+                        hrTime,cadTime,powerTime,showTime) {
 
   ngraphpoints <- max(minNumPoints,npoints)
   dist <- distancevec[length(distancevec)]
   if (is.na(vertMult)|vertMult<=1)
     vertMult <- verticalMult(dist,imperial)
   heightFactor=vertMult/50
-  heightBelow <- heightWith(hrDistance,cadDistance,
-                             hrTime,cadTime,
+  heightBelow <- heightWith(hrDistance,cadDistance,powerDistance,
+                             hrTime,cadTime,powerTime,
                              showTime,totalCall=TRUE,
                              scale=heightFactor)
 
@@ -218,6 +218,40 @@ drawHr <- function(ggp,hr,xvar,segment,
                       lowval=hrLow,hival=hrHigh,
                       lowcolor=hrColorLow,hicolor=hrColorHigh,
                       legendwidth=hrLegendWidth,y.bottom=ymin,
+                      band.height=height("band",heightFactor),
+                      label.height=height("label",heightFactor),
+                      gap.height=height("gap",heightFactor),showlegend)
+  ggpreturn[["g"]] <- g
+  ggpreturn[["ymin"]] <- ymin
+  return(ggpreturn)
+}
+drawPower <- function(ggp,power,xvar,segment,
+                      powerLow,powerHigh,
+                      powerColorLow,powerColorHigh,
+                       minNumPoints,showlegend=TRUE) {
+
+  ggpreturn <- ggp
+  xend <- ggp[["xlast"]]
+  g <- ggp[["g"]]
+  npoints <- ggp[["npoints"]]
+  heightFactor=ggp[["heightFactor"]]
+  npoints <- ggp[["npoints"]]
+  distPerPoint=ggp[["distPerPoint"]]
+  yPowerTop <- ggp[["ymin"]]
+  ymin <- yPowerTop - heightItem(scale=heightFactor)
+  # column width vectors sum to 13 in bar functionsd
+  powerLegendWidth <- hrCadLegendWidth(npoints,distPerPoint,minNumPoints)
+  drawpts <- stats::approx(xvar,power,n=npoints)
+  xvardraw <- drawpts[[1]]*(xend/max(drawpts[[1]]))
+  xvardraw[xvardraw>distPerPoint*npoints] <- distPerPoint*npoints
+  xvardraw[xvardraw<0] <- 0
+  powerdraw <- drawpts[[2]]
+  g <- g +
+    geom_blank()
+  g <- continuous_bar(g,legendtext="Watts",xvar=xvardraw,vals=powerdraw,
+                      lowval=powerLow,hival=powerHigh,
+                      lowcolor=powerColorLow,hicolor=powerColorHigh,
+                      legendwidth=powerLegendWidth,y.bottom=ymin,
                       band.height=height("band",heightFactor),
                       label.height=height("label",heightFactor),
                       gap.height=height("gap",heightFactor),showlegend)

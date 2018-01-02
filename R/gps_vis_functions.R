@@ -154,17 +154,20 @@ verticalMult <- function(dist,imperial) {
                         (miles-distbends[which(distbends>miles)[1]-1]) )
   return(vm)
 }
-heightWith <- function(hrDistance,cadDistance,hrTime,
-                       cadTime,headerTime,totalCall=FALSE,scale) {
+heightWith <- function(hrDistance,cadDistance,powerDistance,
+                       hrTime,cadTime,powerTime,
+                       headerTime,totalCall=FALSE,scale) {
   itemH <- heightItem(scale)
   headerH <- 2*height("axis",scale) + height("connector",scale)
   axisH <- height("axis",scale)
   return( ifelse((!headerTime)&totalCall,axisH,0) +
             ifelse(hrDistance,itemH,0) +
             ifelse(cadDistance,itemH,0) +
+            ifelse(powerDistance,itemH,0) +
             ifelse(headerTime,headerH,0) +
             ifelse(hrTime,itemH,0) +
-            ifelse(cadTime,itemH,0)
+            ifelse(cadTime,itemH,0) +
+            ifelse(powerTime,itemH,0)
   )
 }
 heightItem <- function(scale) {

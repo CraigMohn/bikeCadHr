@@ -340,16 +340,18 @@ plot_elev_profile_plus <- function(track,summary,savefn,title="Ride",
 #' @param elevationShape shape to use for drawing the elevation plot
 #' @param hrDistance display HR data scaled by distance if available
 #' @param cadDistance display cadence data scaled by distance if available
+#' @param powerDistance display power data scaled by distance if available
 #' @param hrTime display HR data scaled by time if available
 #' @param cadTime display cadence data scaled by time if available
+#' @param powerTime display power data scaled by time if available
 #' @param showStops draw row with short and long stops on distance axis
 #' @param showTime draw time axis even if no HR/cad data
 #' @param showSummary display summary results if supplied
 #' @param cadCont display cadence as a continuos color map
 #' @param hrLow heartrates below this are same color
 #' @param hrHigh heartrates above this are same color
-#' @param hrColorLow set color for hr.low and lower
-#' @param hrColorHigh set color for hr.highand higher
+#' @param hrColorLow set color for hrLow and lower
+#' @param hrColorHigh set color for hrHigh and higher
 #'    colors are from same palette as speeds, number is the speed corresponding
 #'    to the desired limit on the range of heartrates
 #' @param cadLow low cadence limit
@@ -358,9 +360,13 @@ plot_elev_profile_plus <- function(track,summary,savefn,title="Ride",
 #'    lower cadences are displayed as same color
 #' @param cadContHigh upper cadence limit for continuous color, all
 #'    higher cadences are displayed as same color
-#' @param cadColorLow set color for cadence at cad.low or below
+#' @param cadColorLow set color for cadence at cadLow or below
 #' @param cadColorMid set color for cadence above low but below target
 #' @param cadColorHigh set color for cadence above target
+#' @param powerLow power outputs below this are same color
+#' @param powerHigh power outputs above this are same color
+#' @param powerColorLow set color for powerLow and lower
+#' @param powerColorHigh set color for powerHigh and higher
 #' @param hrSmoothBW bandwidth (in seconds) for smoothing kernel
 #'    for heartrate data
 #' @param hrSmoothNN number of points (on each side) to use in smoothing
@@ -369,36 +375,47 @@ plot_elev_profile_plus <- function(track,summary,savefn,title="Ride",
 #'    for cadence data
 #' @param cadSmoothNN number of points (on each side) to use in
 #'    smoothing kernel for cadence data
+#' @param powerSmoothBW bandwidth (in seconds) for smoothing kernel
+#'    for power data
+#' @param powerSmoothNN number of points (on each side) to use in smoothing
+#'    for power data
 #' @param minNumPoints pad out the plot on the right if too short
 #' @param imperial use mi and ft instead of km and m
 #'
 #' @return a ggplot object
 #'
 #' @export
-plot_profile <- function(track,summary,savefn,title="Ride starting ",palette="plasma",
-                                  verticalMultiplier=NA,ppm=NA,
-                                  elevationShape=46,
-                                  hrDistance=TRUE,cadDistance=TRUE,
-                                  hrTime=TRUE,cadTime=TRUE,
-                                  showTime=TRUE,showSummary=TRUE,
-                                  showStops=TRUE,
-                                  hrLow=100,hrHigh=170,
-                                  hrColorLow=9,hrColorHigh=31,
-                                  cadLow=65,cadTarget=88,
-                                  cadCont=TRUE,cadContLow=60,cadContHigh=100,
-                                  cadColorLow=3,cadColorMid=9,cadColorHigh=15,
-                                  hrSmoothBW=6,hrSmoothNN=5,
-                                  cadSmoothBW=20,cadSmoothNN=15,
-                                  minNumPoints=3000,
-                                  imperial=TRUE) {
+plot_profile <- function(track,summary,savefn,title="Ride starting ",
+                         palette="plasma",
+                         verticalMultiplier=NA,ppm=NA,
+                         elevationShape=46,
+                         hrDistance=TRUE,cadDistance=TRUE,powerDistance=TRUE,
+                         hrTime=TRUE,cadTime=TRUE,powerTime=TRUE,
+                         showTime=TRUE,showSummary=TRUE,
+                         showStops=TRUE,
+                         hrLow=100,hrHigh=170,
+                         hrColorLow=9,hrColorHigh=31,
+                         cadLow=65,cadTarget=88,
+                         cadCont=TRUE,cadContLow=60,cadContHigh=100,
+                         cadColorLow=3,cadColorMid=9,cadColorHigh=15,
+                         powerLow=100,powerHigh=500,
+                         powerColorLow=5,powerColorHigh=40,
+                         hrSmoothBW=6,hrSmoothNN=5,
+                         cadSmoothBW=20,cadSmoothNN=15,
+                         powerSmoothBW=20,powerSmoothNN=20,
+                         minNumPoints=3000,
+                         imperial=TRUE) {
   ##  what will we add below the profile
   cadDistance <- cadDistance & any(!is.na(track$cadence.rpm))
   hrDistance <- hrDistance & any(!is.na(track$heart_rate.bpm))
+  powerDistance <- powerDistance & any(!is.na(track$power.watts))
   cadTime <- cadTime & any(!is.na(track$cadence.rpm))
   hrTime <- hrTime & any(!is.na(track$heart_rate.bpm))
-  showTime <- showTime | hrTime | cadTime
+  powerTime <- powerTime & any(!is.na(track$power.watts))
+  showTime <- showTime | hrTime | cadTime | powerTime
   showHr <- hrDistance | hrTime
   showCad <- cadDistance | cadTime
+  showPower <- powerDistance | powerTime
 
   ##  set up numeric time (in seconds) and smoothed variables
   walltime <- as.numeric(difftime(track$timestamp.s,track$timestamp.s[1],
@@ -414,8 +431,8 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",palette="pl
   elevsm <- smoothData(yvec=track$altitude.m,xvar=distance,
                        bw=10,nneighbors=3,kernel="epanechnikov")
   if (showCad) {
-    cadzero <- track$cadence == 0
-    cadna <- is.na(track$cadence)
+    cadzero <- track$cadence.rpm == 0
+    cadna <- is.na(track$cadence.rpm)
     cadencetemp <- track$cadence.rpm
     cadencetemp[cadzero] <- NA
     cadencesm <- smoothDataSegments(yvec=cadencetemp,xvar=walltime,
@@ -434,6 +451,20 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",palette="pl
                                kernel="epanechnikov")
   } else {
     hrsm <- rep(NA,length(walltime))
+  }
+  if (showPower) {
+    powzero <- track$power.watts == 0
+    powna <- is.na(track$power.watts)
+    powertemp <- track$power.watts
+    powertemp[powzero] <- NA
+    powersm <- smoothDataSegments(yvec=powertemp,xvar=walltime,
+                                    segment=track$segment,
+                                    bw=powerSmoothBW,nneighbors=powerSmoothNN,
+                                    kernel="epanechnikov")
+    powersm[powzero] <- NA
+    powersm[powna] <- NA
+  } else {
+    powersm <- rep(NA,length(walltime))
   }
   speedsm <- smoothDataSegments(yvec=track$speed.m.s,xvar=walltime,
                                 segment=track$segment,
@@ -459,9 +490,9 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",palette="pl
                         distPerPoint,palette,
                         vertMult=verticalMultiplier,
                         npoints,minNumPoints,
-                        elevationShape,
-                        imperial,hrDistance,cadDistance,
-                        hrTime,cadTime,showTime)
+                        elevationShape,imperial,
+                        hrDistance,cadDistance,powerDistance,
+                        hrTime,cadTime,powerTime,showTime)
   if (showSummary & !missing(summary))
     grlist <- drawSummary(grlist,summary,title)
 
@@ -469,8 +500,6 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",palette="pl
     grlist <- drawXAxis(grlist,segment=track$segment,
                         walltime,distance,showStops,distPerPoint,
                         imperial=imperial,underLine=TRUE)
-#  } else {
-#    grlist[["ymin"]] <- grlist[["ymin"]] - 20
   }
   if (cadDistance) grlist <- drawCadence(grlist,cadencesm,distance,
                                          segment=track$segment,
@@ -483,6 +512,12 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",palette="pl
                                    segment=track$segment,
                                    hrLow,hrHigh,
                                    hrColorLow,hrColorHigh,
+                                   minNumPoints,showlegend=TRUE)
+
+  if (powerDistance) grlist <- drawPower(grlist,powersm,distance,
+                                   segment=track$segment,
+                                   powerLow,powerHigh,
+                                   powerColorLow,powerColorHigh,
                                    minNumPoints,showlegend=TRUE)
 
   if (showTime) {
@@ -506,6 +541,13 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",palette="pl
                                hrLow,hrHigh,
                                hrColorLow,hrColorHigh,
                                minNumPoints,showlegend=!hrDistance)
+
+  if (powerTime) grlist <- drawPower(grlist,powersm,walltime,
+                                         segment=track$segment,
+                                         powerLow,powerHigh,
+                                         powerColorLow,powerColorHigh,
+                                         minNumPoints,showlegend=!powerDistance)
+
 
 
 #  this is key to having text being kept at an appropriate size.

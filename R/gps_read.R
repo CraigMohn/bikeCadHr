@@ -197,7 +197,8 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
   }
   if (any(is.na(trackdata$distance.m))) {
     no.dist.segnums <- unique(trackdata$segment[is.na(trackdata$distance.m)])
-    segs.dropped <- setdiff(no.dist.segnums,unique(trackdata$segment[!is.na(trackdata$distance.m)]))
+    segs.dropped <- setdiff(no.dist.segnums,
+                            unique(trackdata$segment[!is.na(trackdata$distance.m)]))
     if (length(segs.dropped)>0){
       first.seg <- trackdata$segment != lag_one(trackdata$segment)
       first.nodist <- first.seg & trackdata$segment %in% segs.dropped
@@ -207,10 +208,11 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
     trackdata <- trackdata[!is.na(trackdata$distance.m),]
   }
 
-  # remove really, really long intervals between points
+  # split really, really long intervals between points
   first.seg <- trackdata$segment != lag_one(trackdata$segment)
-  long.interval <-  as.numeric(difftime(trackdata$timestamp.s,lag_one(trackdata$timestamp.s),units="secs")) > max.interval.time &
-                             !first.seg
+  long.interval <-  as.numeric(difftime(trackdata$timestamp.s,lag_one(trackdata$timestamp.s),units="secs")) >
+                        max.interval.time &
+                    !first.seg
   if (sum(long.interval)>0) {
     trackdata$segment <- trackdata$segment + cumsum(long.interval)
   }

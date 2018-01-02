@@ -24,18 +24,6 @@ lead_n <- function(vec,n) {
     return(vec<-NA)
   }
 }
-smoothEpanechnikov <- function(t,x,segment,nneighbors=5,bw=5) {
-  if (missing(segment)) segment <- rep(1,length(t))
-  return(smoothDataSegments(yvec=x,xvar=t,segment=segment,
-                            bw=bw,nneighbors=nneighbors,
-                            kernel="epanechnikov"))
-}
-smoothTriangular <- function(t,x,segment,nneighbors=5,bw=5) {
-  if (missing(segment)) segment <- rep(1,length(t))
-  return(smoothDataSegments(yvec=x,xvar=t,segment=segment,
-                            bw=bw,nneighbors=nneighbors,
-                            kernel="triangular"))
-}
 smoothDataSegments <- function(yvec,xvar,segment,
                                bw,nneighbors=10,kernel="epanechnikov") {
   if (!is.vector(xvar)) stop("smoothDataSegments needs xvar as vector")

@@ -8,12 +8,15 @@
 plot_profile(track, summary, savefn, title = "Ride starting ",
   palette = "plasma", verticalMultiplier = NA, ppm = NA,
   elevationShape = 46, hrDistance = TRUE, cadDistance = TRUE,
-  hrTime = TRUE, cadTime = TRUE, showTime = TRUE, showSummary = TRUE,
-  showStops = TRUE, hrLow = 100, hrHigh = 170, hrColorLow = 9,
-  hrColorHigh = 31, cadLow = 65, cadTarget = 88, cadCont = TRUE,
-  cadContLow = 60, cadContHigh = 100, cadColorLow = 3, cadColorMid = 9,
-  cadColorHigh = 15, hrSmoothBW = 6, hrSmoothNN = 5, cadSmoothBW = 20,
-  cadSmoothNN = 15, minNumPoints = 3000, imperial = TRUE)
+  powerDistance = TRUE, hrTime = TRUE, cadTime = TRUE, powerTime = TRUE,
+  showTime = TRUE, showSummary = TRUE, showStops = TRUE, hrLow = 100,
+  hrHigh = 170, hrColorLow = 9, hrColorHigh = 31, cadLow = 65,
+  cadTarget = 88, cadCont = TRUE, cadContLow = 60, cadContHigh = 100,
+  cadColorLow = 3, cadColorMid = 9, cadColorHigh = 15, powerLow = 100,
+  powerHigh = 500, powerColorLow = 5, powerColorHigh = 40,
+  hrSmoothBW = 6, hrSmoothNN = 5, cadSmoothBW = 20, cadSmoothNN = 15,
+  powerSmoothBW = 20, powerSmoothNN = 20, minNumPoints = 3000,
+  imperial = TRUE)
 }
 \arguments{
 \item{track}{data frame or tibble containing track details including
@@ -41,9 +44,13 @@ ranges from 25 to 60 depending on the length being plotted}
 
 \item{cadDistance}{display cadence data scaled by distance if available}
 
+\item{powerDistance}{display power data scaled by distance if available}
+
 \item{hrTime}{display HR data scaled by time if available}
 
 \item{cadTime}{display cadence data scaled by time if available}
+
+\item{powerTime}{display power data scaled by time if available}
 
 \item{showTime}{draw time axis even if no HR/cad data}
 
@@ -55,9 +62,9 @@ ranges from 25 to 60 depending on the length being plotted}
 
 \item{hrHigh}{heartrates above this are same color}
 
-\item{hrColorLow}{set color for hr.low and lower}
+\item{hrColorLow}{set color for hrLow and lower}
 
-\item{hrColorHigh}{set color for hr.highand higher
+\item{hrColorHigh}{set color for hrHigh and higher
 colors are from same palette as speeds, number is the speed corresponding
 to the desired limit on the range of heartrates}
 
@@ -73,11 +80,19 @@ lower cadences are displayed as same color}
 \item{cadContHigh}{upper cadence limit for continuous color, all
 higher cadences are displayed as same color}
 
-\item{cadColorLow}{set color for cadence at cad.low or below}
+\item{cadColorLow}{set color for cadence at cadLow or below}
 
 \item{cadColorMid}{set color for cadence above low but below target}
 
 \item{cadColorHigh}{set color for cadence above target}
+
+\item{powerLow}{power outputs below this are same color}
+
+\item{powerHigh}{power outputs above this are same color}
+
+\item{powerColorLow}{set color for powerLow and lower}
+
+\item{powerColorHigh}{set color for powerHigh and higher}
 
 \item{hrSmoothBW}{bandwidth (in seconds) for smoothing kernel
 for heartrate data}
@@ -90,6 +105,12 @@ for cadence data}
 
 \item{cadSmoothNN}{number of points (on each side) to use in
 smoothing kernel for cadence data}
+
+\item{powerSmoothBW}{bandwidth (in seconds) for smoothing kernel
+for power data}
+
+\item{powerSmoothNN}{number of points (on each side) to use in smoothing
+for power data}
 
 \item{minNumPoints}{pad out the plot on the right if too short}
 
