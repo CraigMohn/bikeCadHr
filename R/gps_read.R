@@ -108,7 +108,7 @@ read_ridefiles <- function(ridefilevec,cores=4,...)  {
 #'    share of the largest peak density
 #' @param grade.smooth.window number of observations on each side used for
 #'    calculating kernel smoothed elevation for the grade calculation
-#' @param grade.smooth.bw bandwidth for kernel smoothing of elevation
+#' @param grade.smooth.bw bandwidth (meters distance) for kernel smoothing of elevation
 #'    in the grade calculation
 #' @param grade.smooth.percentiles percentiles of elevations to use
 #'    as steepest grades
@@ -135,7 +135,7 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
           cadence.correct.errors=TRUE,cadence.correct.nas=FALSE,
           gr.bound=NULL,gr.bound2=NULL,gr.low=0.0378,gr.high=0.1855,gr.peak.m=5,gr.nlowgear=1,
           gr.kernel="epanechnikov",gr.adjust=0.02,gr.density.threshold=0.05,
-          grade.smooth.window=7,grade.smooth.bw=3,
+          grade.smooth.window=7,grade.smooth.bw=10,
           grade.smooth.percentiles=c(0.005,.98))  {
 
   cat(paste0("\nreading: ",ridefile))
@@ -302,7 +302,10 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
   trackdeltaelev <- trackdata$altitude.m - lag_one(trackdata$altitude.m)
   trackdeltadistance <- trackdata$distance.m - lag_one(trackdata$distance.m)
   time.from.start <- cumsum(trackdeltatime)
-  elev.smoothed <- smoothTriangular(time.from.start,trackdata$altitude.m,segment=trackdata$segment,nneighbors=grade.smooth.window,bw=grade.smooth.bw)
+  elev.smoothed <- smoothEpanechnikov(trackdata$distance.m,trackdata$altitude.m,
+                                      segment=trackdata$segment,
+                                      nneighbors=grade.smooth.window,
+                                      bw=grade.smooth.bw)
   deltaelev.smoothed <- elev.smoothed - lag_one(elev.smoothed)
   trackgrade <- deltaelev.smoothed/trackdeltadistance
   trackgrade[trackdeltadistance<1] <- NA

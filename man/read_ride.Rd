@@ -17,7 +17,7 @@ read_ride(ridefile, tz = "America/Los_Angeles",
   gr.bound = NULL, gr.bound2 = NULL, gr.low = 0.0378, gr.high = 0.1855,
   gr.peak.m = 5, gr.nlowgear = 1, gr.kernel = "epanechnikov",
   gr.adjust = 0.02, gr.density.threshold = 0.05, grade.smooth.window = 7,
-  grade.smooth.bw = 3, grade.smooth.percentiles = c(0.005, 0.98))
+  grade.smooth.bw = 10, grade.smooth.percentiles = c(0.005, 0.98))
 }
 \arguments{
 \item{ridefile}{a filenames (.fit or .gpx extension) to process}
@@ -98,7 +98,7 @@ share of the largest peak density}
 \item{grade.smooth.window}{number of observations on each side used for
 calculating kernel smoothed elevation for the grade calculation}
 
-\item{grade.smooth.bw}{bandwidth for kernel smoothing of elevation
+\item{grade.smooth.bw}{bandwidth (meters distance) for kernel smoothing of elevation
 in the grade calculation}
 
 \item{grade.smooth.percentiles}{percentiles of elevations to use

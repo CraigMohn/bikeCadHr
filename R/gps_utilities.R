@@ -25,47 +25,76 @@ lead_n <- function(vec,n) {
   }
 }
 smoothEpanechnikov <- function(t,x,segment,nneighbors=5,bw=5) {
-  #  ignore the 3/4 scale factor, since we are using the kernel for weighting numerator and denominator
-  if (missing(segment)) segment <- rep(1,length(x))
-  xpresent <- as.numeric(!is.na(x))
-  num <- xpresent*x
-  den <- xpresent
-  t <- as.numeric(t)
-  for (i in 1:nneighbors) {
-    twt <- 1.0-((lead_n(t,i)-t)/bw)*((lead_n(t,i)-t)/bw)
-    twt[is.na(twt)] <- 0
-    y <- lead_n(x,i)
-    y[segment != lead_n(segment,i)] <- NA
-    num[!is.na(y)&(twt>0)] <- num[!is.na(y)&(twt>0)] + twt[!is.na(y)&(twt>0)]*y[!is.na(y)&(twt>0)]
-    den[!is.na(y)&(twt>0)] <- den[!is.na(y)&(twt>0)] + twt[!is.na(y)&(twt>0)]
-    twt <- 1.0-((lag_n(t,i)-t)/bw)*((lag_n(t,i)-t)/bw)
-    twt[is.na(twt)] <- 0
-    y <- lag_n(x,i)
-    y[segment != lag_n(segment,i)] <- NA
-    num[!is.na(y)&(twt>0)] <- num[!is.na(y)&(twt>0)] + twt[!is.na(y)&(twt>0)]*x[!is.na(y)&(twt>0)]
-    den[!is.na(y)&(twt>0)] <- den[!is.na(y)&(twt>0)] + twt[!is.na(y)&(twt>0)]
-  }
-  return(num/den)  # if only NAs in neighbors, return NA
+  if (missing(segment)) segment <- rep(1,length(t))
+  return(smoothDataSegments(yvec=x,xvar=t,segment=segment,
+                            bw=bw,nneighbors=nneighbors,
+                            kernel="epanechnikov"))
 }
 smoothTriangular <- function(t,x,segment,nneighbors=5,bw=5) {
-  #  ignore the scale factor, since we are using the kernel for weighting numerator and denominator
-  if (missing(segment)) segment <- rep(1,length(x))
-  xpresent <- as.numeric(!is.na(x))
-  num <- xpresent*x
-  den <- xpresent
-  t <- as.numeric(t)
+  if (missing(segment)) segment <- rep(1,length(t))
+  return(smoothDataSegments(yvec=x,xvar=t,segment=segment,
+                            bw=bw,nneighbors=nneighbors,
+                            kernel="triangular"))
+}
+smoothDataSegments <- function(yvec,xvar,segment,
+                               bw,nneighbors=10,kernel="epanechnikov") {
+  if (!is.vector(xvar)) stop("smoothDataSegments needs xvar as vector")
+  if (missing(segment)) segment <- rep(1,length(xvar))
+  if (length(xvar)!=length(segment))
+    stop("smoothDataSegments needs segment and xvar same length")
+
+  xret <- vector("numeric",length(xvar))
+  xret <- NA  #  if anything goes wrong return garbage
+  for (seg in unique(segment)) {
+    inseg <- segment == seg
+    if (sum(inseg)>1) {
+      xret[inseg] <- smoothData(yvec=yvec[inseg],xvar=xvar[inseg],
+                                bw=bw,nneighbors=nneighbors,
+                                kernel=kernel)
+    } else {
+      xret[inseg] <- x[inseg]
+    }
+  }
+  return(xret)
+
+}
+smoothData <- function(yvec,xvar,bw,nneighbors=10,kernel="epanechnikov") {
+  if (!is.vector(xvar)) stop("smoothData needs xvar as vector")
+  if (!is.vector(yvec)) stop("smoothData needs yvec as vector")
+  if (length(xvar)==0) stop("smoothData needs some points")
+  if (length(yvec)!=length(xvar)) stop("smoothData needs xvar and yvec same length")
+  #  ignore the scale factor, since we are using the kernel for weighting
+  #            numerator and denominator
+  #  note this function fills in missing values with approximation
+  if (!(is.vector(yvec) & is.vector(xvar) & length(yvec)==length(xvar)))
+    stop("need 2 vectors of same length in smoothData")
+  ypresent <- as.numeric(!is.na(yvec))
+  num <- ypresent*yvec
+  den <- ypresent
+  xvar <- as.numeric(xvar)
   for (i in 1:nneighbors) {
-    twt <- 1.0-((lead_n(t,i)-t)/bw)
+    if (kernel == "triangular") {
+      twt <- 1.0-((lead_n(xvar,i)-xvar)/bw)
+    } else if (kernel == "epanechnikov") {
+      twt <- 1.0-((lead_n(xvar,i)-xvar)/bw)*((lead_n(xvar,i)-xvar)/bw)
+    } else {
+      stop("invalid kernel")
+    }
     twt[is.na(twt)] <- 0
-    y <- lead_n(x,i)
-    y[segment != lead_n(segment,i)] <- NA
+    y <- lead_n(yvec,i)
     num[!is.na(y)&(twt>0)] <- num[!is.na(y)&(twt>0)] + twt[!is.na(y)&(twt>0)]*y[!is.na(y)&(twt>0)]
     den[!is.na(y)&(twt>0)] <- den[!is.na(y)&(twt>0)] + twt[!is.na(y)&(twt>0)]
-    twt <- 1.0-((lag_n(t,i)-t)/bw)*((lag_n(t,i)-t)/bw)
+
+    if (kernel == "triangular") {
+      twt <- 1.0-((lag_n(xvar,i)-xvar)/bw)
+    } else if (kernel == "epanechnikov") {
+      twt <- 1.0-((lag_n(xvar,i)-xvar)/bw)*((lag_n(xvar,i)-xvar)/bw)
+    } else {
+      stop("invalid kernel")
+    }
     twt[is.na(twt)] <- 0
-    y <- lag_n(x,i)
-    y[segment != lag_n(segment,i)] <- NA
-    num[!is.na(y)&(twt>0)] <- num[!is.na(y)&(twt>0)] + twt[!is.na(y)&(twt>0)]*x[!is.na(y)&(twt>0)]
+    y <- lag_n(yvec,i)
+    num[!is.na(y)&(twt>0)] <- num[!is.na(y)&(twt>0)] + twt[!is.na(y)&(twt>0)]*y[!is.na(y)&(twt>0)]
     den[!is.na(y)&(twt>0)] <- den[!is.na(y)&(twt>0)] + twt[!is.na(y)&(twt>0)]
   }
   return(num/den)  # if only NAs in neighbors, return NA
