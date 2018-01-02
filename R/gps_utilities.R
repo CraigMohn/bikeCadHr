@@ -62,7 +62,8 @@ smoothData <- function(yvec,xvar,bw,nneighbors=10,kernel="epanechnikov") {
   if (!is.vector(xvar)) stop("smoothData needs xvar as vector")
   if (!is.vector(yvec)) stop("smoothData needs yvec as vector")
   if (length(xvar)==0) stop("smoothData needs some points")
-  if (length(yvec)!=length(xvar)) stop("smoothData needs xvar and yvec same length")
+  if (length(yvec)!=length(xvar))
+    stop("smoothData needs xvar and yvec same length")
   #  ignore the scale factor, since we are using the kernel for weighting
   #            numerator and denominator
   #  note this function fills in missing values with approximation
@@ -82,8 +83,10 @@ smoothData <- function(yvec,xvar,bw,nneighbors=10,kernel="epanechnikov") {
     }
     twt[is.na(twt)] <- 0
     y <- lead_n(yvec,i)
-    num[!is.na(y)&(twt>0)] <- num[!is.na(y)&(twt>0)] + twt[!is.na(y)&(twt>0)]*y[!is.na(y)&(twt>0)]
-    den[!is.na(y)&(twt>0)] <- den[!is.na(y)&(twt>0)] + twt[!is.na(y)&(twt>0)]
+    num[!is.na(y)&(twt>0)] <-
+      num[!is.na(y)&(twt>0)] + twt[!is.na(y)&(twt>0)]*y[!is.na(y)&(twt>0)]
+    den[!is.na(y)&(twt>0)] <-
+      den[!is.na(y)&(twt>0)] + twt[!is.na(y)&(twt>0)]
 
     if (kernel == "triangular") {
       twt <- 1.0-((lag_n(xvar,i)-xvar)/bw)
@@ -94,13 +97,16 @@ smoothData <- function(yvec,xvar,bw,nneighbors=10,kernel="epanechnikov") {
     }
     twt[is.na(twt)] <- 0
     y <- lag_n(yvec,i)
-    num[!is.na(y)&(twt>0)] <- num[!is.na(y)&(twt>0)] + twt[!is.na(y)&(twt>0)]*y[!is.na(y)&(twt>0)]
-    den[!is.na(y)&(twt>0)] <- den[!is.na(y)&(twt>0)] + twt[!is.na(y)&(twt>0)]
+    num[!is.na(y)&(twt>0)] <-
+      num[!is.na(y)&(twt>0)] + twt[!is.na(y)&(twt>0)]*y[!is.na(y)&(twt>0)]
+    den[!is.na(y)&(twt>0)] <-
+      den[!is.na(y)&(twt>0)] + twt[!is.na(y)&(twt>0)]
   }
   return(num/den)  # if only NAs in neighbors, return NA
 }
 dateTimeStr <- function(intDate,intTime) {
-  return(paste0(stringr::str_pad(intDate,8,pad="0"),stringr::str_pad(intTime,6,pad="0")))
+  return(paste0(stringr::str_pad(intDate,8,pad="0"),
+                stringr::str_pad(intTime,6,pad="0")))
 }
 #  this was lifted from stack overflow - credit author
 find_peaks <- function (x, m = 3){
@@ -110,7 +116,7 @@ find_peaks <- function (x, m = 3){
     z <- ifelse(z > 0, z, 1)
     w <- i + m + 1
     w <- ifelse(w < length(x), w, length(x))
-    if(all(x[c(z : i, (i + 2) : w)] <= x[i + 1])) return(i + 1) else return(numeric(0))
+    if(all(x[c(z:i,(i+2):w)] <= x[i+1])) return(i+1) else return(numeric(0))
   })
   pks <- unlist(pks)
   pks

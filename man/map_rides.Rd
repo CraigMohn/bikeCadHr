@@ -76,9 +76,9 @@ values will give more compression but also more degradation of the image}
 }
 \details{
 Create a map displaying the tracks specified.  Tracks may be drawn all in one
-    specified color, with each separate track drawn in a different color from
-    a specified palette, or as a series of closely spaced dots (which may
-    be prodded into appearing as a line through judicious choice of point
-    size and alpha) with the color varying based on speed and the chosen
-    palette.
+  specified color, with each separate track drawn in a different color from
+  a specified palette, or as a series of closely spaced dots (which may
+  be prodded into appearing as a line through judicious choice of point
+  size and alpha) with the color varying based on speed and the chosen
+  palette.
 }

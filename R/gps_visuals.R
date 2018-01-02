@@ -4,11 +4,11 @@
 #'   dots to indicate speed
 #'
 #' Create a map displaying the tracks specified.  Tracks may be drawn all in one
-#'     specified color, with each separate track drawn in a different color from
-#'     a specified palette, or as a series of closely spaced dots (which may
-#'     be prodded into appearing as a line through judicious choice of point
-#'     size and alpha) with the color varying based on speed and the chosen
-#'     palette.
+#'   specified color, with each separate track drawn in a different color from
+#'   a specified palette, or as a series of closely spaced dots (which may
+#'   be prodded into appearing as a line through judicious choice of point
+#'   size and alpha) with the color varying based on speed and the chosen
+#'   palette.
 #'
 #' @param geodf data frame or tibble containing at least: position_lat.dd,
 #'    position_lon.dd,(or lat,lon)(both numeric,decimal degrees),
@@ -409,6 +409,8 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",palette="pl
   else {
     distance <- kmFromMeters(track$distance.m)
   }
+  #  note that may be multiple records at same distance.  smoothing
+  #    algorithm will weight equally.
   elevsm <- smoothData(yvec=track$altitude.m,xvar=distance,
                        bw=10,nneighbors=3,kernel="epanechnikov")
   if (showCad) {
