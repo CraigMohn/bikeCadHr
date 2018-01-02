@@ -399,29 +399,49 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",palette="pl
   showTime <- showTime | hrTime | cadTime
   showHr <- hrDistance | hrTime
   showCad <- cadDistance | cadTime
-  ##  set up time and smoothed variables
+
+  ##  set up numeric time (in seconds) and smoothed variables
   walltime <- as.numeric(difftime(track$timestamp.s,track$timestamp.s[1],
                                   units="secs"))
-  elevsm <- smoothTriangular(walltime,track$altitude.m,
-                             nneighbors=2,bw=5)
-  speedsm <- smoothTriangular(walltime,
-    (lead_one(lead_one(track$distance.m))-lag_one(lag_one(track$distance.m))) /
-      (lead_one(lead_one(walltime))-lag_one(lag_one(walltime))),
-    nneighbors=2,bw=5)
-  if (showCad) cadencesm <- cadenceSmooth(walltime,track$cadence.rpm,
-                                           track$segment,
-                                           cadSmoothNN,cadSmoothBW)
-  if (showHr) hrsm <- smoothEpanechnikov(walltime,track$heart_rate.bpm,
-                                         track$segment,
-                                         nneighbors=hrSmoothNN,bw=hrSmoothBW)
-
   if (imperial) {
     distance  <- milesFromMeters(track$distance.m)
+  }
+  else {
+    distance <- kmFromMeters(track$distance.m)
+  }
+  elevsm <- smoothData(yvec=track$altitude.m,xvar=distance,
+                       bw=10,nneighbors=3,kernel="epanechnikov")
+  if (showCad) {
+    cadzero <- track$cadence == 0
+    cadna <- is.na(track$cadence)
+    cadencetemp <- track$cadence.rpm
+    cadencetemp[cadzero] <- NA
+    cadencesm <- smoothDataSegments(yvec=cadencetemp,xvar=walltime,
+                                    segment=track$segment,
+                                    bw=cadSmoothBW,nneighbors=cadSmoothNN,
+                                    kernel="triangular")
+    cadencesm[cadzero] <- 0.0
+    cadencesm[cadna] <- NA
+  } else {
+    cadencesm <- rep(NA,length(walltime))
+  }
+  if (showHr) {
+    hrsm <- smoothDataSegments(yvec=track$heart_rate.bpm,xvar=walltime,
+                               segment=track$segment,
+                               bw=hrSmoothBW,nneighbors=hrSmoothNN,
+                               kernel="epanechnikov")
+  } else {
+    hrsm <- rep(NA,length(walltime))
+  }
+  speedsm <- smoothDataSegments(yvec=track$speed.m.s,xvar=walltime,
+                                segment=track$segment,
+                                bw=2,nneighbors=2,
+                                kernel="epanechnikov")
+  if (imperial) {
     elevsm <- feetFromMeters(elevsm)
     speedsm <- milesFromMeters(speedsm)*3600
   }
   else {
-    distance <- kmFromMeters(track$distance.m)
     speedsm <- kmFromMeters(speedsm)*3600
   }
   dist <- distance[length(distance)]

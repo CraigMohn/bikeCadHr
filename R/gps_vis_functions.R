@@ -182,15 +182,6 @@ height <- function(what,scale) {
   else if (what=="summary") return(180/scale)
   else return(NA)
 }
-cadenceSmooth <- function(timevec,cadencevec,segment,cadSmoothNN,cadSmoothBW) {
-
-  temp <- cadencevec
-  temp[temp==0] <- NA  # don't move zeros
-  cadence <- smoothTriangular(timevec,temp,segment,
-                              nneighbors=cadSmoothNN,bw=cadSmoothBW)
-  cadence[is.na(cadence)] <- 0
-  return(cadence)
-}
 milesFromMeters <- function(meters) {
   return(meters/1609.34)
 }
