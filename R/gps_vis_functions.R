@@ -118,6 +118,35 @@ discrete_bar <- function(g,legendtext,xvar,vals,lowval,hival,
               hjust=hjust.legend),size=2,fontface="italic")
   return(g)
 }
+# wrapper for approx to leave between segment data missing after rescaling
+approxSegments <- function(xvar,yvar,segment,npoints) {
+  if (!is.vector(xvar) | !is.vector(yvar) | !is.vector(segment))
+    stop("approxSegments needs 3 vectors")
+  if (length(xvar) != length(yvar))
+    stop("approxSegments needs equal length xvar and yvar")
+  if (length(xvar) != length(segment))
+    stop("approxSegments needs a segment for every x,y pair")
+
+  xout <- seq(from=xvar[1], to=xvar[length(xvar)], length.out=npoints)
+  yout <- rep(NA,npoints)
+
+  #  xvar is the independent variable, and is increasing (as is segment)
+  #  ignore middle points in sequence of xvar with the same value
+  #  average the non missing values y at these points
+  xdrop <- (xvar==lag_n(xvar,1)) & (xvar==lead_n(xvar,1))
+  xvar <- xvar[!xdrop]
+  yvar <- yvar[!xdrop]
+  segment <- segment[!xdrop]
+
+  for (seg in unique(segment)) {
+    if (sum(!is.na(yvar[segment==seg])) >= 2) {
+      yseg <- stats::approx(xvar[segment==seg],yvar[segment==seg],
+                            xout=xout,method="linear",rule=1)[[2]]
+      yout <- rowMeans(cbind(yseg,yout),na.rm=TRUE)
+    }
+  }
+  return(list("xout"=xout,"yout"=yout))
+}
 #  return hr/cad legend width
 hrCadLegendWidth <- function(npoints,distPerPoint,minNumPoints) {
   return( distPerPoint*min(npoints,2000)/13 )

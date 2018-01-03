@@ -10,12 +10,12 @@ plot_profile(track, summary, savefn, title = "Ride starting ",
   elevationShape = 46, hrDistance = TRUE, cadDistance = TRUE,
   powerDistance = TRUE, hrTime = TRUE, cadTime = TRUE, powerTime = TRUE,
   showTime = TRUE, showSummary = TRUE, showStops = TRUE, hrLow = 100,
-  hrHigh = 170, hrColorLow = 9, hrColorHigh = 31, cadLow = 65,
+  hrHigh = 170, hrColorLow = 11, hrColorHigh = 26, cadLow = 65,
   cadTarget = 88, cadCont = TRUE, cadContLow = 60, cadContHigh = 100,
-  cadColorLow = 3, cadColorMid = 9, cadColorHigh = 15, powerLow = 100,
-  powerHigh = 500, powerColorLow = 5, powerColorHigh = 40,
+  cadColorLow = 3, cadColorMid = 9, cadColorHigh = 15, powerLow = 75,
+  powerHigh = 400, powerColorLow = 3, powerColorHigh = 35,
   hrSmoothBW = 6, hrSmoothNN = 5, cadSmoothBW = 20, cadSmoothNN = 15,
-  powerSmoothBW = 20, powerSmoothNN = 20, minNumPoints = 3000,
+  powerSmoothBW = 30, powerSmoothNN = 30, minNumPoints = 3000,
   imperial = TRUE)
 }
 \arguments{

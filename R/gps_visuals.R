@@ -394,15 +394,15 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                          showTime=TRUE,showSummary=TRUE,
                          showStops=TRUE,
                          hrLow=100,hrHigh=170,
-                         hrColorLow=9,hrColorHigh=31,
+                         hrColorLow=11,hrColorHigh=26,
                          cadLow=65,cadTarget=88,
                          cadCont=TRUE,cadContLow=60,cadContHigh=100,
                          cadColorLow=3,cadColorMid=9,cadColorHigh=15,
-                         powerLow=100,powerHigh=500,
-                         powerColorLow=5,powerColorHigh=40,
+                         powerLow=75,powerHigh=400,
+                         powerColorLow=3,powerColorHigh=35,
                          hrSmoothBW=6,hrSmoothNN=5,
                          cadSmoothBW=20,cadSmoothNN=15,
-                         powerSmoothBW=20,powerSmoothNN=20,
+                         powerSmoothBW=30,powerSmoothNN=30,
                          minNumPoints=3000,
                          imperial=TRUE) {
   ##  what will we add below the profile
@@ -461,7 +461,7 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                                     segment=track$segment,
                                     bw=powerSmoothBW,nneighbors=powerSmoothNN,
                                     kernel="epanechnikov")
-    powersm[powzero] <- NA
+    powersm[powzero] <- 0
     powersm[powna] <- NA
   } else {
     powersm <- rep(NA,length(walltime))

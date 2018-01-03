@@ -158,13 +158,14 @@ drawCadence <- function(ggp,cadence,xvar,segment,
   g <- ggp[["g"]]
   npoints <- ggp[["npoints"]]
   heightFactor=ggp[["heightFactor"]]
-  npoints <- ggp[["npoints"]]
   distPerPoint=ggp[["distPerPoint"]]
   yCadTop <- ggp[["ymin"]]
   ymin <- yCadTop - heightItem(scale=heightFactor)
   # column width vectors sum to 13 in bar functionsd
   cadLegendWidth <- hrCadLegendWidth(npoints,distPerPoint,minNumPoints)
-  drawpts <- stats::approx(xvar,cadence,n=npoints)
+
+  drawpts <- approxSegments(xvar=xvar,yvar=cadence,
+                            segment=segment,npoints=npoints)
   xvardraw <- drawpts[[1]]*(xend/max(drawpts[[1]]))
   xvardraw[xvardraw>distPerPoint*npoints] <- distPerPoint*npoints
   xvardraw[xvardraw<0] <- 0
@@ -201,13 +202,14 @@ drawHr <- function(ggp,hr,xvar,segment,
   g <- ggp[["g"]]
   npoints <- ggp[["npoints"]]
   heightFactor=ggp[["heightFactor"]]
-  npoints <- ggp[["npoints"]]
   distPerPoint=ggp[["distPerPoint"]]
   yHrTop <- ggp[["ymin"]]
   ymin <- yHrTop - heightItem(scale=heightFactor)
   # column width vectors sum to 13 in bar functionsd
   hrLegendWidth <- hrCadLegendWidth(npoints,distPerPoint,minNumPoints)
-  drawpts <- stats::approx(xvar,hr,n=npoints)
+
+  drawpts <- approxSegments(xvar=xvar,yvar=hr,
+                            segment=segment,npoints=npoints)
   xvardraw <- drawpts[[1]]*(xend/max(drawpts[[1]]))
   xvardraw[xvardraw>distPerPoint*npoints] <- distPerPoint*npoints
   xvardraw[xvardraw<0] <- 0
@@ -235,17 +237,19 @@ drawPower <- function(ggp,power,xvar,segment,
   g <- ggp[["g"]]
   npoints <- ggp[["npoints"]]
   heightFactor=ggp[["heightFactor"]]
-  npoints <- ggp[["npoints"]]
   distPerPoint=ggp[["distPerPoint"]]
   yPowerTop <- ggp[["ymin"]]
   ymin <- yPowerTop - heightItem(scale=heightFactor)
   # column width vectors sum to 13 in bar functionsd
   powerLegendWidth <- hrCadLegendWidth(npoints,distPerPoint,minNumPoints)
-  drawpts <- stats::approx(xvar,power,n=npoints)
+
+  drawpts <- approxSegments(xvar=xvar,yvar=power,
+                            segment=segment,npoints=npoints)
   xvardraw <- drawpts[[1]]*(xend/max(drawpts[[1]]))
   xvardraw[xvardraw>distPerPoint*npoints] <- distPerPoint*npoints
   xvardraw[xvardraw<0] <- 0
   powerdraw <- drawpts[[2]]
+  powerdraw[powerdraw<powerLow] <- NA
   g <- g +
     geom_blank()
   g <- continuous_bar(g,legendtext="Watts",xvar=xvardraw,vals=powerdraw,
