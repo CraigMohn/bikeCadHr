@@ -41,20 +41,24 @@ continuous_bar <- function(g,legendtext,xvar,vals,lowval,hival,
                               legendlabels,alpha.legend,hjust.legend)
   if (showlegend) {
     g <- g +
-      geom_tile(data=valsLegendFrame,
-                aes(y=y.legend,x=x.legend,fill=prtlegend,
-                    color=prtlegend),
-                height=label.height,alpha=1,show.legend = FALSE)
+      ggplot2::geom_tile(data=valsLegendFrame,
+                         aes(y=y.legend,x=x.legend,fill=prtlegend,
+                             color=prtlegend),
+                         height=label.height,alpha=1,show.legend = FALSE)
   }
   g <- g +
-    geom_tile(data=valsDataFrame,
-              aes(y=y.band,x=xvar,fill=prtvalue,color=prtvalue,
-                  alpha=prtalpha),
-              height=band.height,show.legend = FALSE) +
-    geom_text(data=valsTextFrame,
-              aes(x=xtext.legend,y=ytext.legend,label=legendlabels,
-                  hjust=hjust.legend,alpha=alpha.legend),
-              size=2,color="black",fontface="italic",show.legend = FALSE)
+#    ggplot2::geom_rect(xmin=0,xmax=max(xvar),
+#                       ymin=y.bottom+gap.height,
+#                       ymax=y.bottom+gap.height+band.height,fill="gray69") +
+    ggplot2::geom_tile(data=valsDataFrame,
+                       aes(y=y.band,x=xvar,fill=prtvalue,color=prtvalue),
+                       alpha=0.6,
+                       height=band.height,
+                       show.legend = FALSE) +
+    ggplot2::geom_text(data=valsTextFrame,
+                       aes(x=xtext.legend,y=ytext.legend,label=legendlabels,
+                           hjust=hjust.legend,alpha=alpha.legend),
+                       size=2,color="black",fontface="italic",show.legend = FALSE)
   return(g)
 }
 discrete_bar <- function(g,legendtext,xvar,vals,lowval,hival,
@@ -103,19 +107,19 @@ discrete_bar <- function(g,legendtext,xvar,vals,lowval,hival,
                               legendcolors,alpha.legend,hjust.legend)
   if (showlegend) {
       g <- g +
-      geom_rect(data=valsTextFrame,
-                aes(xmin=x1.legend,xmax=x2.legend,fill=legendcolors,
-                    alpha=alpha.legend),
-                ymin=y1.legend,ymax=y2.legend,inherit.aes=FALSE,
-                show.legend=FALSE)
+      ggplot2::geom_rect(data=valsTextFrame,
+                         aes(xmin=x1.legend,xmax=x2.legend,fill=legendcolors,
+                             alpha=alpha.legend),
+                         ymin=y1.legend,ymax=y2.legend,inherit.aes=FALSE,
+                         show.legend=FALSE)
   }
   g <- g +
-    geom_tile(data=valsDataFrame,
-              aes(y=y.band,x=xvar,fill=prtvalue,color=prtvalue),
-              height=band.height,show.legend=FALSE)  +
-    geom_text(data=valsTextFrame,
-              aes(x=xtext.legend,y=ytext.legend,label=legendlabels,
-              hjust=hjust.legend),size=2,fontface="italic")
+    ggplot2::geom_tile(data=valsDataFrame,
+                       aes(y=y.band,x=xvar,fill=prtvalue,color=prtvalue),
+                       height=band.height,show.legend=FALSE)  +
+    ggplot2::geom_text(data=valsTextFrame,
+                       aes(x=xtext.legend,y=ytext.legend,label=legendlabels,
+                       hjust=hjust.legend),size=2,fontface="italic")
   return(g)
 }
 # wrapper for approx to leave between segment data missing after rescaling
@@ -138,9 +142,17 @@ approxSegments <- function(xvar,yvar,segment,npoints) {
   yvar <- yvar[!xdrop]
   segment <- segment[!xdrop]
 
+  #  how far apart are the x points
+  xincr <- (xout[2] - xout[1])/2
   for (seg in unique(segment)) {
     if (sum(!is.na(yvar[segment==seg])) >= 2) {
-      yseg <- stats::approx(xvar[segment==seg],yvar[segment==seg],
+      #  add repetitions of first/last values so y for those extremes will be
+      #     interpolated near ends of segment
+      pxv <- xvar[segment==seg]
+      pyv <- yvar[segment==seg]
+      pxv <- c( min(pxv)-xincr , pxv , max(pxv)+xincr )
+      pyv <- c( pyv[1] , pyv , pyv[length(pyv)])
+      yseg <- stats::approx(x=pxv,y=pyv,
                             xout=xout,method="linear",rule=1)[[2]]
       yout <- rowMeans(cbind(yseg,yout),na.rm=TRUE)
     }
