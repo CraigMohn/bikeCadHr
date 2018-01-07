@@ -429,7 +429,7 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
   #  note that may be multiple records at same distance.  smoothing
   #    algorithm will weight equally.
   elevsm <- smoothData(yvec=track$altitude.m,xvar=distance,
-                       bw=10,nneighbors=3,kernel="epanechnikov")
+                       bw=25,nneighbors=20,kernel="epanechnikov")
   if (showCad) {
     cadzero <- track$cadence.rpm == 0
     cadna <- is.na(track$cadence.rpm)

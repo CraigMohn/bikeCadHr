@@ -218,11 +218,11 @@ heightItem <- function(scale) {
          height("label",scale) + topGaps*height("gap",scale))
 }
 height <- function(what,scale) {
-  if (what=="label") return(40/scale)
-  else if (what=="band") return(75/scale)
-  else if (what=="gap") return(9/scale)
-  else if (what=="axis") return(180/scale)
-  else if (what=="connector") return(10/scale)
+  if (what=="label") return(30/scale)
+  else if (what=="band") return(50/scale)
+  else if (what=="gap") return(2/scale)
+  else if (what=="axis") return(155/scale)
+  else if (what=="connector") return(5/scale)
   else if (what=="summary") return(180/scale)
   else return(NA)
 }

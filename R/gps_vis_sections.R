@@ -47,6 +47,7 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
   } else {
     elevMinInt <- 500*floor(elevround*floor(elevMin/elevround)/500)
   }
+  elevMinShade <- max(0,elevMinInt)
   elevMax <- max(elevation)
   elevMaxInt <- elevround*round(elevMax/elevround)
   ymin <- elevMinInt - heightBelow - 100
@@ -83,10 +84,10 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
                                                   size=0.5,linetype="solid"),
                    panel.grid.major=ggplot2::element_line(size=0.3,
                                                   linetype='solid',
-                                                  colour="lightskyblue2"),
+                                                  colour="lightblue1"),
                    panel.grid.minor=ggplot2::element_line(size=0.15,
                                                   linetype='solid',
-                                                  colour="lightskyblue2")) +
+                                                  colour="lightblue1")) +
     ggplot2::labs(y=paste0("Elevation (",
                            ifelse(imperial,"ft)","m)"))) +
     ggplot2::theme(axis.title.y=element_text(hjust=0.8)) +
@@ -94,11 +95,17 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
                                  na.value="white",direction=-1) +
     viridis::scale_fill_viridis(option=palette,limits=c(0,40),
                                 na.value="white",direction=-1) +
-    ggplot2::geom_ribbon(ggplot2::aes(ymax=elevation,ymin=ymin),
+    ggplot2::geom_ribbon(ggplot2::aes(ymax=elevation,ymin=elevMinShade),
+                         color="springgreen1",fill="springgreen1",
+                         alpha=0.25) +
+    ggplot2::geom_ribbon(ggplot2::aes(ymax=elevMinShade,ymin=ymin),
                          color="white",fill="white") +
-    ggplot2::geom_point(ggplot2::aes(color=speed),shape=elevationShape,
-                        size=1.25*heightFactor,
-                        position=ggplot2::position_nudge(y=1.2))
+#    ggplot2::geom_ribbon(ggplot2::aes(ymax=elevation+5,ymin=elevation-5,
+#                         color=speed,fill=speed))
+    ggplot2::geom_line(ggplot2::aes(color=speed))
+#    ggplot2::geom_point(ggplot2::aes(color=speed),shape=elevationShape,
+#                      size=1.25*heightFactor,alpha=0.6,
+#                      position=ggplot2::position_nudge(y=1.2))
     if (npoints < ngraphpoints) {
       g <- g +
         ggplot2::geom_rect(xmin=npoints*distPerPoint,xmax=xmax,
@@ -250,7 +257,9 @@ drawPower <- function(ggp,power,xvar,segment,
   xvardraw[xvardraw>distPerPoint*npoints] <- distPerPoint*npoints
   xvardraw[xvardraw<0] <- 0
   powerdraw <- drawpts[[2]]
-  powerdraw[powerdraw<powerLow] <- NA
+  powerdraw[!is.na(powerdraw) &
+              powerdraw<powerLow &
+              powerdraw>0.0] <- powerLow
   g <- g +
     ggplot2::geom_blank()
   g <- continuous_bar(g,legendtext="Watts",xvar=xvardraw,vals=powerdraw,
