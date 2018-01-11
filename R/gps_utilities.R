@@ -24,6 +24,41 @@ lead_n <- function(vec,n) {
     return(vec<-NA)
   }
 }
+stripDupTrackRecords <- function(track,fixDistance=FALSE) {
+  #  drop any observation where the timestamp is the same as the preceding
+  #  this should be rare
+  firstInRun <- track$timestamp.s != dplyr::lag(track$timestamp.s)
+  firstInRun[1] <- TRUE
+  ndropped <- sum(!firstInRun)
+  if (ndropped > 0) {
+    print(paste0("dropping ",ndropped," obs with duplicate timestamps"))
+  }
+  rettrack <- track[firstInRun,]
+  if (is.unsorted(rettrack$timestamp.s,strictly=TRUE))
+    stop(paste0("timestamps are not strictly increasing!"))
+  if (is.unsorted(rettrack$distance.m,strictly=FALSE)) {
+    if (fixDistance) {
+      deltaDist <- c(0.0,diff(rettrack$distance.m))
+      nonMono <- deltaDist < 0.0
+      b4NonMono <-c(nonMono[-1],FALSE)
+      cat(" fixing ",sum(nonMono)," non-monotonicities in distance.m\n")
+      if (any(rettrack$segment[nonMono]==rettrack$segment[b4NonMono]))
+        stop("nonmonotonicity within a segment")
+      offset <- -cumsum(pmin(deltaDist,0.0))
+      fixdist <- -pmin(deltaDist,0.0)
+      fixdist[nonMono] <- fixdist[nonMono] +
+        raster::pointDistance(cbind(rettrack$position_lon.dd[nonMono],
+                                    rettrack$position_lat.dd[nonMono]),
+                              cbind(rettrack$position_lon.dd[b4NonMono],
+                                    rettrack$position_lat.dd[b4NonMono]),
+                              lonlat=TRUE)
+      rettrack$distance.m <- rettrack$distance.m + cumsum(fixdist)
+    } else {
+      stop(paste0("distance is not nondecreasing!"))
+    }
+  }
+  return(rettrack)
+}
 smoothDataSegments <- function(yvec,xvar,segment,
                                bw,nneighbors=10,kernel="epanechnikov") {
   if (!is.vector(xvar)) stop("smoothDataSegments needs xvar as vector")

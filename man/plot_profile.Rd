@@ -12,10 +12,10 @@ plot_profile(track, summary, savefn, title = "Ride starting ",
   showTime = TRUE, showSummary = TRUE, showStops = TRUE, hrLow = 100,
   hrHigh = 170, hrColorLow = 11, hrColorHigh = 26, cadLow = 65,
   cadTarget = 88, cadCont = TRUE, cadContLow = 60, cadContHigh = 100,
-  cadColorLow = 3, cadColorMid = 9, cadColorHigh = 15, powerLow = 5,
-  powerHigh = 400, powerColorLow = 3, powerColorHigh = 35,
-  hrSmoothBW = 6, hrSmoothNN = 5, cadSmoothBW = 20, cadSmoothNN = 15,
-  powerSmoothBW = 30, powerSmoothNN = 30, minNumPoints = 3000,
+  cadColorLow = 3, cadColorMid = 9, cadColorHigh = 15, powerLow = 75,
+  powerHigh = 350, powerColorLow = 3, powerColorHigh = 35,
+  hrSmoothBW = 6, hrSmoothNN = 6, cadSmoothBW = 10, cadSmoothNN = 10,
+  powerSmoothBW = 15, powerSmoothNN = 15, minNumPoints = 3000,
   imperial = TRUE)
 }
 \arguments{
@@ -52,7 +52,7 @@ ranges from 25 to 60 depending on the length being plotted}
 
 \item{powerTime}{display power data scaled by time if available}
 
-\item{showTime}{draw time axis even if no HR/cad data}
+\item{showTime}{draw time axis - use FALSE to suppress,}
 
 \item{showSummary}{display summary results if supplied}
 

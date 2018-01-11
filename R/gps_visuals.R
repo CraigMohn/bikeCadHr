@@ -345,7 +345,7 @@ plot_elev_profile_plus <- function(track,summary,savefn,title="Ride",
 #' @param cadTime display cadence data scaled by time if available
 #' @param powerTime display power data scaled by time if available
 #' @param showStops draw row with short and long stops on distance axis
-#' @param showTime draw time axis even if no HR/cad data
+#' @param showTime draw time axis - use FALSE to suppress,
 #' @param showSummary display summary results if supplied
 #' @param cadCont display cadence as a continuos color map
 #' @param hrLow heartrates below this are same color
@@ -398,11 +398,11 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                          cadLow=65,cadTarget=88,
                          cadCont=TRUE,cadContLow=60,cadContHigh=100,
                          cadColorLow=3,cadColorMid=9,cadColorHigh=15,
-                         powerLow=75,powerHigh=400,
+                         powerLow=75,powerHigh=350,
                          powerColorLow=3,powerColorHigh=35,
-                         hrSmoothBW=6,hrSmoothNN=5,
-                         cadSmoothBW=20,cadSmoothNN=15,
-                         powerSmoothBW=30,powerSmoothNN=30,
+                         hrSmoothBW=6,hrSmoothNN=6,
+                         cadSmoothBW=10,cadSmoothNN=10,
+                         powerSmoothBW=15,powerSmoothNN=15,
                          minNumPoints=3000,
                          imperial=TRUE) {
   ##  what will we add below the profile
@@ -412,7 +412,9 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
   cadTime <- cadTime & any(!is.na(track$cadence.rpm))
   hrTime <- hrTime & any(!is.na(track$heart_rate.bpm))
   powerTime <- powerTime & any(!is.na(track$power.watts))
-  showTime <- showTime | hrTime | cadTime | powerTime
+  cadTime <- cadTime & showTime
+  hrTime <- hrTime & showTime
+  powerTime <- powerTime & showTime
   showHr <- hrDistance | hrTime
   showCad <- cadDistance | cadTime
   showPower <- powerDistance | powerTime
@@ -426,10 +428,14 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
   else {
     distance <- kmFromMeters(track$distance.m)
   }
+  # grab the structure of starts and stops
+  startsAndStops <- segSummary(time=walltime,dist=distance,segment=track$segment)
+startsAndStops <<- startsAndStops
+
   #  note that may be multiple records at same distance.  smoothing
   #    algorithm will weight equally.
   elevsm <- smoothData(yvec=track$altitude.m,xvar=distance,
-                       bw=25,nneighbors=20,kernel="epanechnikov")
+                       bw=15,nneighbors=18,kernel="epanechnikov")
   if (showCad) {
     cadzero <- track$cadence.rpm == 0
     cadna <- is.na(track$cadence.rpm)
@@ -468,7 +474,7 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
   }
   speedsm <- smoothDataSegments(yvec=track$speed.m.s,xvar=walltime,
                                 segment=track$segment,
-                                bw=2,nneighbors=2,
+                                bw=4,nneighbors=4,
                                 kernel="epanechnikov")
   if (imperial) {
     elevsm <- feetFromMeters(elevsm)
@@ -479,7 +485,6 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
   }
   dist <- distance[length(distance)]
   hours <- walltime[length(walltime)]/3600
-
   npoints <- numPointsXAxis(dist,ppm,imperial)
   distPerPoint <- dist/(npoints-1)
   hoursPerPoint <- hours/(npoints-1)
@@ -497,8 +502,9 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
     grlist <- drawSummary(grlist,summary,title)
 
   if (!showTime) {
-    grlist <- drawXAxis(grlist,segment=track$segment,
-                        walltime,distance,showStops,distPerPoint,
+    grlist <- drawXAxis(grlist,distance,
+                        startsAndStops=startsAndStops,
+                        showStops,distPerPoint,
                         imperial=imperial,underLine=TRUE)
   }
   if (cadDistance) grlist <- drawCadence(grlist,cadencesm,distance,
@@ -521,13 +527,22 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                                    minNumPoints,showlegend=TRUE)
 
   if (showTime) {
-    grlist <- drawXAxis(grlist,segment=track$segment,
-                        walltime,distance,showStops=FALSE,distPerPoint,
-                        imperial=imperial,lineAtZero=!(cadDistance|hrDistance))
-    grlist <- drawXTConnect(grlist,distance,walltime,segment=track$segment,
+    #  draw opaque white background where faint gridlines aren't helpful
+    grlist[["g"]] <- grlist[["g"]] +
+      ggplot2::geom_rect(xmin=0,xmax=grlist[["xmax"]],
+                         ymax=grlist[["ymin"]],
+                         ymin=grlist[["ybottom"]],
+                         color="white",fill="white")
+
+    grlist <- drawXAxis(grlist,distance,startsAndStops=startsAndStops,
+                        showStops=FALSE,distPerPoint,imperial=imperial,
+                        lineAtZero=!(cadDistance|hrDistance|powerDistance))
+    grlist <- drawXTConnect(grlist,distance,walltime,
+                            startsAndStops=startsAndStops,
                             distPerPoint,hoursPerPoint)
-    grlist <- drawTAxis(grlist,segment=track$segment,
-                        walltime,distPerPoint,hoursPerPoint)
+    grlist <- drawTAxis(grlist,walltime,
+                        startsAndStops=startsAndStops,
+                        distPerPoint,hoursPerPoint)
   }
 
   if (cadTime) grlist <- drawCadence(grlist,cadencesm,walltime,

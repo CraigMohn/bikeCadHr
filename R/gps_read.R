@@ -114,6 +114,8 @@ read_ridefiles <- function(ridefilevec,cores=4,...)  {
 #'    as steepest grades
 #' @param cadence.time.shift.start do not use, alter assumptions about gps sample recording
 #' @param last.interval.end.notrigger do not use, alter assumptions about gps sample recording
+#' @param fixDistance repair nonmonotonicities in distance which are on segment breaks -
+#'    this occurs when power is lost or on some device lockups
 #'
 #' @return a list of three data tibbles:  \eqn{summary} and \eqn{trackpoints} and
 #'    \eqn{session}
@@ -129,6 +131,7 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
           min.segment.obs=2,min.segment.dist=10,min.segment.time=5,
           short.segment.merge.timegap.max=4,
           short.seg.delete=FALSE,short.seg.cadence.delete.na.threshold=0.5,
+          fixDistance=FALSE,
           cadence.time.shift.start=0,last.interval.end.notrigger=FALSE,
           cadence.trim.beg.secs=30,cadence.trim.end.secs=30,
           cadence.max=160,cadence.correct.window=7,
@@ -138,7 +141,7 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
           grade.smooth.window=7,grade.smooth.bw=10,
           grade.smooth.percentiles=c(0.005,.98))  {
 
-  cat(paste0("\nreading: ",ridefile))
+  cat("reading: ",ridefile,"\n")
   if (missing(tz)) {
     tz <- Sys.timezone()
   }
@@ -170,7 +173,7 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
   trackdata <- temp[["track"]]
   recovery_hr <- temp[["recovery_hr"]]
   session <- temp[["session"]]
-  #  trackdata$timestamp.s <- format(trackdata$timestamp.s,tz=tz)
+
   attr(trackdata$timestamp.s,"tzone") <- tz
   if (is.na(time.turned.on)){
     #  if filename was not successfully turned into a start-button time, use first
@@ -207,6 +210,15 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
     }
     trackdata <- trackdata[!is.na(trackdata$distance.m),]
   }
+  ###   minimal data validity checks after dumping unusable obs
+  trackdata <- stripDupTrackRecords(trackdata,fixDistance=fixDistance)
+  if (is.unsorted(trackdata$segment,strictly=FALSE))
+    stop(paste0(ridefile," yields segment ids that are not nondecreasing!"))
+  if (is.unsorted(trackdata$distance.m,strictly=FALSE))
+    stop(paste0(ridefile," yields distances that are not nondecreasing!"))
+  if (is.unsorted(trackdata$timestamp.s,strictly=TRUE))
+    stop(paste0(ridefile," yields timestamps that are not strictly increasing!"))
+
 
   # split really, really long intervals between points
   first.seg <- trackdata$segment != lag_one(trackdata$segment)
@@ -351,9 +363,12 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
   trimmed.cadence <- rep(NA,nwaypoints)
   if (sum(cadence.pos.index) > 0) {
     for (segment in 1:nsegments) {
-      innersegment <- (trackdata$timestamp.s >= start.times[segment]+lubridate::seconds(cadence.trim.beg.secs)) &
+      innersegment <-
+        (trackdata$timestamp.s >= start.times[segment]+lubridate::seconds(cadence.trim.beg.secs)) &
         (trackdata$timestamp.s <   stop.times[segment]-lubridate::seconds(cadence.trim.end.secs))
-      if (sum(innersegment)>0) trimmed.cadence[innersegment] <- trackdata$cadence.rpm[innersegment]
+      innersegment[is.na(innersegment)] <- 0
+      if (sum(innersegment)>0)
+          trimmed.cadence[innersegment] <- trackdata$cadence.rpm[innersegment]
     }
   }
 
@@ -464,24 +479,27 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
   processed.time <- Sys.time()
 
   if (!is.na(trackdata$position_lon.dd[1])){
-    beg.end.gap <- raster::pointDistance(cbind(trackdata$position_lon.dd[1],
-                                               trackdata$position_lat.dd[1]),
-                                 cbind(trackdata$position_lon.dd[nrow(trackdata)],
-                                       trackdata$position_lat.dd[nrow(trackdata)]),
-                                 lonlat=TRUE)
-    if (beg.end.gap>133) {
-      cat(paste0("\n  *non-loop - distance between start and end = ",beg.end.gap,"m "))
-      cat(paste0("\n   start = ",trackdata$position_lon.dd[1],"  ",
-                   trackdata$position_lat.dd[1]))
-      cat(paste0("\n   stop  = ",trackdata$position_lon.dd[nrow(trackdata)],"  ",
-                   trackdata$position_lat.dd[nrow(trackdata)]))
+    begEndGap <- raster::pointDistance(cbind(trackdata$position_lon.dd[1],
+                                             trackdata$position_lat.dd[1]),
+                                       cbind(trackdata$position_lon.dd[nrow(trackdata)],
+                                             trackdata$position_lat.dd[nrow(trackdata)]),
+                                       lonlat=TRUE)
+    if (begEndGap>100) {
+      cat("  *non-loop - distance between start and end = ",begEndGap,"m \n")
+      cat("   start = ",trackdata$position_lon.dd[1],"  ",
+                   trackdata$position_lat.dd[1],"  \n")
+      cat("   stop  = ",trackdata$position_lon.dd[nrow(trackdata)],"  ",
+                   trackdata$position_lat.dd[nrow(trackdata)],"\n")
       ride.loop <- FALSE
     } else {
       ride.loop <- TRUE
     }
   } else {
+    begEndGap <- NA
     ride.loop <- NA
   }
+  deltaElev <- trackdata$altitude.m[nrow(trackdata)] -
+               trackdata$altitude.m[1]
   gr <- trackdata$gearratio[!is.na(trackdata$gearratio) &
                               trackdata$gearratio >= gr.low &
                               trackdata$gearratio < gr.high]
@@ -495,7 +513,7 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
       peakspots <- peakspots[grdens$y[peakspots] > gr.density.threshold*maxpdens]
       peaks <- grdens$x[peakspots]
       pprt = utils::head(formatC(peaks, digits = 3, format = "f"),16)
-      cat("\n  gears ",pprt)
+      cat("  gears ",pprt,"\n")
       if (length(peaks) >= gr.nlowgear+1) {
         low.gear <- peaks[gr.nlowgear]
         lowgear <- as.numeric( trackdata$gearratio <
@@ -526,7 +544,7 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
   }
 
   track.cleaned <- data_frame(date=ride.date,start.time,start.hour,
-      nwaypoints,numsegs,
+      nwaypoints,numsegs,begEndGap,deltaElev,
       distance,total.time,rolling.time,pedal.time,startline.time,pedal.strokes,
       avgcadence.nozeros,avgcadence.withzeros,avgcadence.midsegment,
       hr.at.stop,hr.recovery,speed.rolling.m.s,speed.all.m.s,speed.max.m.s,

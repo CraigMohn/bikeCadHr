@@ -211,9 +211,9 @@ read_fittrack <- function(fitfile) {
     recovery_hr$heart_rate.at.stop <- records$heart_rate.bpm[nrow(records)]
     names(recovery_hr) <- gsub("data.","heart_rate.postride",names(recovery_hr))
     hrdrop <- recovery_hr$heart_rate.at.stop - recovery_hr$heart_rate.postride
-    cat(paste0("\n  ** hr at stop = ",recovery_hr$heart_rate.at.stop,
-               "   hr after 2 min = ",recovery_hr$heart_rate.postride,
-               "   change = ",hrdrop))
+    cat("  ** hr at stop = ",recovery_hr$heart_rate.at.stop,
+        "   hr after 2 min = ",recovery_hr$heart_rate.postride,
+        "   change = ",hrdrop,"\n")
   }
   return(list(track=records,recovery_hr=recovery_hr,session=session))
 }
@@ -241,13 +241,13 @@ format_event <- function(event) {
     #  this is a cheap and dirty fix, we won't use the variable but it screws up processing
     #  could use fitfilerepair utility, but why bother.
     if (out$event == "recovery_hr") {
-      #cat(paste0("\n  *****recovery_hr timer event in fit file. HR=",out$data))
+      #cat("  *****recovery_hr timer event in fit file. HR=",out$data,"\n")
     } else if (out$event == "hr_high_alert") {
-      cat(paste0("\n  *****hr high alert event in fit file. HR=",out$data))
+      cat("  *****hr high alert event in fit file. HR=",out$data,"\n")
     } else if (out$event == "course_point") {
       #cat("*****course point event in fit file.\n")
     } else {
-      cat("\n *****missing event_group in fit file!\n")
+      cat(" *****missing event_group in fit file!\n")
       print(event)
     }
     out$event_group <- 0

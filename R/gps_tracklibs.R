@@ -267,8 +267,8 @@ join_ridefiles <- function(joinlist,summaries,tracks) {
     rides <- dplyr::arrange(summaries[summaries$sourcefile %in% ridevec,],start.time)
     if (nrow(rides)>0) {
       changed <- TRUE
-      cat("\njoining ride files: ")
-      cat("\n",ridevec,"\n")
+      cat("joining ride files: \n")
+      cat(ridevec,"\n")
       dropped.files <- c(dropped.files,ridevec[-1])
       summary.joined <- rides[1,]
       for (varname in values.from.last) {
@@ -375,7 +375,7 @@ combine_track_stores <- function(primary_sums,primary_tracks,
     if (nrow(primary_tracks[!dateTimeStr(primary_tracks$startbutton.date,
                                          primary_tracks$startbutton.time) %in%
                             pri.on.times,1])>0) {
-      cat("\n** track dataframe track not in primary summary, starting time ",
+      cat("** track dataframe track not in primary summary, starting time \n",
           setdiff(unique(dateTimeStr(primary_tracks$startbutton.date,
                                      primary_tracks$startbutton.time)),
                   pri.on.times))
@@ -383,10 +383,10 @@ combine_track_stores <- function(primary_sums,primary_tracks,
     if (nrow(secondary_tracks[!dateTimeStr(secondary_tracks$startbutton.date,
                                        secondary_tracks$startbutton.time) %in%
                               sec.on.times,1])>0) {
-      cat("\n** track dataframe track not in secondary summary, start time ",
+      cat("** track dataframe track not in secondary summary, start time ",
           setdiff(unique(dateTimeStr(secondary_tracks$startbutton.date,
                                      secondary_tracks$startbutton.time)),
-                  sec.on.times))
+                  sec.on.times),"\n")
     }
     frompri <- pri.on.times
     if (!missing(prefer_secondary))

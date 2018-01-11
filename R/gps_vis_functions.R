@@ -122,6 +122,38 @@ discrete_bar <- function(g,legendtext,xvar,vals,lowval,hival,
                        hjust=hjust.legend),size=2,fontface="italic")
   return(g)
 }
+# build tibble with segment data
+#  segnum, begtime, endtime, stoptime, begdist, enddist
+segSummary <- function(time,dist,segment) {
+
+  if ( !is.numeric(segment) | !all(diff(segment)>=0) )
+    stop("segment must be nondecreasing integers")
+  if ( !is.numeric(dist) | !all(diff(dist)>=0) )
+    stop("dist must be nondecreasing numeric")
+  if ( !is.numeric(time) | !all(diff(time)>=0) )
+    stop("time must be nondecreasing numeric")
+  newseg <- c(TRUE,(diff(segment)>0))
+  endseg <- c((diff(segment)>0),TRUE)
+  timeStop <- (tibble::as_tibble(list(time=time,dist=dist,segment=segment)) %>%
+    dplyr::group_by(segment) %>%
+    dplyr::filter(dist==max(dist)) %>%
+    dplyr::summarize(timeStop=min(time)))$timeStop
+
+  segSumFrame <- tibble::as_tibble(list(segment=segment[newseg],
+                                     locBeg=dist[newseg],
+                                     locEnd=dist[endseg],
+                                     timeBeg=time[newseg],
+                                     timeEnd=time[endseg],
+                                     timeStop=timeStop))
+  stopSumFrame <- tibble::as_tibble(list(stopNum=seq(1,nrow(segSumFrame)),
+                                         locStop=dist[endseg],
+                                         timeBeg=timeStop,
+                                         timeEnd=c(segSumFrame$timeBeg[-1],max(time))))
+  stopSumFrame <- stopSumFrame %>%
+    dplyr::mutate(lenStop=timeEnd-timeBeg)
+  return(list(segSumFrame=segSumFrame,stopSumFrame=stopSumFrame))
+}
+
 # wrapper for approx to leave between segment data missing after rescaling
 approxSegments <- function(xvar,yvar,segment,npoints) {
   if (!is.vector(xvar) | !is.vector(yvar) | !is.vector(segment))
@@ -172,7 +204,7 @@ numPointsXAxis <- function(dist,ppm,imperial) {
     distbends <- c(0,5,10,35,85,200,Inf)       # begin at 0, end at max distance
     pointsbends <- c(0,2000,3000,4500,6500,10000,10000) # begin at 0, end at max
     pointsbends <- c(0,800,1600,5600,13600,15000,15000) # begin at 0, end at max
-    pointsbends <- c(0,2000,3000,6000,15000,15000,15000) # begin at 0, end at max
+    pointsbends <- c(0,2000,3000,6000,15000,18000,18000) # begin at 0, end at max
     return(ceiling(pointsbends[which(distbends>miles)[1]-1] +
                      ( (pointsbends[which(distbends>miles)[1]]-
                           pointsbends[which(distbends>miles)[1]-1])/
@@ -185,7 +217,7 @@ numPointsXAxis <- function(dist,ppm,imperial) {
 verticalMult <- function(dist,imperial) {
   miles <- ifelse(imperial,dist,milesFromMeters(1000*dist))
   distbends <- c(0,10,35,85,200,Inf) # begin at 0, end max distance
-  vertbends <- c(25,25,30,40,40,40)  # begin at 25, end 50
+  vertbends <- c(15,18,24,32,40,50)  # begin at 25, end 50
   vm <-
     ceiling(vertbends[which(distbends>miles)[1]-1] +
                         ( (vertbends[which(distbends>miles)[1]]-
@@ -218,11 +250,11 @@ heightItem <- function(scale) {
          height("label",scale) + topGaps*height("gap",scale))
 }
 height <- function(what,scale) {
-  if (what=="label") return(30/scale)
-  else if (what=="band") return(50/scale)
-  else if (what=="gap") return(2/scale)
-  else if (what=="axis") return(155/scale)
-  else if (what=="connector") return(5/scale)
+  if (what=="label") return(25/scale)
+  else if (what=="band") return(45/scale)
+  else if (what=="gap") return(3/scale)
+  else if (what=="axis") return(190/scale)
+  else if (what=="connector") return(1/scale)
   else if (what=="summary") return(180/scale)
   else return(NA)
 }

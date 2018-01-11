@@ -51,6 +51,7 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
   elevMax <- max(elevation)
   elevMaxInt <- elevround*round(elevMax/elevround)
   ymin <- elevMinInt - heightBelow - 100
+  ybottom <- ymin
   ymax <- 500*ceiling((elevMaxInt + height("summary",heightFactor))/500)
   xmin <- 0
   xmax <- distPerPoint*ngraphpoints
@@ -79,15 +80,15 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
                    axis.ticks.x=ggplot2::element_blank(),
                    axis.line.x=ggplot2::element_blank(),
                    axis.line.y=ggplot2::element_blank(),
-                   panel.background=ggplot2::element_rect(fill="lightskyblue1",
-                                                  colour="lightskyblue1",
+                   panel.background=ggplot2::element_rect(fill="lightblue1",
+                                                  colour="lightblue1",
                                                   size=0.5,linetype="solid"),
                    panel.grid.major=ggplot2::element_line(size=0.3,
                                                   linetype='solid',
-                                                  colour="lightblue1"),
+                                                  colour="steelblue1"),
                    panel.grid.minor=ggplot2::element_line(size=0.15,
                                                   linetype='solid',
-                                                  colour="lightblue1")) +
+                                                  colour="steelblue1")) +
     ggplot2::labs(y=paste0("Elevation (",
                            ifelse(imperial,"ft)","m)"))) +
     ggplot2::theme(axis.title.y=element_text(hjust=0.8)) +
@@ -96,10 +97,11 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
     viridis::scale_fill_viridis(option=palette,limits=c(0,40),
                                 na.value="white",direction=-1) +
     ggplot2::geom_ribbon(ggplot2::aes(ymax=elevation,ymin=elevMinShade),
-                         color="springgreen1",fill="springgreen1",
-                         alpha=0.25) +
+                         color="lightgreen",fill="lightgreen",
+                         alpha=0.7) +
+#   lay down a light background that lets some of the grid show through
     ggplot2::geom_ribbon(ggplot2::aes(ymax=elevMinShade,ymin=ymin),
-                         color="white",fill="white") +
+                         color="white",fill="white",alpha=0.7) +
 #    ggplot2::geom_ribbon(ggplot2::aes(ymax=elevation+5,ymin=elevation-5,
 #                         color=speed,fill=speed))
     ggplot2::geom_line(ggplot2::aes(color=speed))
@@ -113,7 +115,7 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
     }
 
     return(list(g=g,xmin=xmin,xmax=xmax,xlast=distPerPoint*npoints,
-              ymin=elevMinInt,ymax=ymax,vertmult=vertMult,
+              ymin=elevMinInt,ymax=ymax,ybottom=ybottom,vertmult=vertMult,
               distPerPoint=distPerPoint,heightFactor=heightFactor,
               npoints=npoints,ngraphpoints=ngraphpoints))
 }
@@ -273,7 +275,7 @@ drawPower <- function(ggp,power,xvar,segment,
   ggpreturn[["ymin"]] <- ymin
   return(ggpreturn)
 }
-drawTAxis <- function(ggp,segment,walltime,distPerPoint,hoursPerPoint) {
+drawTAxis <- function(ggp,walltime,startsAndStops,distPerPoint,hoursPerPoint) {
   ggpreturn <- ggp
   g <- ggp[["g"]]
   xmax <- ggp[["xmax"]]
@@ -284,24 +286,14 @@ drawTAxis <- function(ggp,segment,walltime,distPerPoint,hoursPerPoint) {
   ymin <- yTAxis - height("axis",heightFactor)
   yCenter <- (yTAxis+ymin)/2
 
-  newseg <- segment != lag_one(segment)
-  newseg[1] <- TRUE
-  endseg <- segment != lead_one(segment)
-  endseg[length(endseg)] <- TRUE
-  segbegs <- walltime[newseg]
-  segends <- walltime[endseg]
-  numsegs <- sum(newseg)
+  stops <- startsAndStops[["stopSumFrame"]]
+  segs <- startsAndStops[["segSumFrame"]]
+
   #  axis line - color coded for stops
   xscale <- distPerPoint/hoursPerPoint
-  tAxisSegData <- data.frame(x=segbegs,xend=segends,xcol=40,y=yCenter)
-  if (numsegs > 1) {
-    stopbegs <- segends[-length(segbegs)]
-    stopends <- segbegs[-1]
-    tAxisStopData <- data.frame(x=stopbegs,xend=stopends,xcol=15,y=yCenter)
-    tAxisData <- rbind(tAxisSegData,tAxisStopData)
-  } else {
-    tAxisData <- tAxisSegData
-  }
+  tAxisSegData <- data.frame(x=segs$timeBeg,xend=segs$timeStop,xcol=40,y=yCenter)
+  tAxisStopData <- data.frame(x=stops$timeBeg,xend=stops$timeEnd,xcol=15,y=yCenter)
+  tAxisData <- rbind(tAxisSegData,tAxisStopData)
   tAxisData$x <- (xscale/3600)*tAxisData$x
   tAxisData$xend <- (xscale/3600)*tAxisData$xend
   g <- g +
@@ -364,7 +356,7 @@ drawTAxis <- function(ggp,segment,walltime,distPerPoint,hoursPerPoint) {
   ggpreturn[["ymin"]] <- ymin
   return(ggpreturn)
 }
-drawXAxis <- function(ggp,segment,walltime,distance,
+drawXAxis <- function(ggp,distance,startsAndStops,
                       showStops,distPerPoint,imperial=TRUE,
                       underLine=FALSE,lineAtZero=FALSE) {
   ggpreturn <- ggp
@@ -374,7 +366,7 @@ drawXAxis <- function(ggp,segment,walltime,distance,
   npoints <- ggp[["npoints"]]
   heightFactor=ggp[["heightFactor"]]
   yXAxis <- ggp[["ymin"]]
-  if (!underLine & ! lineAtZero)
+  if (!underLine & !lineAtZero)
     yXAxis <- yXAxis - height("gap",heightFactor)
   if(underLine | lineAtZero) {
     ymin <- yXAxis - 0.5*height("axis",heightFactor)
@@ -407,37 +399,27 @@ drawXAxis <- function(ggp,segment,walltime,distance,
   xAxisData <- data.frame(x=distancegraphends,y=yCenter)
   g <- g + ggplot2::geom_line(data=xAxisData,aes(x=x,y=y),alpha=1)
 
+  stops <- startsAndStops[["stopSumFrame"]]
   if (showStops) {
     #  create data frames for stops/breaks
     #  classify seg breaks as short stops or long breaks, work in grid coords
-    first.seg <- segment != lag_one(segment) # don't include first egment start
-    pause.len <- first.seg*(walltime-lag_one(walltime))
-    pause.size <- rep(0,npoints)
-    pause.alpha <- rep(0,npoints)
-    pause.short <- pause.len < 300 & pause.len > 0
-    pause.long <- pause.len >= 300
-    if (sum(pause.short) > 0) {
-      pause.size[pause.short] <- 1
-      pause.alpha[pause.short] <- 0.6
-    }
-    if (sum(pause.long) > 0) {
-      pause.size[pause.long] <- 1.5 + 1.5*log(pause.len[pause.long]/300)
-      pause.alpha[pause.long] <- 0.5
-    }
     stopdata <-
-      data.frame(distance,yCenter,pause.long,pause.short,pause.size,pause.alpha)
-    stopdata.short <- stopdata[stopdata$pause.short,]
-    stopdata.long <- stopdata[stopdata$pause.long,]
-    if (nrow(stopdata.short)>0) {
+      data.frame(distance=stops$locStop,yCenter,lenStop=stops$lenStop)
+    stopdata$pauseSize <- ifelse(stopdata$lenStop<300,
+                                  1,
+                                  1.5*log(stopdata$lenStop/300))
+    stopdataShort <- stopdata[stopdata$lenStop<300,]
+    stopdataLong <- stopdata[stopdata$lenStop>=300,]
+    if (nrow(stopdataShort)>0) {
       g <- g +
-        ggplot2::geom_point(data=stopdata.short,
-                            aes(y=yCenter,alpha=pause.alpha,size=pause.size),
+        ggplot2::geom_point(data=stopdataShort,
+                            aes(y=yCenter,alpha=0.6,size=pauseSize),
                             color="red3",shape=124,show.legend=FALSE)
     }
-    if (nrow(stopdata.long)>0) {
+    if (nrow(stopdataLong)>0) {
       g <- g +
-        ggplot2::geom_point(data=stopdata.long,
-                            aes(y=yCenter,alpha=pause.alpha,size=pause.size),
+        ggplot2::geom_point(data=stopdataLong,
+                            aes(y=yCenter,alpha=0.5,size=pauseSize),
                             color="green",shape=124,show.legend=FALSE)
     }
   }
@@ -477,7 +459,7 @@ drawXAxis <- function(ggp,segment,walltime,distance,
   ggpreturn[["ymin"]] <- ymin
   return(ggpreturn)
 }
-drawXTConnect <- function(ggp,distance,walltime,segment,
+drawXTConnect <- function(ggp,distance,walltime,startsAndStops,
                           distPerPoint,hoursPerPoint) {
   ggpreturn <- ggp
   g <- ggp[["g"]]
@@ -491,51 +473,29 @@ drawXTConnect <- function(ggp,distance,walltime,segment,
   yCenter <- (yXTConnect + ymin)/2
   xscale <- distPerPoint/(hoursPerPoint*3600)
 
-  #  stops longer than 30 seconds
-  stopConnectMin <- 30
-  newseg <- segment != lag_one(segment)
-  newseg[1] <- TRUE
-  endseg <- segment != lead_one(segment)
-  endseg[length(endseg)] <- TRUE
-  segbegs <- walltime[newseg]
-  segbegspot <- distance[newseg]
-  segends <- walltime[endseg]
-  segendspot <- distance[endseg]
+  stops <- startsAndStops[["stopSumFrame"]]
 
-  stopbegs <- segends[-length(segends)]
-  stopends <- segbegs[-1]
-  stopspots <- segbegspot[-1]
-  lenstop <- stopends - stopbegs
-  #stop begin time,stop end times, stop location
-  if (sum(lenstop>stopConnectMin)>0) {
-    starttimes <- stopends[lenstop>stopConnectMin]
-    startplaces <- stopspots[lenstop>stopConnectMin]
-    stoptimes <- c(stopbegs[lenstop>stopConnectMin],walltime[length(walltime)])
-    stopplaces <- c(startplaces,distance[length(distance)])
-    startcolors <- rep(20,length(starttimes))
-    stopcolors <- rep(20,length(stoptimes))
-    startalphas <- rep(1,length(starttimes))
-    stopalphas <- rep(1,length(stoptimes))
-    pointsStop <- data.frame(group=seq(1,length(stopplaces)),
-                              x=stopplaces,
-                              y=yXTConnect+(height("axis",heightFactor)/2))
-    pointsTimeBeg <- data.frame(group=seq(1,length(stoptimes)),
-                                x=xscale*stoptimes,
-                                y=ymin-(height("axis",heightFactor)/2))
-    pointsTimeEnd <- data.frame(group=seq(1,length(starttimes)),
-                                x=xscale*starttimes,
-                                y=ymin-(height("axis",heightFactor)/2))
-    stopData <- rbind(pointsStop,pointsTimeBeg,pointsTimeEnd)
-     g <- g +
-       ggplot2::geom_polygon(data=stopData,
-                             aes(x=x,y=y,group=group),fill="red3",alpha=0.3,
-                             show.legend=FALSE)
-     XTConnTextFrame <- data.frame(x=xmax/2,y=yCenter,label="Stops")
-     g <- g +
+   #stop begin time,stop end times, stop location
+  pointsStop <- data.frame(group=stops$stopNum,
+                           x=stops$locStop,
+                           y=yXTConnect+(height("axis",heightFactor)/2))
+  pointsTimeBeg <- data.frame(group=stops$stopNum,
+                              x=xscale*stops$timeBeg,
+                              y=ymin-(height("axis",heightFactor)/2))
+  pointsTimeEnd <- data.frame(group=stops$stopNum,
+                              x=xscale*stops$timeEnd,
+                              y=ymin-(height("axis",heightFactor)/2))
+  stopData <- rbind(pointsStop,pointsTimeBeg,pointsTimeEnd)
+  g <- g +
+     ggplot2::geom_polygon(data=stopData,
+                           aes(x=x,y=y,group=group),fill="red3",alpha=0.3,
+                           show.legend=FALSE)
+   XTConnTextFrame <- data.frame(x=xmax/2,y=yCenter,label="Stops")
+   g <- g +
        ggplot2::geom_text(data=XTConnTextFrame,aes(x=x,y=y,label=label),
                           size=3.3,hjust=0.5,vjust=0.5,
                           color="red",show.legend = FALSE)
-  }
+
   hourtimes <- seq(0,timelast,3600)
   hourcolors <- rep(40,length(hourtimes))
   houralphas <- rep(0.5,length(hourtimes))

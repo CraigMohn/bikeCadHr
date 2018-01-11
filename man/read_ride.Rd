@@ -10,13 +10,14 @@ read_ride(ridefile, tz = "America/Los_Angeles",
   max.interval.time = 30, min.segment.obs = 2, min.segment.dist = 10,
   min.segment.time = 5, short.segment.merge.timegap.max = 4,
   short.seg.delete = FALSE, short.seg.cadence.delete.na.threshold = 0.5,
-  cadence.time.shift.start = 0, last.interval.end.notrigger = FALSE,
-  cadence.trim.beg.secs = 30, cadence.trim.end.secs = 30,
-  cadence.max = 160, cadence.correct.window = 7,
-  cadence.correct.errors = TRUE, cadence.correct.nas = FALSE,
-  gr.bound = NULL, gr.bound2 = NULL, gr.low = 0.0378, gr.high = 0.1855,
-  gr.peak.m = 5, gr.nlowgear = 1, gr.kernel = "epanechnikov",
-  gr.adjust = 0.02, gr.density.threshold = 0.05, grade.smooth.window = 7,
+  fixDistance = FALSE, cadence.time.shift.start = 0,
+  last.interval.end.notrigger = FALSE, cadence.trim.beg.secs = 30,
+  cadence.trim.end.secs = 30, cadence.max = 160,
+  cadence.correct.window = 7, cadence.correct.errors = TRUE,
+  cadence.correct.nas = FALSE, gr.bound = NULL, gr.bound2 = NULL,
+  gr.low = 0.0378, gr.high = 0.1855, gr.peak.m = 5, gr.nlowgear = 1,
+  gr.kernel = "epanechnikov", gr.adjust = 0.02,
+  gr.density.threshold = 0.05, grade.smooth.window = 7,
   grade.smooth.bw = 10, grade.smooth.percentiles = c(0.005, 0.98))
 }
 \arguments{
@@ -51,6 +52,9 @@ within the max tim gap above}
 
 \item{short.seg.cadence.delete.na.threshold}{delete short segments even
 if \eqn{short.seg.delete}=FALSE if share of cadence NAs in segment exceeds this}
+
+\item{fixDistance}{repair nonmonotonicities in distance which are on segment breaks -
+this occurs when power is lost or on some device lockups}
 
 \item{cadence.time.shift.start}{do not use, alter assumptions about gps sample recording}
 
