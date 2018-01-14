@@ -7,6 +7,7 @@ read_gpxtrack <- function(gpxfile)  {
       ntrackpoints <- ntrackpoints + sum(sapply(gpxtrack[[i]],nrow))
   }
 
+  #  distance and speed are calculated from gps positions
   segment <- vector("numeric",ntrackpoints)
   timestamp.s <- vector("character",ntrackpoints)
   position_lat.dd <- vector("numeric",ntrackpoints)

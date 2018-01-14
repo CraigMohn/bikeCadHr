@@ -9,7 +9,7 @@ update_gps_variables(outdir, fitrootdir, gpxrootdir, merge.files = list(c(NA,
   "nosegs"), prefer.gpx = c(""), rebuild.all.fit = FALSE,
   rebuild.all.gpx = FALSE, drawprofile = TRUE, drawprofile.both = FALSE,
   elevationChar = "|", cadCont = TRUE, drawmap = TRUE,
-  drawmap.both = FALSE, cores = 4, ...)
+  drawmap.both = FALSE, cores = 4, loud = FALSE, ...)
 }
 \arguments{
 \item{outdir}{string containing location of output data pair files}
@@ -55,6 +55,8 @@ the ride with speed-varying color}
 the ride with speed-varying color for both the .fit files and the .gox files}
 
 \item{cores}{numer of cores (default is #CPUs - 1)}
+
+\item{loud}{display summary of re/segmenting}
 
 \item{...}{parameters passed for track cleaning}
 }

@@ -430,7 +430,6 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
   }
   # grab the structure of starts and stops
   startsAndStops <- segSummary(time=walltime,dist=distance,segment=track$segment)
-startsAndStops <<- startsAndStops
 
   #  note that may be multiple records at same distance.  smoothing
   #    algorithm will weight equally.

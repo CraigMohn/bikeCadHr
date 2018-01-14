@@ -10,9 +10,10 @@
 #'  \item{heart_rate.bpm - heartrate recorded at the trackpoint}
 #'  \item{cadence.rpm - (possibly corrected) cadence recorded at the trackpoint}
 #'  \item{power.watts - power at trackpoint as reported to GPS from power meter}
-#'  \item{gearratio - speed divided by cadence, uncorrected values, may contain Inf and NA}
 #'  \item{temperature - temperature recorded at the trackpoint}
 #'  \item{segment - segment identifier for the trackpoint}
+#'  \item{stopped - not moving at trackpoint}
+#'  \item{deltatime - numeric time since last trackpoint (seconds)}
 #'  \item{position_lat.dd - latitude in decimal degrees at the trackpoint}
 #'  \item{position_lon.dd - longitude in decimal degrees at the trackpoint}
 #'  \item{startbutton.date - integer containing human readable date stamp for ride,

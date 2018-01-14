@@ -9,13 +9,16 @@
 #'      This is useful for merging with other data sources with slightly misaligned clocks}
 #'  \item{nwaypoints - number of waypoints in the track}
 #'  \item{numsegs - number of segments in the track}
+#'  \item{pct.trkpts.hr - share of trackpoints with nonmissing heartrate data}
+#'  \item{pct.trkpts.cad - share of trackpoints with nonmissing cadence data}
+#'  \item{begEndGap - distance between the startpoint and endpoint of ride}
+#'  \item{deltaElev - change in elevation between the startpoint and endpoint of ride}
 #'  \item{distance - the distance traveled.  for fit files this uses the
 #'      wheel distance sensor if present. Otherwise it uses gps position changes.}
 #'  \item{total.time - time from first start to final stop}
 #'  \item{rolling.time - time while moving}
 #'  \item{pedal.time - time with a nonzero, nonmissing cadence measure}
 #'  \item{startline.time - time between starting track data recording and beginning motion}
-#'  \item{pedal.strokes - estimate of pedal strokes based on stream of cadence values}
 #'  \item{avgcadence.nozeros - average cadence excluding zeros}
 #'  \item{avgcadence.withzeros - average cadence including zeros}
 #'  \item{avgcadence.midsegment - average cadence excluding time before and after stops}
@@ -29,14 +32,10 @@
 #'  \item{descent - vertical descent estimated from smoothed elevations}
 #'  \item{distance.ascending - distance where smoothed climb exceeds 0.25 meters between samples}
 #'  \item{distance.descending- distance where smoothed drop exceeds 0.25 meters between samples}
-#'  \item{grade.ascending.steepest - not reliable - self-explanatory}
-#'  \item{grade.descending.steepest - not reliable - self-explanatory}
-#'  \item{pct.trkpts.hr - share of trackpoints with nonmissing heartrate data}
-#'  \item{pct.trkpts.cad - share of trackpoints with nonmissing cadence data}
-#'  \item{pct.low.gear - share of trackpoints ridden in the lowest gear}
-#'  \item{low.gear2 - alternate value of speed/cadence ratio specified in gr.bound2}
-#'  \item{pct.low.gear2 - share of trackpoints ridden in gear below gr.bound2}
 #'  \item{low.gear - value of speed/cadence ratio corresponding to the lowest gear}
+#'  \item{low.gear2 - alternate value of speed/cadence ratio specified in gr.bound2}
+#'  \item{pct.low.gear - share of trackpoints ridden in the lowest gear}
+#'  \item{pct.low.gear2 - share of trackpoints ridden in gear below gr.bound2}
 #'  \item{ride.loop - TRUE if ride endpoint is within 133 meters of startpoint}
 #'  \item{stops.subminute - count of stops lasting less than 1 minute}
 #'  \item{stops.1to10minutes - count of stops lasting between 1 and 10 minutes}
@@ -57,6 +56,8 @@
 #'     on options set at time of ride}
 #'  \item{session.avg.hr -  - fit file only - average heart rate}
 #'  \item{session.max.hr - fit file only - max heart rate}
+#'  \item{session.avg.power -  - fit file only - average power}
+#'  \item{session.max.power - fit file only - max heart power}
 #'  \item{sourcefile - basename of the file containing the source data}
 #'  \item{processed.time - time that the file was read into the summary}
 #'  \item{startbutton.date - integer containing human readable date stamp for ride,

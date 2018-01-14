@@ -25,15 +25,17 @@ lead_n <- function(vec,n) {
   }
 }
 stripDupTrackRecords <- function(track,fixDistance=FALSE) {
+  #  first thing, strip out observations with no distance (no speed sensor and no gps)
+  rettrack <- track[!is.na(track$distance.m),]
   #  drop any observation where the timestamp is the same as the preceding
   #  this should be rare
-  firstInRun <- track$timestamp.s != dplyr::lag(track$timestamp.s)
+  firstInRun <- rettrack$timestamp.s != dplyr::lag(rettrack$timestamp.s)
   firstInRun[1] <- TRUE
   ndropped <- sum(!firstInRun)
   if (ndropped > 0) {
     print(paste0("dropping ",ndropped," obs with duplicate timestamps"))
   }
-  rettrack <- track[firstInRun,]
+  rettrack <- rettrack[firstInRun,]
   if (is.unsorted(rettrack$timestamp.s,strictly=TRUE))
     stop(paste0("timestamps are not strictly increasing!"))
   if (is.unsorted(rettrack$distance.m,strictly=FALSE)) {

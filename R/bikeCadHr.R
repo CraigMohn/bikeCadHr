@@ -72,6 +72,7 @@ NULL
 tedious <- utils::globalVariables(c("alphachar","alphahour","distlegend",
                                     "prtchar","prthour","start.hour","start.time",
                                     "startbutton.date","stoplabels","timestamp.s",
+                                    "distance.m","segment","timestamp",
                                     "x","xtext.stop","y","xend","xcol",
                                     "verticalMultiplier","color","hjust","label",
                                     "yend","group","timeBeg","timeEnd","pauseSize"))

@@ -40,6 +40,7 @@
 #' @param drawmap.both create a .tiff file in the output directory mapping
 #'    the ride with speed-varying color for both the .fit files and the .gox files
 #' @param cores numer of cores (default is #CPUs - 1)
+#' @param loud display summary of re/segmenting
 #' @param ... parameters passed for track cleaning
 #'
 #' @return a tbl contining the combined summaries and tracks, with preference
@@ -54,7 +55,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
                   rebuild.all.fit=FALSE,rebuild.all.gpx=FALSE,
                   drawprofile=TRUE,drawprofile.both=FALSE,elevationChar="|",
                   cadCont=TRUE,
-                  drawmap=TRUE,drawmap.both=FALSE,cores=4,...) {
+                  drawmap=TRUE,drawmap.both=FALSE,cores=4,loud=FALSE,...) {
 
   num_drawn <- 0
   num_mapped <- 0
@@ -72,7 +73,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
         fl <- fl[grep(x,fl,invert=TRUE)]
       }
     }
-    fitlist <- read_ridefiles(fl,cores=cores,...)
+    fitlist <- read_ridefiles(fl,cores=cores,loud=loud,...)
     fitsummary <- fitlist[["summaries"]]
     fittracks <- dplyr::arrange(fitlist[["tracks"]],startbutton.date,timestamp.s)
     newfitfiles <- basename(fl)
@@ -95,7 +96,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
       }
     }
     if (length(newfitfiles)>0) {
-      newfitlist <- read_ridefiles(newfitfiles,cores=cores,...)
+      newfitlist <- read_ridefiles(newfitfiles,cores=cores,loud=loud,...)
       newfitresults <- newfitlist[["summaries"]]
       newfittracks <- newfitlist[["tracks"]]
       newfiles <- newfitresults$sourcefile
@@ -145,7 +146,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
         fl <- fl[grep(x,fl,invert=TRUE)]
       }
     }
-    gpxlist <- read_ridefiles(fl,cores=cores,...)
+    gpxlist <- read_ridefiles(fl,cores=cores,loud=loud,...)
     gpxsummary <- gpxlist[["summaries"]]
     gpxtracks <- dplyr::arrange(gpxlist[["tracks"]],timestamp.s)
     newgpxfiles <- basename(fl)
@@ -168,7 +169,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
        }
     }
     if (length(newgpxfiles)>0) {
-      newgpxlist <- read_ridefiles(newgpxfiles,cores=cores,...)
+      newgpxlist <- read_ridefiles(newgpxfiles,cores=cores,loud=loud,...)
       newgpxresults <- newgpxlist[["summaries"]]
       newgpxtracks <- newgpxlist[["tracks"]]
       newfiles <- newgpxresults$sourcefile

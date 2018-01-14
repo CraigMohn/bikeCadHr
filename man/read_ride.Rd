@@ -4,113 +4,31 @@
 \alias{read_ride}
 \title{read and clean a gps data file}
 \usage{
-read_ride(ridefile, tz = "America/Los_Angeles",
-  subtrack.initial.idle.agg.secs = 20,
-  subtrack.initial.idle.agg.meters = 15, min.segment.break.time = 3,
-  max.interval.time = 30, min.segment.obs = 2, min.segment.dist = 10,
-  min.segment.time = 5, short.segment.merge.timegap.max = 4,
-  short.seg.delete = FALSE, short.seg.cadence.delete.na.threshold = 0.5,
-  fixDistance = FALSE, cadence.time.shift.start = 0,
-  last.interval.end.notrigger = FALSE, cadence.trim.beg.secs = 30,
-  cadence.trim.end.secs = 30, cadence.max = 160,
-  cadence.correct.window = 7, cadence.correct.errors = TRUE,
-  cadence.correct.nas = FALSE, gr.bound = NULL, gr.bound2 = NULL,
-  gr.low = 0.0378, gr.high = 0.1855, gr.peak.m = 5, gr.nlowgear = 1,
-  gr.kernel = "epanechnikov", gr.adjust = 0.02,
-  gr.density.threshold = 0.05, grade.smooth.window = 7,
-  grade.smooth.bw = 10, grade.smooth.percentiles = c(0.005, 0.98))
+read_ride(ridefile, tz = "America/Los_Angeles", fixDistance = FALSE,
+  loud = FALSE, ...)
 }
 \arguments{
 \item{ridefile}{a filenames (.fit or .gpx extension) to process}
 
 \item{tz}{string contaiing timezone for converting from UTC}
 
-\item{subtrack.initial.idle.agg.secs}{stops/restarts before this time has
-elapsed are discarded and the ride starts at the last start prior to this}
+\item{fixDistance}{repair nonmonotonicities in distance which are on
+segment breaks - this occurs when power is lost or on some device lockups}
 
-\item{subtrack.initial.idle.agg.meters}{stops/restarts within this distance
-of the initial start are discarded as above}
+\item{loud}{print information about re/segmenting track data}
 
-\item{min.segment.break.time}{(seconds) segments separated by less time
-than this are joined}
-
-\item{max.interval.time}{(seconds) tracks are split between datapoints
-separated by more time than this}
-
-\item{min.segment.obs}{segments smaller than this are joined to closest
-neighboring segment}
-
-\item{min.segment.dist}{(meters) segments shorter than this are joined}
-
-\item{min.segment.time}{(seconds) segments shorter than this are joined}
-
-\item{short.segment.merge.timegap.max}{(seconds) short segments are joined
-if interval between closest is no longer than this time}
-
-\item{short.seg.delete}{delete short segments if no other segment
-within the max tim gap above}
-
-\item{short.seg.cadence.delete.na.threshold}{delete short segments even
-if \eqn{short.seg.delete}=FALSE if share of cadence NAs in segment exceeds this}
-
-\item{fixDistance}{repair nonmonotonicities in distance which are on segment breaks -
-this occurs when power is lost or on some device lockups}
-
-\item{cadence.time.shift.start}{do not use, alter assumptions about gps sample recording}
-
-\item{last.interval.end.notrigger}{do not use, alter assumptions about gps sample recording}
-
-\item{cadence.trim.beg.secs}{number of seconds after the beginning of a
-track segment that are ignored in calculating midsegment avg cadence}
-
-\item{cadence.trim.end.secs}{number of seconds before the end of a
-track segment that are ignored in calculating midsegment avg cadence}
-
-\item{cadence.max}{max credible cadence value, larger values are errors}
-
-\item{cadence.correct.window}{window size for kernel smoothing of cadence}
-
-\item{cadence.correct.errors}{repair excessive cadence values
-using triangular-kernel-weighted average of the nearest nonmissing values
-in the same segment}
-
-\item{cadence.correct.nas}{repair cadence missing values using
-triangular-kernel-weighted average of the nearest nonmissing values in
-the same segment}
-
-\item{gr.bound}{gear ratio (speed divided by cadence) cutoff for classifying
-as lowest gear.  default calculated based on parameters}
-
-\item{gr.bound2}{alternate cutoff for classifying
-as lowest gear}
-
-\item{gr.low}{lowest gear ratio (speed divided by cadence)}
-
-\item{gr.high}{highest gear ratio (speed divided by cadence)}
-
-\item{gr.peak.m}{window for identifying peaks in gear ratio density}
-
-\item{gr.nlowgear}{number of gears lumped into pct.low.gear statistic}
-
-\item{gr.kernel}{kernel to use in gear ratio density estimation}
-
-\item{gr.adjust}{multiplier for default density() bandwidth}
-
-\item{gr.density.threshold}{threshold to keep density peak, as a
-share of the largest peak density}
-
-\item{grade.smooth.window}{number of observations on each side used for
-calculating kernel smoothed elevation for the grade calculation}
-
-\item{grade.smooth.bw}{bandwidth (meters distance) for kernel smoothing of elevation
-in the grade calculation}
-
-\item{grade.smooth.percentiles}{percentiles of elevations to use
-as steepest grades}
+\item{...}{parameters for \code{\link{processSegments}},
+\code{\link{statsCadence}},
+\code{\link{statsPower}},
+\code{\link{statsHeartRate}},
+\code{\link{statsGearing}},
+\code{\link{statsGrade}},
+\code{\link{statsSession}},
+\code{\link{statsStops}}}
 }
 \value{
-a list of three data tibbles:  \eqn{summary} and \eqn{trackpoints} and
-   \eqn{session}
+a list of three data tibbles:  \eqn{summary} and \eqn{trackpoints}
+   and \eqn{session}
    These are linked by integer fields \eqn{startbutton.date}
    and \eqn{startbutton.time}
 }
@@ -123,5 +41,13 @@ a list of three data tibbles:  \eqn{summary} and \eqn{trackpoints} and
   are repaired, and summary stats are calculated for analysis.
 }
 \seealso{
-\code{\link{read_ridefiles}}
+\code{\link{read_ridefiles}},
+   \code{\link{processSegments}},
+   \code{\link{statsCadence}},
+   \code{\link{statsPower}},
+   \code{\link{statsHeartRate}},
+   \code{\link{statsGearing}},
+   \code{\link{statsGrade}},
+   \code{\link{statsSession}},
+   \code{\link{statsStops}}
 }

@@ -4,12 +4,14 @@
 \alias{read_ridefiles}
 \title{read multiple gps data files}
 \usage{
-read_ridefiles(ridefilevec, cores = 4, ...)
+read_ridefiles(ridefilevec, cores = 4, loud = loud, ...)
 }
 \arguments{
 \item{ridefilevec}{a vector of filenames to process}
 
-\item{cores}{numer of cores (default is #CPUs - 1)}
+\item{cores}{number of cores (default is #CPUs - 1)}
+
+\item{loud}{display summary of re/segmenting actions}
 
 \item{...}{parameters passed for track cleaning}
 }
