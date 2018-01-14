@@ -1,4 +1,4 @@
-#' filename to date parsing options for bikeCadHr functions
+#' filename-to-date parsing options for bikeCadHr functions
 #'
 #' @details option names and defaults:
 #'   Assumes names of .fit files from gps YYYY-MM-DD-HH-MM-SS.fit

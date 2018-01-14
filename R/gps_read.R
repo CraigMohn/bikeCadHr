@@ -798,8 +798,8 @@ processSegments <- function(trackdf,
                             segInitIdleAggMeters=20,
                             segBreakTimeMin=3,
                             nonsegTimeGapMax=30,
-                            segSplitTimeStop=5,
-                            segMinObs=3,segMinMeters=10,segMinSecs=7,
+                            segSplitTimeStop=3,
+                            segMinObs=4,segMinMeters=10,segMinSecs=10,
                             ignoreSegInfo=FALSE,loud=FALSE,...) {
 
   #  demand some small amount of consistency

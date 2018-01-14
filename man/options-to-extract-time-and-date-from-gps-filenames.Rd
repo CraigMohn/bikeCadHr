@@ -2,9 +2,9 @@
 % Please edit documentation in R/bikeCadHr_options.R
 \name{options to extract time and date from gps filenames}
 \alias{options to extract time and date from gps filenames}
-\title{filename to date parsing options for bikeCadHr functions}
+\title{filename-to-date parsing options for bikeCadHr functions}
 \description{
-filename to date parsing options for bikeCadHr functions
+filename-to-date parsing options for bikeCadHr functions
 }
 \details{
 option names and defaults:

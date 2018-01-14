@@ -248,17 +248,19 @@ join_ridefiles <- function(joinlist,summaries,tracks) {
   #  tracks - tbl of tracks consisting of timestamp.s,position_lat.dd,position_lon.dd,starttime,segment plus anything else
   values.from.first <- c("date","start.time","start.hour","sourcefile","processed.time",
                          "startbutton.date","startbutton.time","low.gear","low.gear2")
-  values.to.add <- c("nwaypoints","numsegs","distance","total.time","rolling.time","pedal.time","pedal.strokes",
+  values.to.add <- c("nwaypoints","numsegs","distance","total.time","rolling.time","pedal.time",
                      "ascent","descent","distance.ascending","distance.descending","stops.subminute","stops.1to10minutes",
                      "stops.10to30minutes","stops.long","session.distance","session.elapsed.time","session.timer.time",
                      "session.pedal.strokes","session.total.calories","session.total.ascent","session.total.descent",
                      "session.distance")
   values.special <- c("startline.time","avgcadence.nozeros","avgcadence.withzeros",
-                      "speed.rolling.m.s","speed.all.m.s","speed.max.m.s","grade.ascending.steepest","grade.descending.steepest",
-                      "session.max.speed","session.max.hr","ride.loop")
+                      "speed.rolling.m.s","speed.all.m.s","speed.max.m.s",
+                      "session.max.speed","session.max.hr","session.max.power","ride.loop",
+                      "deltaElev","begEndGap")
   values.weighted.mean.time <- c("avgcadence.midsegment","pct.trkpts.hr","pct.trkpts.cad",
                                  "session.avg.speed","session.avg.cadence",
-                                 "session.avg.hr","pct.low.gear","pct.low.gear2")
+                                 "session.avg.hr", "session.avg.power","pct.low.gear",
+                                 "pct.low.gear2")
   values.from.last <- c("hr.at.stop","hr.recovery")
 
   dropped.files <- "zzz"
@@ -290,17 +292,16 @@ join_ridefiles <- function(joinlist,summaries,tracks) {
             sum( rides[-1,"startline.time"] >= 600 & rides[-1,"startline.time"] < 1800 )
       summary.joined[1,"stops.long"] <- summary.joined[1,"stops.1to10minutes"] +
             sum( rides[-1,"startline.time"] >= 1800 )
-      summary.joined$avgcadence.nozeros <- 60*summary.joined$pedal.strokes/summary.joined$pedal.time
-      summary.joined$avgcadence.withzeros <- 60*summary.joined$pedal.strokes/summary.joined$rolling.time
+      pedal.strokes <- sum(60*rides$avgcadence.nozeros*rides$pedal.time)
+      summary.joined$avgcadence.nozeros <- 60*pedal.strokes/summary.joined$pedal.time
+      summary.joined$avgcadence.withzeros <- 60*pedal.strokes/summary.joined$rolling.time
       summary.joined$speed.rolling.m.s <- summary.joined$distance/summary.joined$rolling.time
       summary.joined$speed.all.m.s <- summary.joined$distance/summary.joined$total.time
       summary.joined$speed.max.m.s <- max(rides$speed.max.m.s,na.rm=T)
-      summary.joined$grade.ascending.steepest <- max(rides$grade.ascending.steepest,na.rm=T)
-      summary.joined$grade.descending.steepest <- min(rides$grade.descending.steepest,na.rm=T)
       summary.joined$session.max.speed <- max(rides$session.max.speed,na.rm=T)
       summary.joined$session.max.hr <- max(rides$session.max.hr,na.rm=T)
-      summaries <- dplyr::bind_rows(summaries[!summaries$sourcefile %in% ridevec,],summary.joined[1,]) %>%
-                                dplyr::arrange(start.time)
+      summary.joined$session.max.power <- max(rides$session.max.power,na.rm=T)
+
       datetimestr.sum <- dateTimeStr(rides$startbutton.date,rides$startbutton.time)
       track <- dplyr::arrange(tracks[dateTimeStr(tracks$startbutton.date,tracks$startbutton.time) %in% datetimestr.sum,],
                         startbutton.date,timestamp.s)
@@ -315,25 +316,37 @@ join_ridefiles <- function(joinlist,summaries,tracks) {
         print(summary.joined)
         stop("incorrect segment count after join")
       }
+      if (!is.na(track$position_lon.dd[1])){
+        begEndGap <- raster::pointDistance(cbind(track$position_lon.dd[1],
+                                                 track$position_lat.dd[1]),
+                                           cbind(track$position_lon.dd[nrow(track)],
+                                                 track$position_lat.dd[nrow(track)]),
+                                           lonlat=TRUE)
+        if (begEndGap>100) {
+          cat("  *non-loop - distance between start and end = ",begEndGap,"m \n")
+          cat("   start = ",track$position_lon.dd[1],"  ",
+              track$position_lat.dd[1],"  \n")
+          cat("   stop  = ",track$position_lon.dd[nrow(track)],"  ",
+              track$position_lat.dd[nrow(track)],"\n")
+          rideLoop <- FALSE
+        } else {
+          rideLoop <- TRUE
+        }
+      } else {
+        begEndGap <- NA
+        rideLoop <- NA
+      }
+      summary.joined$ride.loop <- rideLoop
+      summary.joined$begEndGap <- begEndGap
+      summary.joined$deltaElev <- track$altitude.m[nrow(track)] -
+                                  track$altitude.m[1]
       track$startbutton.date <- track$startbutton.date[1]
       track$startbutton.time <- track$startbutton.time[1]
-      if (!is.na(track$position_lon.dd[1])){
-        beg.end.gap <- raster::pointDistance(cbind(track$position_lon.dd[1],track$position_lat.dd[1]),
-                                             cbind(track$position_lon.dd[nrow(track)],track$position_lat.dd[nrow(track)]),
-                                             lonlat=TRUE)
-        if (beg.end.gap>133) {
-          print(paste0("non-loop after merge- distance between start and end = ",beg.end.gap))
-          print(paste0("start = ",track$position_lon.dd[1],"  ",track$position_lat.dd[1]))
-          print(paste0("stop  = ",track$position_lon.dd[nrow(track)],"  ",track$position_lat.dd[nrow(track)]))
-          ride.loop <- FALSE
-        } else {
-          ride.loop <- TRUE
-        }
-        } else {
-        ride.loop <- NA
-      }
-      tracks <- dplyr::bind_rows(tracks[!(dateTimeStr(tracks$startbutton.date,tracks$startbutton.time) %in% datetimestr.sum),],track) %>%
+      tracks <- dplyr::bind_rows(tracks[!(dateTimeStr(tracks$startbutton.date,tracks$startbutton.time) %in% datetimestr.sum),],
+                                 track) %>%
         dplyr::arrange(startbutton.date,timestamp.s)
+      summaries <- dplyr::bind_rows(summaries[!summaries$sourcefile %in% ridevec,],summary.joined[1,]) %>%
+        dplyr::arrange(start.time)
     }
   }
   return(list(changed,dropped.files[-1],summaries,tracks))
