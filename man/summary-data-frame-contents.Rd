@@ -29,6 +29,9 @@ Data fields in the summary:
  \item{avgcadence.nozeros - average cadence excluding zeros}
  \item{avgcadence.withzeros - average cadence including zeros}
  \item{avgcadence.midsegment - average cadence excluding time before and after stops}
+ \item{avgpower.nozeros - average cadence excluding zeros}
+ \item{avgpower.withzeros - average cadence including zeros}
+ \item{avgpower.postcal.rolling - average cadence excluding time before and after stops}
  \item{hr.at.stop - fit file only, heart rate at end of ride}
  \item{hr.recovery - fit file only, and only if you waited 2 minutes after hitting stop
     before you stop recording or reset counters, heart rate after 2 minute interval}

@@ -281,7 +281,13 @@ join_ridefiles <- function(joinlist,summaries,tracks) {
         summary.joined[1,varname] <- sum(rides[,varname],na.rm=T)
       }
       for (varname in values.weighted.mean.time){
-        summary.joined[1,varname] <- stats::weighted.mean(unlist(rides[,varname]),unlist(rides[,"rolling.time"]),na.rm=TRUE)
+        if (any(!is.na(rides[,varname]))) {
+          summary.joined[1,varname] <-
+                stats::weighted.mean(unlist(rides[,varname]),
+                                     unlist(rides[,"rolling.time"]),na.rm=TRUE)
+        } else {
+          summary.joined[1,varname] <- NA
+        }
       }
       #startline time comes from first (already put there by copy), others are added into breaks
       summary.joined[1,"stops.subminute"] <- summary.joined[1,"stops.subminute"] +
@@ -292,16 +298,23 @@ join_ridefiles <- function(joinlist,summaries,tracks) {
             sum( rides[-1,"startline.time"] >= 600 & rides[-1,"startline.time"] < 1800 )
       summary.joined[1,"stops.long"] <- summary.joined[1,"stops.1to10minutes"] +
             sum( rides[-1,"startline.time"] >= 1800 )
-      pedal.strokes <- sum(60*rides$avgcadence.nozeros*rides$pedal.time)
+      pedal.strokes <- sum(rides$avgcadence.nozeros*rides$pedal.time/60)
       summary.joined$avgcadence.nozeros <- 60*pedal.strokes/summary.joined$pedal.time
       summary.joined$avgcadence.withzeros <- 60*pedal.strokes/summary.joined$rolling.time
       summary.joined$speed.rolling.m.s <- summary.joined$distance/summary.joined$rolling.time
       summary.joined$speed.all.m.s <- summary.joined$distance/summary.joined$total.time
       summary.joined$speed.max.m.s <- max(rides$speed.max.m.s,na.rm=T)
       summary.joined$session.max.speed <- max(rides$session.max.speed,na.rm=T)
-      summary.joined$session.max.hr <- max(rides$session.max.hr,na.rm=T)
-      summary.joined$session.max.power <- max(rides$session.max.power,na.rm=T)
-
+      if (any(is.na(rides$session.max.hr))) {
+        summary.joined$session.max.hr <- max(rides$session.max.hr,na.rm=T)
+      } else {
+        summary.joined$session.max.hr <- NA
+      }
+      if (!all(is.na(rides$session.max.power))) {
+        summary.joined$session.max.power <- max(rides$session.max.power,na.rm=T)
+      } else {
+        summary.joined$session.max.power <- NA
+      }
       datetimestr.sum <- dateTimeStr(rides$startbutton.date,rides$startbutton.time)
       track <- dplyr::arrange(tracks[dateTimeStr(tracks$startbutton.date,tracks$startbutton.time) %in% datetimestr.sum,],
                         startbutton.date,timestamp.s)

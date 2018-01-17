@@ -220,6 +220,9 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
                        avgcadence.nozeros = cadStats[["avgcadenceNoZeros"]],
                        avgcadence.withzeros = cadStats[["avgcadenceWithZeros"]],
                        avgcadence.midsegment = cadStats[["avgcadenceMidsegment"]],
+                       avgpower.nozeros=powStats[["avgpowerNoZeros"]],
+                       avgpower.withzeros=powStats[["avgpowerWithZeros"]],
+                       avgpower.postcal.rolling=powStats[["avgpowerPostCalRolling"]],
                        ascent = climbStats[["ascent"]],
                        descent = climbStats[["descent"]],
                        distance.ascending = climbStats[["distanceAscending"]],
@@ -565,6 +568,7 @@ statsCadence <- function(trackdf,
 #' \code{statsPower}  processes a gps track file to summarize the power data
 #'
 #' @param trackdf data frame or tibble with gps track data
+#' @param powerCalibrateTime number of seconds to ignore in avgpowerPostCal
 #' @param ... parameters for \code{\link{processSegments}},
 #'    \code{\link{statsCadence}},
 #'    \code{\link{statsHeartRate}},
@@ -584,15 +588,20 @@ statsCadence <- function(trackdf,
 #'    \code{\link{statsStops}}
 #'
 #' @export
-statsPower <- function(trackdf,...) {
+statsPower <- function(trackdf,powerCalibrateTime=600,...) {
   powerpos <- !is.na(trackdf$power.watts) & trackdf$power.watts > 0
   powerNum <- sum(trackdf$power.watts[powerpos]*
                     trackdf$deltatime[powerpos]  )
   avgpowerNoZeros <- powerNum / sum(trackdf$deltatime[powerpos])
   avgpowerWithZeros <- powerNum / rollingTime(trackdf)
+  powerpospost <- powerpos & cumsum(trackdf$deltatime)
+  powerNumpost <- sum(trackdf$power.watts[powerpospost]*
+                      trackdf$deltatime[powerpospost]  )
+  avgpowerPostCalRolling <-powerNumpost / rollingTime(trackdf)
 
   return(list(avgpowerNoZeros=avgpowerNoZeros,
-              avgpowerWithZeros=avgpowerWithZeros))
+              avgpowerWithZeros=avgpowerWithZeros,
+              avgpowerPostCalRolling=avgpowerPostCalRolling))
 }
 #' generate heartrate statistics for a track
 #'

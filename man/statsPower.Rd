@@ -4,10 +4,12 @@
 \alias{statsPower}
 \title{generate power statistics for a track}
 \usage{
-statsPower(trackdf, ...)
+statsPower(trackdf, powerCalibrateTime = 600, ...)
 }
 \arguments{
 \item{trackdf}{data frame or tibble with gps track data}
+
+\item{powerCalibrateTime}{number of seconds to ignore in avgpowerPostCal}
 
 \item{...}{parameters for \code{\link{processSegments}},
 \code{\link{statsCadence}},
