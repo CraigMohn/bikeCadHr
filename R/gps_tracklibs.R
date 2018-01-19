@@ -108,10 +108,13 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
           newfiles <- setdiff(newfiles,temp[[2]])
         }
       }
-      datetimestr.sum <- dateTimeStr(newfitresults$startbutton.date,newfitresults$startbutton.time)
-      datetimestr.track <- dateTimeStr(fittracks$startbutton.date,fittracks$startbutton.time)
-      fitsummary <- dplyr::arrange(dplyr::bind_rows(newfitresults,fitsummary[!fitsummary$sourcefile %in% newfitfiles,]),date,start.hour)
-      fittracks <- dplyr::arrange(dplyr::bind_rows(newfittracks,fittracks[!(datetimestr.track %in% datetimestr.sum),]),startbutton.date,timestamp.s)
+      fitpair <- combine_track_stores(primary_sums=newfitresults,
+                                      primary_tracks=newfittracks,
+                                      secondary_sums=fitsummary,
+                                      secondary_tracks=fittracks)
+      fitsummary <- fitpair[["summaries"]]
+      fittracks <- fitpair[["tracks"]]
+
       for (ridefn in basename(newfiles)) {
         idate <- fitsummary[fitsummary$sourcefile==ridefn,]$startbutton.date
         itime <- fitsummary[fitsummary$sourcefile==ridefn,]$startbutton.time
@@ -181,10 +184,13 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
           newfiles <- setdiff(newfiles,temp[[2]])
         }
       }
-      datetimestr.sum <- dateTimeStr(newgpxresults$startbutton.date,newgpxresults$startbutton.time)
-      datetimestr.track <- dateTimeStr(gpxtracks$startbutton.date,gpxtracks$startbutton.time)
-      gpxsummary <- dplyr::arrange(dplyr::bind_rows(newgpxresults,gpxsummary[!gpxsummary$sourcefile %in% newgpxfiles,]),date,start.hour)
-      gpxtracks <- dplyr::arrange(dplyr::bind_rows(newgpxtracks,gpxtracks[!(datetimestr.track %in% datetimestr.sum),]),startbutton.date,timestamp.s)
+      gpxpair <- combine_track_stores(primary_sums=newgpxresults,
+                                      primary_tracks=newgpxtracks,
+                                      secondary_sums=gpxsummary,
+                                      secondary_tracks=gpxtracks)
+
+      gpxsummary <- gpxpair[["summaries"]]
+      gpxtracks <- gpxtracks[["tracks"]]
       for (ridefn in basename(newfiles)) {
         idate <- gpxsummary[gpxsummary$sourcefile==ridefn,]$startbutton.date
         itime <- gpxsummary[gpxsummary$sourcefile==ridefn,]$startbutton.time
@@ -228,8 +234,8 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
 #' \code{join_ridefiles} Join two or more ride segments which come from
 #'   separate files, since binary .fit files are not amenable to easy
 #'   editing.  The merged data is in the updated entries in the
-#'   (summary,track) data pair.  Tee joined .fit files cannot be
-#'   exported.
+#'   (summary,track) data pair.  The joined data cannot be
+#'   exported as a fit file, sorry.
 #'
 #' @param joinlist list of vectors (order matters within vectors) of .fit
 #'    or .gpx filenames, each vector a part of a track to be joined in order
@@ -439,5 +445,5 @@ combine_track_stores <- function(primary_sums,primary_tracks,
                                      secondary_tracks$startbutton.time) %in%
                        fromsec,]),
       startbutton.date,timestamp.s)
-    return(list(summaries,tracks))
+    return(list(summaries=summaries,tracks=tracks))
 }

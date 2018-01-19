@@ -291,7 +291,7 @@ drawTAxis <- function(ggp,walltime,startsAndStops,distPerPoint,hoursPerPoint) {
 
   #  axis line - color coded for stops
   xscale <- distPerPoint/hoursPerPoint
-  tAxisSegData <- data.frame(x=segs$timeBeg,xend=segs$timeStop,xcol=40,y=yCenter)
+  tAxisSegData <- data.frame(x=segs$timeBeg,xend=segs$timeEnd,xcol=40,y=yCenter)
   tAxisStopData <- data.frame(x=stops$timeBeg,xend=stops$timeEnd,xcol=15,y=yCenter)
   tAxisData <- rbind(tAxisSegData,tAxisStopData)
   tAxisData$x <- (xscale/3600)*tAxisData$x
@@ -404,7 +404,7 @@ drawXAxis <- function(ggp,distance,startsAndStops,
     #  create data frames for stops/breaks
     #  classify seg breaks as short stops or long breaks, work in grid coords
     stopdata <-
-      data.frame(distance=stops$locStop,yCenter,lenStop=stops$lenStop)
+      data.frame(distance=stops$locEnd,yCenter,lenStop=stops$lenStop)
     stopdata$pauseSize <- ifelse(stopdata$lenStop<300,
                                   1,
                                   1.5*log(stopdata$lenStop/300))
@@ -476,16 +476,19 @@ drawXTConnect <- function(ggp,distance,walltime,startsAndStops,
   stops <- startsAndStops[["stopSumFrame"]]
 
    #stop begin time,stop end times, stop location
-  pointsStop <- data.frame(group=stops$stopNum,
-                           x=stops$locStop,
-                           y=yXTConnect+(height("axis",heightFactor)/2))
+  pointsStopBeg <- data.frame(group=stops$stopNum,
+                              x=stops$locBeg,
+                              y=yXTConnect+(height("axis",heightFactor)/2))
+  pointsStopEnd <- data.frame(group=stops$stopNum,
+                              x=stops$locEnd,
+                              y=yXTConnect+(height("axis",heightFactor)/2))
   pointsTimeBeg <- data.frame(group=stops$stopNum,
                               x=xscale*stops$timeBeg,
                               y=ymin-(height("axis",heightFactor)/2))
   pointsTimeEnd <- data.frame(group=stops$stopNum,
                               x=xscale*stops$timeEnd,
                               y=ymin-(height("axis",heightFactor)/2))
-  stopData <- rbind(pointsStop,pointsTimeBeg,pointsTimeEnd)
+  stopData <- rbind(pointsStopBeg,pointsStopEnd,pointsTimeBeg,pointsTimeEnd)
   g <- g +
      ggplot2::geom_polygon(data=stopData,
                            aes(x=x,y=y,group=group),fill="red3",alpha=0.3,

@@ -15,7 +15,8 @@ plot_profile(track, summary, savefn, title = "Ride starting ",
   cadColorLow = 3, cadColorMid = 9, cadColorHigh = 15, powerLow = 75,
   powerHigh = 350, powerColorLow = 3, powerColorHigh = 35,
   hrSmoothBW = 6, hrSmoothNN = 6, cadSmoothBW = 10, cadSmoothNN = 10,
-  powerSmoothBW = 15, powerSmoothNN = 15, minNumPoints = 3000,
+  powerSmoothBW = 20, powerSmoothNN = 20, elevSmoothBWMeters = 15,
+  stopToleranceMeters = 5, minSecsRolling = 5, minNumPoints = 3000,
   imperial = TRUE)
 }
 \arguments{
@@ -111,6 +112,13 @@ for power data}
 
 \item{powerSmoothNN}{number of points (on each side) to use in smoothing
 for power data}
+
+\item{elevSmoothBWMeters}{bandwidth (in meters) for elevation smoothing}
+
+\item{stopToleranceMeters}{tolerance in meters for determining stop}
+
+\item{minSecsRolling}{restarts shorter than this number of seconds
+considered to be part of stop}
 
 \item{minNumPoints}{pad out the plot on the right if too short}
 

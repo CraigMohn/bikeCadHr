@@ -1,4 +1,4 @@
-read_fittrack <- function(fitfile) {
+read_fittrack <- function(fitfile,createSegs=FALSE) {
 
   #  this code is a modified and repurposed version of the scripts posted in
   #  various websites and in the examples with the fitdc package, which does the
@@ -46,9 +46,8 @@ read_fittrack <- function(fitfile) {
   #  drop records with no distance measure, they are beyond salvage
   records <- records[!is.na(records$distance.m),]
   #  put in check that assumption of 1 record per timestamp holds...
-
   #  add auto start/stop if GPS not set to auto on/off, but only if lat/lon
-  if ((length(which(events$timer_trigger. == "auto"))==0) &
+  if ((length(which(events$timer_trigger. == "auto"))==0) & createSegs &
       ("position_lat.semicircles" %in% colnames(records))){
 
     seg.start <- (records$distance.m == lag_one(records$distance.m)) &

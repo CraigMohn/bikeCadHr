@@ -222,6 +222,7 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
                        avgcadence.midsegment = cadStats[["avgcadenceMidsegment"]],
                        avgpower.nozeros=powStats[["avgpowerNoZeros"]],
                        avgpower.withzeros=powStats[["avgpowerWithZeros"]],
+                       avgpower.postcal.nozeros=powStats[["avgpowerPostCalNoZeros"]],
                        avgpower.postcal.rolling=powStats[["avgpowerPostCalRolling"]],
                        ascent = climbStats[["ascent"]],
                        descent = climbStats[["descent"]],
@@ -592,15 +593,29 @@ statsPower <- function(trackdf,powerCalibrateTime=600,...) {
   powerpos <- !is.na(trackdf$power.watts) & trackdf$power.watts > 0
   powerNum <- sum(trackdf$power.watts[powerpos]*
                     trackdf$deltatime[powerpos]  )
-  avgpowerNoZeros <- powerNum / sum(trackdf$deltatime[powerpos])
-  avgpowerWithZeros <- powerNum / rollingTime(trackdf)
-  powerpospost <- powerpos & cumsum(trackdf$deltatime)
-  powerNumpost <- sum(trackdf$power.watts[powerpospost]*
-                      trackdf$deltatime[powerpospost]  )
-  avgpowerPostCalRolling <-powerNumpost / rollingTime(trackdf)
+  if (sum(powerpos)>0) {
+    avgpowerNoZeros <- powerNum / totalTime(trackdf,powerpos)
+    avgpowerWithZeros <- powerNum / rollingTime(trackdf)
 
+    calibrate <- cumsum(trackdf$deltatime)<powerCalibrateTime
+    if (sum(!calibrate)>sum(calibrate)) {
+      powerNumpost <- sum(trackdf$power.watts[powerpos & !calibrate]*
+                          trackdf$deltatime[powerpos & !calibrate]  )
+      avgpowerPostCalNoZeros <-powerNumpost / totalTime(trackdf,powerpos & !calibrate)
+      avgpowerPostCalRolling <-powerNumpost / rollingTime(trackdf,!calibrate)
+    } else {
+      avgpowerPostCalNoZeros <- NA
+      avgpowerPostCalRolling <- NA
+    }
+  } else {
+    avgpowerNoZeros <- NA
+    avgpowerWithZeros <- NA
+    avgpowerPostCalNoZeros <- NA
+    avgpowerPostCalRolling <- NA
+  }
   return(list(avgpowerNoZeros=avgpowerNoZeros,
               avgpowerWithZeros=avgpowerWithZeros,
+              avgpowerPostCalNoZeros=avgpowerPostCalNoZeros,
               avgpowerPostCalRolling=avgpowerPostCalRolling))
 }
 #' generate heartrate statistics for a track
@@ -901,14 +916,17 @@ statsStops <- function(trackdf,
               stops10to30Minutes=stops10to30Minutes,
               stopsLong=stopsLong))
 }
-totalTime <- function(trackdf) {
-  return(sum(trackdf$deltatime))
+totalTime <- function(trackdf,include) {
+  if (missing(include)) include <- TRUE
+  return(sum(trackdf$deltatime[include]))
 }
-rollingTime <- function(trackdf) {
-  return(sum(trackdf$deltatime[trackdf$speed.m.s > 0]))
+rollingTime <- function(trackdf,include) {
+  if (missing(include)) include <- TRUE
+  return(sum(trackdf$deltatime[include & trackdf$speed.m.s > 0]))
 }
-pedalTime <- function(trackdf) {
+pedalTime <- function(trackdf,include) {
+  if (missing(include)) include <- TRUE
   pedaling <- !is.na(trackdf$cadence.rpm) & trackdf$cadence.rpm > 0
-  return(sum(trackdf$deltatime[pedaling]))
+  return(sum(trackdf$deltatime[include & pedaling]))
 }
 

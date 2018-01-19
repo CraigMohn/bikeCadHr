@@ -22,8 +22,8 @@ a list of two tbls containing the summaries and tracks with the
 \code{join_ridefiles} Join two or more ride segments which come from
   separate files, since binary .fit files are not amenable to easy
   editing.  The merged data is in the updated entries in the
-  (summary,track) data pair.  Tee joined .fit files cannot be
-  exported.
+  (summary,track) data pair.  The joined data cannot be
+  exported as a fit file, sorry.
 }
 \seealso{
 \code{\link{read_ride}}

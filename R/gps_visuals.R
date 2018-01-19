@@ -379,6 +379,10 @@ plot_elev_profile_plus <- function(track,summary,savefn,title="Ride",
 #'    for power data
 #' @param powerSmoothNN number of points (on each side) to use in smoothing
 #'    for power data
+#' @param elevSmoothBWMeters bandwidth (in meters) for elevation smoothing
+#' @param stopToleranceMeters tolerance in meters for determining stop
+#' @param minSecsRolling restarts shorter than this number of seconds
+#'    considered to be part of stop
 #' @param minNumPoints pad out the plot on the right if too short
 #' @param imperial use mi and ft instead of km and m
 #'
@@ -402,7 +406,10 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                          powerColorLow=3,powerColorHigh=35,
                          hrSmoothBW=6,hrSmoothNN=6,
                          cadSmoothBW=10,cadSmoothNN=10,
-                         powerSmoothBW=15,powerSmoothNN=15,
+                         powerSmoothBW=20,powerSmoothNN=20,
+                         elevSmoothBWMeters=15,
+                         stopToleranceMeters=5,
+                         minSecsRolling=5,
                          minNumPoints=3000,
                          imperial=TRUE) {
   ##  what will we add below the profile
@@ -424,17 +431,24 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                                   units="secs"))
   if (imperial) {
     distance  <- milesFromMeters(track$distance.m)
+    stopDistLim <- milesFromMeters(stopToleranceMeters)
+    elevsmbw <- milesFromMeters(elevSmoothBWMeters)
   }
   else {
     distance <- kmFromMeters(track$distance.m)
+    stopDistLim <- kmFromMeters(stopToleranceMeters)
+    elevsmbw <- kmFromMeters(elevSmoothBWMeters)
   }
   # grab the structure of starts and stops
-  startsAndStops <- segSummary(time=walltime,dist=distance,segment=track$segment)
+  startsAndStops <- segSummary(time=walltime,dist=distance,
+                               segment=track$segment,stopped=track$stopped,
+                               stopDistTolerance=stopDistLim,
+                               stopRunLength=minSecsRolling)
 
   #  note that may be multiple records at same distance.  smoothing
   #    algorithm will weight equally.
   elevsm <- smoothData(yvec=track$altitude.m,xvar=distance,
-                       bw=15,nneighbors=18,kernel="epanechnikov")
+                       bw=elevsmbw,nneighbors=18,kernel="epanechnikov")
   if (showCad) {
     cadzero <- track$cadence.rpm == 0
     cadna <- is.na(track$cadence.rpm)

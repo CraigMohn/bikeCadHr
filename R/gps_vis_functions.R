@@ -124,7 +124,9 @@ discrete_bar <- function(g,legendtext,xvar,vals,lowval,hival,
 }
 # build tibble with segment data
 #  segnum, begtime, endtime, stoptime, begdist, enddist
-segSummary <- function(time,dist,segment) {
+segSummary <- function(time,dist,segment,stopped,
+                       stopDistTolerance,
+                       stopRunLength,...) {
 
   if ( !is.numeric(segment) | !all(diff(segment)>=0) )
     stop("segment must be nondecreasing integers")
@@ -134,21 +136,37 @@ segSummary <- function(time,dist,segment) {
     stop("time must be nondecreasing numeric")
   newseg <- c(TRUE,(diff(segment)>0))
   endseg <- c((diff(segment)>0),TRUE)
-  timeStop <- (tibble::as_tibble(list(time=time,dist=dist,segment=segment)) %>%
-    dplyr::group_by(segment) %>%
-    dplyr::filter(dist==max(dist)) %>%
-    dplyr::summarize(timeStop=min(time)))$timeStop
-
+  stopdata <- tibble::as_tibble(list(time=time,
+                                      dist=dist,
+                                      segment=segment,
+                                      stopped=stopped)) %>%
+              dplyr::group_by(segment) %>%
+              dplyr::mutate(maxdist=max(dist),
+                            segbegtime=min(time),
+                            segendtime=max(time)) %>%
+              dplyr::mutate(timelaststop=lag_one(cumsum(stopped*time))) %>%
+              dplyr::mutate(movingrun=((time-timelaststop) > stopRunLength) |
+                                      ((time-segbegtime)  <= stopRunLength )) %>%
+              dplyr::mutate(startofstop=!movingrun &
+                                        lag_one(movingrun) &
+                                        (maxdist-dist<stopDistTolerance) ) %>%
+              dplyr::mutate(sosNA=ifelse(startofstop,1,NA)) %>%
+              dplyr::summarize(timeStop=ifelse(sum(startofstop)==0,
+                                               segendtime,
+                                               min(sosNA*time,na.rm=TRUE)),
+                               distStop=ifelse(sum(startofstop)==0,
+                                               max(dist),
+                                               min(sosNA*dist,na.rm=TRUE)))
   segSumFrame <- tibble::as_tibble(list(segment=segment[newseg],
-                                     locBeg=dist[newseg],
-                                     locEnd=dist[endseg],
-                                     timeBeg=time[newseg],
-                                     timeEnd=time[endseg],
-                                     timeStop=timeStop))
+                                        locBeg=dist[newseg],
+                                        locEnd=stopdata$distStop,
+                                        timeBeg=time[newseg],
+                                        timeEnd=stopdata$timeStop))
   stopSumFrame <- tibble::as_tibble(list(stopNum=seq(1,nrow(segSumFrame)),
-                                         locStop=dist[endseg],
-                                         timeBeg=timeStop,
-                                         timeEnd=c(segSumFrame$timeBeg[-1],max(time))))
+                                       locBeg=stopdata$distStop,
+                                       locEnd=dist[endseg],
+                                       timeBeg=stopdata$timeStop,
+                                       timeEnd=c(segSumFrame$timeBeg[-1],max(time))))
   stopSumFrame <- stopSumFrame %>%
     dplyr::mutate(lenStop=timeEnd-timeBeg)
   return(list(segSumFrame=segSumFrame,stopSumFrame=stopSumFrame))
