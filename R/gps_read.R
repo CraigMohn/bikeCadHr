@@ -131,7 +131,6 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
   trackdata <- temp[["track"]]
   recovery_hr <- temp[["recovery_hr"]]
   session <- temp[["session"]]
-
   attr(trackdata$timestamp.s,"tzone") <- tz
   if (is.na(time.turned.on)){
     #  if filename not successfully turned into a start-button time, use 1st
@@ -257,7 +256,7 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
                        processed.time = Sys.time(),
                        startbutton.date=startbuttonDate,
                        startbutton.time=startbuttonTime)
-  return(list(summary=track.cleaned,trackpoints=trackdata,session=session))
+    return(list(summary=track.cleaned,trackpoints=trackdata,session=session))
 }
 #' clean up and add start/stop segments to a track tibble, add flag for stopped
 #'
@@ -705,13 +704,11 @@ statsGearing <- function(trackdf,
     gearratio <- trackdf$speed.m.s/trackdf$cadence.rpm
     gearratio[is.na(gearratio)|is.infinite(gearratio)] <- 10000
     inlowgear <- ( gearratio < grLow1 )
-    pctLowGear1 <- sum(trackdf$deltatime[pedaling & inlowgear]*
-                       gearratio[pedaling & inlowgear]) /
+    pctLowGear1 <- sum(trackdf$deltatime[pedaling & inlowgear]) /
                              pedalTime(trackdf)
     if (!missing(grLow2)) {
       inlowgear <- ( gearratio < grLow2 )
-      pctLowGear2 <- sum(trackdf$deltatime[pedaling & inlowgear]*
-                         gearratio[pedaling & inlowgear]) /
+      pctLowGear2 <- sum(trackdf$deltatime[pedaling & inlowgear]) /
                              pedalTime(trackdf)
     } else {
       grLow2 <- NA

@@ -491,7 +491,7 @@ drawXTConnect <- function(ggp,distance,walltime,startsAndStops,
   stopData <- rbind(pointsStopBeg,pointsStopEnd,pointsTimeBeg,pointsTimeEnd)
   g <- g +
      ggplot2::geom_polygon(data=stopData,
-                           aes(x=x,y=y,group=group),fill="red3",alpha=0.3,
+                           aes(x=x,y=y,group=group),fill="red3",alpha=0.5,
                            show.legend=FALSE)
    XTConnTextFrame <- data.frame(x=xmax/2,y=yCenter,label="Stops")
    g <- g +

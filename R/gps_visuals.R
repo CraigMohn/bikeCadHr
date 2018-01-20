@@ -403,7 +403,7 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                          cadCont=TRUE,cadContLow=60,cadContHigh=100,
                          cadColorLow=3,cadColorMid=9,cadColorHigh=15,
                          powerLow=75,powerHigh=350,
-                         powerColorLow=3,powerColorHigh=35,
+                         powerColorLow=2,powerColorHigh=20,
                          hrSmoothBW=6,hrSmoothNN=6,
                          cadSmoothBW=10,cadSmoothNN=10,
                          powerSmoothBW=20,powerSmoothNN=20,
@@ -425,7 +425,6 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
   showHr <- hrDistance | hrTime
   showCad <- cadDistance | cadTime
   showPower <- powerDistance | powerTime
-
   ##  set up numeric time (in seconds) and smoothed variables
   walltime <- as.numeric(difftime(track$timestamp.s,track$timestamp.s[1],
                                   units="secs"))

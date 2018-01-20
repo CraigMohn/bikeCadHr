@@ -40,9 +40,6 @@ read_fittrack <- function(fitfile,createSegs=FALSE) {
     print(paste0("file has ",length(session)," session records, returning NULL for session variables"))
     session <- NULL
   }
-#session <<- session
-#events <<- events
-#records <<- records
   #  drop records with no distance measure, they are beyond salvage
   records <- records[!is.na(records$distance.m),]
   #  put in check that assumption of 1 record per timestamp holds...
@@ -81,14 +78,17 @@ read_fittrack <- function(fitfile,createSegs=FALSE) {
   events <- events[events$event. %in% c("timer","power_down","power_up"),]
   events <- dplyr::arrange(left_join(events,records,by="timestamp.s"),
                            timestamp.s,event.,event_type.)
-  # drop events and records before any early (< 10m) power-off-power-on pairs
+  # drop events and records before any early (< 10m,<5Min) power-off-power-on pairs
   power.on.event <- events$event. == "power_up" &
                     (lag_n(events$event.,1) == "power_down" |
                      lag_n(events$event.,2) == "power_down") &
                     cumsum(ifelse(is.na(events$distance.m),
-                                  0,events$distance.m)) < 10
+                                  0,events$distance.m)) < 10 &
+                    difftime(as.POSIXct(events$timestamp.s,tz="UTC",origin='1989-12-31'),
+                             as.POSIXct(events$timestamp.s[1],tz="UTC",origin='1989-12-31'),
+                             units="secs") < 300
 
-  if (sum(power.on.event)>0){
+  if (sum(power.on.event,na.rm=TRUE)>0){
     last.power.on <- max(which(power.on.event))
     first.time <- events$timestamp.s[last.power.on]
     events <- events[events$timestamp.s>first.time,]

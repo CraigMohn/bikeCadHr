@@ -188,9 +188,8 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
                                       primary_tracks=newgpxtracks,
                                       secondary_sums=gpxsummary,
                                       secondary_tracks=gpxtracks)
-
       gpxsummary <- gpxpair[["summaries"]]
-      gpxtracks <- gpxtracks[["tracks"]]
+      gpxtracks <- gpxpair[["tracks"]]
       for (ridefn in basename(newfiles)) {
         idate <- gpxsummary[gpxsummary$sourcefile==ridefn,]$startbutton.date
         itime <- gpxsummary[gpxsummary$sourcefile==ridefn,]$startbutton.time
