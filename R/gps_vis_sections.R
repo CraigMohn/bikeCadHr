@@ -1,7 +1,7 @@
 #  create the basic plot, with reserved room below
 #  elevation and speed are smoothed already if that's what is wanted
 drawProfile <- function(distancevec,elevationvec,speedvec,
-                        distPerPoint,palette,
+                        distPerPoint,palette,naPlotColor,
                         vertMult,npoints,minNumPoints,
                         elevationShape,imperial,
                         hrDistance,cadDistance,powerDistance,
@@ -93,9 +93,9 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
                            ifelse(imperial,"ft)","m)"))) +
     ggplot2::theme(axis.title.y=element_text(hjust=0.8)) +
     viridis::scale_color_viridis(option=palette,limits=c(0,40),
-                                 na.value="white",direction=-1) +
+                                 na.value=naPlotColor,direction=-1) +
     viridis::scale_fill_viridis(option=palette,limits=c(0,40),
-                                na.value="white",direction=-1) +
+                                na.value=naPlotColor,direction=-1) +
     ggplot2::geom_ribbon(ggplot2::aes(ymax=elevation,ymin=elevMinShade),
                          color="lightgreen",fill="lightgreen",
                          alpha=0.7) +

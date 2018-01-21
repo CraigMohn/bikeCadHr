@@ -334,6 +334,7 @@ plot_elev_profile_plus <- function(track,summary,savefn,title="Ride",
 #' @param title title printed over top center of map
 #' @param palette palette to use in graphic (\code{"plasma"} or \code{"magma"}
 #'    or \code{"inferno"} or \code{"viridis"})
+#' @param naPlotColor name of color to use displaying NAs and zeros
 #' @param verticalMultiplier default vertical exaggeration factor.  Default
 #'    ranges from 25 to 60 depending on the length being plotted
 #' @param ppm override calculated default number of points per mile
@@ -391,6 +392,7 @@ plot_elev_profile_plus <- function(track,summary,savefn,title="Ride",
 #' @export
 plot_profile <- function(track,summary,savefn,title="Ride starting ",
                          palette="plasma",
+                         naPlotColor="lightyellow",
                          verticalMultiplier=NA,ppm=NA,
                          elevationShape=46,
                          hrDistance=TRUE,cadDistance=TRUE,powerDistance=TRUE,
@@ -504,7 +506,7 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
   grlist <- drawProfile(distancevec=distance,
                         elevationvec=elevsm,
                         speedvec=speedsm,
-                        distPerPoint,palette,
+                        distPerPoint,palette,naPlotColor,
                         vertMult=verticalMultiplier,
                         npoints,minNumPoints,
                         elevationShape,imperial,

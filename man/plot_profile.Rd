@@ -6,15 +6,16 @@
   data summaries to convey performance patterns}
 \usage{
 plot_profile(track, summary, savefn, title = "Ride starting ",
-  palette = "plasma", verticalMultiplier = NA, ppm = NA,
-  elevationShape = 46, hrDistance = TRUE, cadDistance = TRUE,
-  powerDistance = TRUE, hrTime = TRUE, cadTime = TRUE, powerTime = TRUE,
-  showTime = TRUE, showSummary = TRUE, showStops = TRUE, hrLow = 100,
-  hrHigh = 170, hrColorLow = 11, hrColorHigh = 26, cadLow = 65,
-  cadTarget = 88, cadCont = TRUE, cadContLow = 60, cadContHigh = 100,
-  cadColorLow = 3, cadColorMid = 9, cadColorHigh = 15, powerLow = 75,
-  powerHigh = 350, powerColorLow = 2, powerColorHigh = 20,
-  hrSmoothBW = 6, hrSmoothNN = 6, cadSmoothBW = 10, cadSmoothNN = 10,
+  palette = "plasma", naPlotColor = "lightyellow",
+  verticalMultiplier = NA, ppm = NA, elevationShape = 46,
+  hrDistance = TRUE, cadDistance = TRUE, powerDistance = TRUE,
+  hrTime = TRUE, cadTime = TRUE, powerTime = TRUE, showTime = TRUE,
+  showSummary = TRUE, showStops = TRUE, hrLow = 100, hrHigh = 170,
+  hrColorLow = 11, hrColorHigh = 26, cadLow = 65, cadTarget = 88,
+  cadCont = TRUE, cadContLow = 60, cadContHigh = 100, cadColorLow = 3,
+  cadColorMid = 9, cadColorHigh = 15, powerLow = 75, powerHigh = 350,
+  powerColorLow = 2, powerColorHigh = 20, hrSmoothBW = 6,
+  hrSmoothNN = 6, cadSmoothBW = 10, cadSmoothNN = 10,
   powerSmoothBW = 20, powerSmoothNN = 20, elevSmoothBWMeters = 15,
   stopToleranceMeters = 5, minSecsRolling = 5, minNumPoints = 3000,
   imperial = TRUE)
@@ -33,6 +34,8 @@ extension specified, .pdf, .png or .jpg}
 
 \item{palette}{palette to use in graphic (\code{"plasma"} or \code{"magma"}
 or \code{"inferno"} or \code{"viridis"})}
+
+\item{naPlotColor}{name of color to use displaying NAs and zeros}
 
 \item{verticalMultiplier}{default vertical exaggeration factor.  Default
 ranges from 25 to 60 depending on the length being plotted}
