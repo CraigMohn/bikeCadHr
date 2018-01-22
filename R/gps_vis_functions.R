@@ -220,7 +220,7 @@ numPointsXAxis <- function(dist,ppm,imperial) {
     return(ceiling(ppm*miles))
   } else {
     distbends <- c(0,5,10,35,85,200,Inf)       # begin at 0, end at max distance
-    pointsbends <- c(0,2000,3000,4500,6500,10000,10000) # begin at 0, end at max
+    pointsbends <- c(0,2200,3300,4500,6500,10000,10000) # begin at 0, end at max
     pointsbends <- c(0,800,1600,5600,13600,15000,15000) # begin at 0, end at max
     pointsbends <- c(0,2000,3000,6000,15000,18000,18000) # begin at 0, end at max
     return(ceiling(pointsbends[which(distbends>miles)[1]-1] +
