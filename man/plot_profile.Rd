@@ -15,7 +15,7 @@ plot_profile(track, summary, savefn, title = "Ride starting ",
   cadColorLow = 4, cadColorMid = 10, cadColorHigh = 15, powerLow = 75,
   powerHigh = 400, powerColorLow = 9, powerColorHigh = 21,
   hrSmoothBW = 6, hrSmoothNN = 6, cadSmoothBW = 10, cadSmoothNN = 10,
-  powerSmoothBW = 20, powerSmoothNN = 20, elevSmoothBWMeters = 15,
+  powerSmoothBW = 10, powerSmoothNN = 10, elevSmoothBWMeters = 15,
   stopToleranceMeters = 5, minSecsRolling = 5, minNumPoints = 3000,
   imperial = TRUE)
 }
