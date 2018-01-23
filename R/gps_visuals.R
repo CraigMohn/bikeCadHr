@@ -410,7 +410,7 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                          cadSmoothBW=10,cadSmoothNN=10,
                          powerSmoothBW=10,powerSmoothNN=10,
                          elevSmoothBWMeters=15,
-                         stopToleranceMeters=5,
+                         stopToleranceMeters=10,
                          minSecsRolling=5,
                          minNumPoints=3000,
                          imperial=TRUE) {
@@ -446,6 +446,13 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                                segment=track$segment,stopped=track$stopped,
                                stopDistTolerance=stopDistLim,
                                stopRunLength=minSecsRolling)
+
+  #  adjust elevation if track is a loop
+  if (summary$ride.loop) {
+    if (abs(summary$deltaElev) > 1) {
+      track$altitude.m <- track$altitude.m + seq(0,-summary$deltaElev,length.out=nrow(track))
+    }
+  }
 
   #  note that may be multiple records at same distance.  smoothing
   #    algorithm will weight equally.
@@ -529,6 +536,12 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                         showStops,distPerPoint,
                         imperial=imperial,underLine=TRUE)
   }
+  if (powerDistance) grlist <- drawPower(grlist,powersm,distance,
+                                         segment=track$segment,
+                                         powerLow,powerHigh,
+                                         powerColorLow,powerColorHigh,
+                                         minNumPoints,showlegend=TRUE)
+
   if (cadDistance) grlist <- drawCadence(grlist,cadencesm,distance,
                                          segment=track$segment,
                                          cadLow,cadTarget,
@@ -540,12 +553,6 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                                    segment=track$segment,
                                    hrLow,hrHigh,
                                    hrColorLow,hrColorHigh,
-                                   minNumPoints,showlegend=TRUE)
-
-  if (powerDistance) grlist <- drawPower(grlist,powersm,distance,
-                                   segment=track$segment,
-                                   powerLow,powerHigh,
-                                   powerColorLow,powerColorHigh,
                                    minNumPoints,showlegend=TRUE)
 
   if (showTime) {
@@ -567,6 +574,12 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                         distPerPoint,hoursPerPoint)
   }
 
+  if (powerTime) grlist <- drawPower(grlist,powersm,walltime,
+                                     segment=track$segment,
+                                     powerLow,powerHigh,
+                                     powerColorLow,powerColorHigh,
+                                     minNumPoints,showlegend=!powerDistance)
+
   if (cadTime) grlist <- drawCadence(grlist,cadencesm,walltime,
                                      segment=track$segment,
                                      cadLow,cadTarget,
@@ -578,14 +591,6 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                                hrLow,hrHigh,
                                hrColorLow,hrColorHigh,
                                minNumPoints,showlegend=!hrDistance)
-
-  if (powerTime) grlist <- drawPower(grlist,powersm,walltime,
-                                         segment=track$segment,
-                                         powerLow,powerHigh,
-                                         powerColorLow,powerColorHigh,
-                                         minNumPoints,showlegend=!powerDistance)
-
-
 
 #  this is key to having text being kept at an appropriate size.
   ymax <- grlist[["ymax"]]

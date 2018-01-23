@@ -144,7 +144,7 @@ segSummary <- function(time,dist,segment,stopped,
               dplyr::mutate(maxdist=max(dist),
                             segbegtime=min(time),
                             segendtime=max(time)) %>%
-              dplyr::mutate(timelaststop=lag_one(cumsum(stopped*time))) %>%
+              dplyr::mutate(timelaststop=lag_one(cummax(stopped*time))) %>%
               dplyr::mutate(movingrun=((time-timelaststop) > stopRunLength) |
                                       ((time-segbegtime)  <= stopRunLength )) %>%
               dplyr::mutate(startofstop=!movingrun &
@@ -249,9 +249,9 @@ heightWith <- function(hrDistance,cadDistance,powerDistance,
                        hrTime,cadTime,powerTime,
                        headerTime,totalCall=FALSE,scale) {
   itemH <- heightItem(scale)
-  headerH <- 2*height("axis",scale) + height("connector",scale)
-  axisH <- height("axis",scale)
-  return( ifelse((!headerTime)&totalCall,axisH,0) +
+  headerH <- heightXAxis(scale) + heightTAxis(scale) +
+    + height("connector",scale)
+  return( ifelse((!headerTime)&totalCall,heightXAxis(scale),0) +
             ifelse(hrDistance,itemH,0) +
             ifelse(cadDistance,itemH,0) +
             ifelse(powerDistance,itemH,0) +
@@ -267,14 +267,25 @@ heightItem <- function(scale) {
          height("gap",scale) +
          height("label",scale) + topGaps*height("gap",scale))
 }
+heightTAxis <- function(scale) {
+  return(height("axisToLegend",scale)+
+           height("axisLabel",scale)+
+           2*height("gap",scale))
+}
+heightXAxis <- function(scale) {
+  return(height("axisToLegend",scale)+
+           height("axisLabel",scale)+
+           2*height("gap",scale))
+}
 height <- function(what,scale) {
   if (what=="label") return(20/scale)
   else if (what=="band") return(35/scale)
-  else if (what=="gap") return(1/scale)
-  else if (what=="axis") return(185/scale)
-  else if (what=="connector") return(1/scale)
-  else if (what=="summary") return(400/scale)
-  else return(NA)
+  else if (what=="gap") return(3/scale)
+  else if (what=="connector") return(150/scale)
+  else if (what=="summary") return(200/scale)
+  else if (what=="axisToLegend") return(25/scale)
+  else if (what=="axisLabel") return(35/scale)
+  else stop(paste0("don't know what ",what," is"))
 }
 milesFromMeters <- function(meters) {
   return(meters/1609.34)

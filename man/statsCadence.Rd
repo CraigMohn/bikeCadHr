@@ -2,12 +2,10 @@
 % Please edit documentation in R/gps_read.R
 \name{statsCadence}
 \alias{statsCadence}
-\title{clean up and summarize cadence statistics for a track}
+\title{summarize cadence statistics for a track}
 \usage{
 statsCadence(trackdf, cadTrimBegSecs = 15, cadTrimBegMeters = 10,
-  cadTrimEndSecs = 20, cadTrimEndMeters = 15, cadMax = 160,
-  cadCorrectTooHigh = TRUE, cadCorrectNA = FALSE, cadCorrectWindowSec = 7,
-  ...)
+  cadTrimEndSecs = 20, cadTrimEndMeters = 15, ...)
 }
 \arguments{
 \item{trackdf}{data frame or tibble with gps track data}
@@ -23,18 +21,6 @@ track segment that are ignored in calculating midsegment avg cadence}
 
 \item{cadTrimEndMeters}{number of meters before the end of a
 track segment that are ignored in calculating midsegment avg cadence}
-
-\item{cadMax}{max credible cadence value, larger values are errors}
-
-\item{cadCorrectTooHigh}{repair excessive cadence values
-using triangular-kernel-weighted average of the nearest nonmissing values
-in the same segment}
-
-\item{cadCorrectNA}{repair cadence missing values using
-triangular-kernel-weighted average of the nearest nonmissing values in
-the same segment}
-
-\item{cadCorrectWindowSec}{window size for kernel smoothing of cadence}
 
 \item{...}{parameters for \code{\link{processSegments}},
 \code{\link{statsPower}},

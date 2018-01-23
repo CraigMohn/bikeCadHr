@@ -97,7 +97,7 @@ read_ridefiles <- function(ridefilevec,cores=4,loud=loud,...)  {
 read_ride <- function(ridefile,tz="America/Los_Angeles",
                       fixDistance=FALSE,loud=FALSE,...)  {
 
-  cat("reading: ",ridefile,"\n")
+  cat("\nreading: ",ridefile,"\n")
   if (missing(tz)) {
     tz <- Sys.timezone()
   }
@@ -155,6 +155,13 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
   if (is.unsorted(trackdata$timestamp.s,strictly=TRUE))
     stop(paste0(ridefile," yields timestamps that are
                             not strictly increasing!"))
+
+  trackdata$deltatime <- as.numeric(difftime(trackdata$timestamp.s,
+                                             lag_one(trackdata$timestamp.s),units="secs"),
+                                    units="secs")
+
+  #  repair problems with data
+  trackdata <- repairCadence(trackdata,loud=loud,...)
 
   #  split/revise track into segments separated by non-negligile stops
   trackdata <- processSegments(trackdf=trackdata,loud=loud,...)
@@ -258,6 +265,95 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
                        startbutton.time=startbuttonTime)
     return(list(summary=track.cleaned,trackpoints=trackdata,session=session))
 }
+
+#' clean up cadence data for a track
+#'
+#' \code{repairCadence}  processes a gps track file to correct and
+#'   summarize cadence data
+#'
+#'
+#' @param trackdf data frame or tibble with gps track data
+#' @param cadMax max credible cadence value, larger values are errors
+#' @param cadCorrectTooHigh repair excessive cadence values
+#'    using triangular-kernel-weighted average of the nearest nonmissing values
+#'    in the same segment
+#' @param cadCorrectNA repair cadence missing values using
+#'    triangular-kernel-weighted average of the nearest nonmissing values in
+#'    the same segment
+#' @param cadCorrectStopped repair cadence by setting cadence to 0 when speed
+#'    is zero.  This is what would be appropriate if magnet parked near sensor
+#'    was generating spurious clicks or if moving pedal while at stoplight
+#' @param cadCorrectWindowSec window size for kernel smoothing of cadence
+#' @param loud display actions taken
+#' @param ... parameters for \code{\link{processSegments}},
+#'    \code{\link{statsPower}},
+#'    \code{\link{statsHeartRate}},
+#'    \code{\link{statsGearing}},
+#'    \code{\link{statsGrade}},
+#'    \code{\link{statsSession}},
+#'    \code{\link{statsStops}}
+#'
+#' @return dataframe with cadence data repaired
+#'
+#' @seealso \code{\link{read_ride}},
+#'    \code{\link{statsCadence}}
+#'
+#' @export
+repairCadence <- function(trackdf,
+                          cadMax=160,cadCorrectTooHigh=TRUE,
+                          cadCorrectNA=FALSE, cadCorrectStopped=TRUE,
+                          cadCorrectWindowSec=7,loud=FALSE,...) {
+
+  ## too large cadence values
+  cadTooHigh <- trackdf$cadence.rpm > cadMax
+  cadTooHigh[is.na(cadTooHigh)] <- FALSE
+  if (sum(cadTooHigh) > 0) {
+    if (loud) cat("fixing ",sum(cadTooHigh)," too-large cadence values\n")
+    if (cadCorrectTooHigh) {
+      trackdf$cadence.rpm[cadTooHigh] <- NA
+      cadenceSmoothed <- smoothDataSegments(yvec=trackdf$cadence.rpm,
+                                            xvar=cumsum(trackdf$deltatime),
+                                            segment=trackdf$segment,
+                                            bw=cadCorrectWindowSec,
+                                            nneighbors=cadCorrectWindowSec,
+                                            kernel="triangular")
+      trackdf$cadence.rpm[cadTooHigh] <-
+        cadenceSmoothed[cadTooHigh]
+    } else {
+      trackdf$cadence.rpm[cadTooHigh] <- NA
+    }
+  }
+
+  ######    cadence > 0 but not moving -
+  cadzero <-  trackdf$cadence.rpm>0 & !is.na(trackdf$cadence.rpm) &
+    trackdf$speed.m.s==0
+  if (loud & sum(cadzero)>0) {
+    cat("  ",sum(cadzero)," positive cadence values while speed is 0\n")
+    if (sum(cadzero)>10)
+      print(trackdf[cadzero,c("timestamp.s","speed.m.s","cadence.rpm",
+                              "distance.m")],n=50)
+    if (cadCorrectStopped) cat("     setting them to zero\n")
+  }
+  if (cadCorrectStopped) {
+    trackdf$cadence.rpm[cadzero] <- 0
+  }
+
+  ######   Missing cadence values
+  if (cadCorrectNA) {
+    cadenceNA <- is.na(trackdf$cadence.rpm)
+    if (sum(cadenceNA) > 0) {
+      if (loud) cat("fixing ",sum(cadenceNA)," missing cadence values")
+      cadenceSmoothed <- smoothDataSegments(yvec=trackdf$cadence.rpm,
+                                            xvar=cumsum(trackdf$deltatime),
+                                            segment=trackdf$segment,
+                                            bw=cadCorrectWindowSec,
+                                            nneighbors=cadCorrectWindowSec,
+                                            kernel="triangular")
+      trackdf$cadence.rpm[cadenceNA] <- cadenceSmoothed[cadenceNA]
+    }
+  }
+  return(trackdf)
+}
 #' clean up and add start/stop segments to a track tibble, add flag for stopped
 #'
 #' \code{processSegments}  processes a gps track file to correct or add
@@ -321,11 +417,10 @@ processSegments <- function(trackdf,
 
   #   no observations will be deleted or added, so set up some useful stuff
   #
-  deltatime <- as.numeric(difftime(trackdf$timestamp.s,
-                                   lag_one(trackdf$timestamp.s),units="secs"),
-                          units="secs")
-  timesecs <- cumsum(deltatime)
-  stopped <- trackdf$speed.m.s==0
+  timesecs <- cumsum(trackdf$deltatime)
+# usually will choose to set cadence to 0 if not moving, so will have no effect
+  stopped <- trackdf$speed.m.s==0  &
+               (is.na(trackdf$cadence.rpm) | trackdf$cadence.rpm==0)
   stopped[length(stopped)] <-TRUE
   starting <- !stopped & lag_one(stopped)
   starting[1] <- TRUE
@@ -346,7 +441,7 @@ processSegments <- function(trackdf,
   newseg <- trackdf$segment != lag_one(trackdf$segment)
   newseg[1] <- TRUE
   # split really, really long intervals between points
-  needsplit <- (deltatime > nonsegTimeGapMax) & !newseg
+  needsplit <- (trackdf$deltatime > nonsegTimeGapMax) & !newseg
   if (sum(needsplit) > 0) {
     if (loud) {
       cat("splitting ",sum(needsplit)," long intervals in same segment\n")
@@ -355,7 +450,7 @@ processSegments <- function(trackdf,
     newseg <- newseg | needsplit
   }
   # join segment breaks which are too short
-  needjoin <- (deltatime < segBreakTimeMin) & newseg
+  needjoin <- (trackdf$deltatime < segBreakTimeMin) & newseg
   needjoin[1] <- FALSE
   if (sum(needjoin) > 0) {
     if (loud) {
@@ -434,7 +529,7 @@ processSegments <- function(trackdf,
   }
 
   ###  now allow the first segment to include starts/stop issues at beginning
-  insidefirstseg <- (cumsum(deltatime) <= segInitIdleAggSecs)  |
+  insidefirstseg <- (cumsum(trackdf$deltatime) <= segInitIdleAggSecs)  |
     (trackdf$distance.m <= segInitIdleAggMeters)
   needjoin <- insidefirstseg & newseg
   needjoin[1] <- FALSE
@@ -450,11 +545,13 @@ processSegments <- function(trackdf,
   newseg[1] <- TRUE
   trackdf$segment <- cumsum(newseg)
   trackdf$stopped <- stopped
-  trackdf$deltatime <- deltatime
+  if (loud) {
+    cat("ending with ",sum(newseg)," segments\n")
+  }
 
   return(trackdf)
 }
-#' clean up and summarize cadence statistics for a track
+#' summarize cadence statistics for a track
 #'
 #' \code{statsCadence}  processes a gps track file to correct and
 #'   summarize cadence data
@@ -469,14 +566,6 @@ processSegments <- function(trackdf,
 #'    track segment that are ignored in calculating midsegment avg cadence
 #' @param cadTrimEndMeters number of meters before the end of a
 #'    track segment that are ignored in calculating midsegment avg cadence
-#' @param cadMax max credible cadence value, larger values are errors
-#' @param cadCorrectTooHigh repair excessive cadence values
-#'    using triangular-kernel-weighted average of the nearest nonmissing values
-#'    in the same segment
-#' @param cadCorrectNA repair cadence missing values using
-#'    triangular-kernel-weighted average of the nearest nonmissing values in
-#'    the same segment
-#' @param cadCorrectWindowSec window size for kernel smoothing of cadence
 #' @param ... parameters for \code{\link{processSegments}},
 #'    \code{\link{statsPower}},
 #'    \code{\link{statsHeartRate}},
@@ -498,43 +587,10 @@ processSegments <- function(trackdf,
 #' @export
 statsCadence <- function(trackdf,
                          cadTrimBegSecs=15,cadTrimBegMeters=10,
-                         cadTrimEndSecs=20,cadTrimEndMeters=15,
-                         cadMax=160,cadCorrectTooHigh=TRUE,
-                         cadCorrectNA=FALSE,
-                         cadCorrectWindowSec=7,...) {
+                         cadTrimEndSecs=20,cadTrimEndMeters=15,...) {
 
-  ## patch cadence errors and then NAs
-  cadenceTooHigh <- trackdf$cadence.rpm > cadMax
-  cadenceTooHigh[is.na(cadenceTooHigh)] <- FALSE
-  if (sum(cadenceTooHigh) > 0) {
-    if (cadCorrectTooHigh) {
-      trackdf$cadence.rpm[cadenceTooHigh] <- NA
-      cadenceSmoothed <- smoothDataSegments(yvec=trackdf$cadence.rpm,
-                                           xvar=cumsum(trackdf$deltatime),
-                                           segment=trackdf$segment,
-                                           bw=cadCorrectWindowSec,
-                                           nneighbors=cadCorrectWindowSec,
-                                           kernel="triangular")
-      trackdf$cadence.rpm[cadCorrectTooHigh] <-
-        cadenceSmoothed[cadCorrectTooHigh]
-    } else {
-      trackdf$cadence.rpm[cadCorrectTooHigh] <- NA
-    }
-  }
-  if (cadCorrectNA) {
-    cadenceNA <- is.na(trackdf$cadence.rpm)
-    if (sum(cadenceNA) > 0) {
-      cadenceSmoothed <- smoothDataSegments(yvec=trackdf$cadence.rpm,
-                                            xvar=cumsum(trackdf$deltatime),
-                                            segment=trackdf$segment,
-                                            bw=cadCorrectWindowSec,
-                                            nneighbors=cadCorrectWindowSec,
-                                            kernel="triangular")
-      trackdf$cadence.rpm[cadenceNA] <- cadenceSmoothed[cadenceNA]
-    }
-  }
-  pedaling <- !is.na(trackdf$cadence.rpm) & trackdf$cadence.rpm > 0
-  segtimes <- tibble::data_frame(timestamp=cumsum(trackdf$deltatime),
+    pedaling <- !is.na(trackdf$cadence.rpm) & trackdf$cadence.rpm > 0
+    segtimes <- tibble::data_frame(timestamp=cumsum(trackdf$deltatime),
                                  distance.m=trackdf$distance.m,
                                  segment=trackdf$segment)    %>%
     dplyr::group_by(segment) %>%
