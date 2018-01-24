@@ -308,7 +308,7 @@ repairCadence <- function(trackdf,
   cadTooHigh <- trackdf$cadence.rpm > cadMax
   cadTooHigh[is.na(cadTooHigh)] <- FALSE
   if (sum(cadTooHigh) > 0) {
-    if (loud) cat("fixing ",sum(cadTooHigh)," too-large cadence values\n")
+    if (loud) cat("   fixing ",sum(cadTooHigh)," too-large cadence values\n")
     if (cadCorrectTooHigh) {
       trackdf$cadence.rpm[cadTooHigh] <- NA
       cadenceSmoothed <- smoothDataSegments(yvec=trackdf$cadence.rpm,

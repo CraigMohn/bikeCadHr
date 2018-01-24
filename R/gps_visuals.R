@@ -448,7 +448,7 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                                stopRunLength=minSecsRolling)
 
   #  adjust elevation if track is a loop
-  if (summary$ride.loop) {
+  if (!is.na(summary$ride.loop) & summary$ride.loop) {
     if (abs(summary$deltaElev) > 1) {
       track$altitude.m <- track$altitude.m + seq(0,-summary$deltaElev,length.out=nrow(track))
     }
