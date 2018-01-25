@@ -344,20 +344,20 @@ drawXAxis <- function(ggp,distance,startsAndStops,
       data.frame(distance=stops$locEnd,yDistAxis,lenStop=stops$lenStop)
     stopdata$pauseSize <- ifelse(stopdata$lenStop<300,
                                  1,
-                                 1.5*log(stopdata$lenStop/300))
+                                 1+log(stopdata$lenStop/300))
     stopdataShort <- stopdata[stopdata$lenStop<300,]
     stopdataLong <- stopdata[stopdata$lenStop>=300,]
     if (nrow(stopdataShort)>0) {
       g <- g +
         ggplot2::geom_point(data=stopdataShort,
-                            aes(y=yDistAxis,alpha=0.6,size=pauseSize),
-                            color="red3",shape=124,show.legend=FALSE)
+                            aes(y=yDistAxis,alpha=0.8,size=pauseSize),
+                            color="red1",shape=124,show.legend=FALSE)
     }
     if (nrow(stopdataLong)>0) {
       g <- g +
         ggplot2::geom_point(data=stopdataLong,
-                            aes(y=yDistAxis,alpha=0.5,size=pauseSize),
-                            color="green",shape=124,show.legend=FALSE)
+                            aes(y=yDistAxis,alpha=0.8,size=pauseSize),
+                            color="purple3",shape=124,show.legend=FALSE)
     }
   }
   # axis labels
