@@ -3,7 +3,6 @@
 export(combine_track_stores)
 export(join_ridefiles)
 export(map_rides)
-export(plot_elev_profile_plus)
 export(plot_profile)
 export(processSegments)
 export(read_ride)

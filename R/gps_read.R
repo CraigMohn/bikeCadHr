@@ -316,7 +316,8 @@ repairCadence <- function(trackdf,
                                             segment=trackdf$segment,
                                             bw=cadCorrectWindowSec,
                                             nneighbors=cadCorrectWindowSec,
-                                            kernel="triangular")
+                                            kernel="triangular",
+                                            replaceNAs=TRUE)
       trackdf$cadence.rpm[cadTooHigh] <-
         cadenceSmoothed[cadTooHigh]
     } else {
@@ -348,7 +349,8 @@ repairCadence <- function(trackdf,
                                             segment=trackdf$segment,
                                             bw=cadCorrectWindowSec,
                                             nneighbors=cadCorrectWindowSec,
-                                            kernel="triangular")
+                                            kernel="triangular",
+                                            replaceNAs=TRUE)
       trackdf$cadence.rpm[cadenceNA] <- cadenceSmoothed[cadenceNA]
     }
   }
@@ -814,7 +816,8 @@ statsGrade <- function(trackdf,
                                      segment=trackdf$segment,
                                      bw=gradeSmoothWindowMeters,
                                      nneighbors=gradeSmoothWindowNN,
-                                     kernel="epanechnikov")
+                                     kernel="epanechnikov",
+                                     replaceNAs=TRUE)
   deltaelevSmoothed <- elevSmoothed - lag_one(elevSmoothed)
   trackdeltadistance <- trackdf$distance.m - lag_one(trackdf$distance.m)
 

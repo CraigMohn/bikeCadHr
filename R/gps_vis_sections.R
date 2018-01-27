@@ -165,7 +165,7 @@ drawSummary <- function(ggp,summary,title){
 
 }
 #  draw cadence bar graph
-drawCadence <- function(ggp,cadence,xvar,segment,
+drawCadence <- function(ggp,cadence,xvar,segment,toofar=0,
                         cadLow,cadTarget,
                         cadCont,cadContLow,cadContHigh,
                         cadColorLow,cadColorMid,cadColorHigh,
@@ -182,7 +182,8 @@ drawCadence <- function(ggp,cadence,xvar,segment,
   cadLegendWidth <- hrCadLegendWidth(npoints,distPerPoint,minNumPoints)
 
   drawpts <- approxSegments(xvar=xvar,yvar=cadence,
-                            segment=segment,npoints=npoints)
+                            segment=segment,npoints=npoints,
+                            toofar=toofar)
   xvardraw <- drawpts[[1]]*(xend/max(drawpts[[1]]))
   xvardraw[xvardraw>distPerPoint*npoints] <- distPerPoint*npoints
   xvardraw[xvardraw<0] <- 0
@@ -209,7 +210,7 @@ drawCadence <- function(ggp,cadence,xvar,segment,
   ggpreturn[["ymin"]] <- ymin
   return(ggpreturn)
 }
-drawHr <- function(ggp,hr,xvar,segment,
+drawHr <- function(ggp,hr,xvar,segment,toofar=0,
                    hrLow,hrHigh,
                    hrColorLow,hrColorHigh,
                    minNumPoints,showlegend=TRUE) {
@@ -226,7 +227,8 @@ drawHr <- function(ggp,hr,xvar,segment,
   hrLegendWidth <- hrCadLegendWidth(npoints,distPerPoint,minNumPoints)
 
   drawpts <- approxSegments(xvar=xvar,yvar=hr,
-                            segment=segment,npoints=npoints)
+                            segment=segment,npoints=npoints,
+                            toofar=toofar)
   xvardraw <- drawpts[[1]]*(xend/max(drawpts[[1]]))
   xvardraw[xvardraw>distPerPoint*npoints] <- distPerPoint*npoints
   xvardraw[xvardraw<0] <- 0
@@ -244,7 +246,7 @@ drawHr <- function(ggp,hr,xvar,segment,
   ggpreturn[["ymin"]] <- ymin
   return(ggpreturn)
 }
-drawPower <- function(ggp,power,xvar,segment,
+drawPower <- function(ggp,power,xvar,segment,toofar=0,
                       powerLow,powerHigh,
                       powerColorLow,powerColorHigh,
                        minNumPoints,showlegend=TRUE) {
@@ -261,7 +263,8 @@ drawPower <- function(ggp,power,xvar,segment,
   powerLegendWidth <- hrCadLegendWidth(npoints,distPerPoint,minNumPoints)
 
   drawpts <- approxSegments(xvar=xvar,yvar=power,
-                            segment=segment,npoints=npoints)
+                            segment=segment,npoints=npoints,
+                            toofar=toofar)
   xvardraw <- drawpts[[1]]*(xend/max(drawpts[[1]]))
   xvardraw[xvardraw>distPerPoint*npoints] <- distPerPoint*npoints
   xvardraw[xvardraw<0] <- 0

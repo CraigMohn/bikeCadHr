@@ -172,8 +172,8 @@ segSummary <- function(time,dist,segment,stopped,
   return(list(segSumFrame=segSumFrame,stopSumFrame=stopSumFrame))
 }
 
-# wrapper for approx to leave between segment data missing after rescaling
-approxSegments <- function(xvar,yvar,segment,npoints) {
+# replacement for approx in handling rescaling of time/dist axis for plot pts
+approxSegments <- function(xvar,yvar,segment,npoints,toofar=0) {
   if (!is.vector(xvar) | !is.vector(yvar) | !is.vector(segment))
     stop("approxSegments needs 3 vectors")
   if (length(xvar) != length(yvar))
@@ -182,31 +182,44 @@ approxSegments <- function(xvar,yvar,segment,npoints) {
     stop("approxSegments needs a segment for every x,y pair")
 
   xout <- seq(from=xvar[1], to=xvar[length(xvar)], length.out=npoints)
-  yout <- rep(NA,npoints)
 
   #  xvar is the independent variable, and is increasing (as is segment)
-  #  ignore middle points in sequence of xvar with the same value
-  #  average the non missing values y at these points
-  xdrop <- (xvar==lag_n(xvar,1)) & (xvar==lead_n(xvar,1))
-  xvar <- xvar[!xdrop]
-  yvar <- yvar[!xdrop]
-  segment <- segment[!xdrop]
+  #  average the non missing values y at duplicate (x,s) points
+  dfwork <- tibble::as_tibble(list(x=xvar,y=yvar,segment=segment)) %>%
+    dplyr::group_by(x,segment) %>%
+    dplyr::summarize(ymean=mean(y,na.rm=TRUE))
+  xvar <- dfwork$x
+  segment <- dfwork$segment
+  yvar <- dfwork$ymean
+  yvar[is.nan(yvar)] <- NA
 
   #  how far apart are the x points
   xincr <- (xout[2] - xout[1])/2
-  for (seg in unique(segment)) {
-    if (sum(!is.na(yvar[segment==seg])) >= 2) {
-      #  add repetitions of first/last values so y for those extremes will be
-      #     interpolated near ends of segment
-      pxv <- xvar[segment==seg]
-      pyv <- yvar[segment==seg]
-      pxv <- c( min(pxv)-xincr , pxv , max(pxv)+xincr )
-      pyv <- c( pyv[1] , pyv , pyv[length(pyv)])
-      yseg <- stats::approx(x=pxv,y=pyv,
-                            xout=xout,method="linear",rule=1)[[2]]
-      yout <- rowMeans(cbind(yseg,yout),na.rm=TRUE)
-    }
+
+  if (toofar>0) {
+    xtoofar <- c(diff(xvar)>toofar,FALSE)
   }
+  else {
+    xtoofar <- rep(FALSE,length(xvar))
+  }
+  xidx <- findInterval(xout,xvar,rightmost.closed=TRUE)
+
+  #  if last entry, exact match, or yupper missing in same seg
+  #       and ylower not too far in past, use ylower
+  case1 <- (xidx == length(xvar)) |
+           (abs(xout-xvar[xidx]) < 0.01*xincr) |
+           (!xtoofar[xidx] &
+            (is.na(yvar[xidx+1]) & segment[xidx]==segment[xidx+1]))
+  #  otherwise, if ylower and yupper both present, use weighted average
+  y1 <- yvar[xidx]
+  case2 <- !case1 & !xtoofar[xidx] & !is.na(yvar[xidx]) & !is.na(yvar[xidx+1])
+  wt <- (xout - xvar[xidx])/(xvar[xidx+1] - xvar[xidx])
+  y2 <- y1 + wt*(yvar[xidx+1]-yvar[xidx])
+  #  all others, return NA
+  yout <- rep(NA,npoints)
+  yout[case2] <- y2[case2]
+  yout[case1] <- y1[case1]
+
   return(list("xout"=xout,"yout"=yout))
 }
 #  return hr/cad legend width

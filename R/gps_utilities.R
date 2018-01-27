@@ -62,7 +62,8 @@ stripDupTrackRecords <- function(track,fixDistance=FALSE) {
   return(rettrack)
 }
 smoothDataSegments <- function(yvec,xvar,segment,
-                               bw,nneighbors=10,kernel="epanechnikov") {
+                               bw,nneighbors=10,kernel="epanechnikov",
+                               replaceNAs=TRUE) {
   if (!is.vector(xvar)) stop("smoothDataSegments needs xvar as vector")
   if (missing(segment)) segment <- rep(1,length(xvar))
   if (length(xvar)!=length(segment))
@@ -75,7 +76,7 @@ smoothDataSegments <- function(yvec,xvar,segment,
     if (sum(inseg)>1) {
       xret[inseg] <- smoothData(yvec=yvec[inseg],xvar=xvar[inseg],
                                 bw=bw,nneighbors=nneighbors,
-                                kernel=kernel)
+                                kernel=kernel,replaceNAs=replaceNAs)
     } else {
       xret[inseg] <- xvar[inseg]
     }
@@ -83,7 +84,8 @@ smoothDataSegments <- function(yvec,xvar,segment,
   return(xret)
 
 }
-smoothData <- function(yvec,xvar,bw,nneighbors=10,kernel="epanechnikov") {
+smoothData <- function(yvec,xvar,bw,nneighbors=10,
+                       kernel="epanechnikov",replaceNAs=TRUE) {
   if (!is.vector(xvar)) stop("smoothData needs xvar as vector")
   if (!is.vector(yvec)) stop("smoothData needs yvec as vector")
   if (length(xvar)==0) stop("smoothData needs some points")
@@ -127,7 +129,9 @@ smoothData <- function(yvec,xvar,bw,nneighbors=10,kernel="epanechnikov") {
     den[!is.na(y)&(twt>0)] <-
       den[!is.na(y)&(twt>0)] + twt[!is.na(y)&(twt>0)]
   }
-  return(num/den)  # if only NAs in neighbors, return NA
+  retvec <- num/den # if only NAs in neighbors, return NA
+  if (!replaceNAs) retvec[is.na(yvec)] <- NA
+  return(retvec)
 }
 dateTimeStr <- function(intDate,intTime) {
   return(paste0(stringr::str_pad(intDate,8,pad="0"),
