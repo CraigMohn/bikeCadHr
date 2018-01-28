@@ -248,7 +248,7 @@ numPointsXAxis <- function(dist,ppm,imperial) {
 verticalMult <- function(dist,imperial) {
   miles <- ifelse(imperial,dist,milesFromMeters(1000*dist))
   distbends <- c(0,10,35,85,200,Inf) # begin at 0, end max distance
-  vertbends <- c(15,18,24,32,40,50)  # begin at 25, end 50
+  vertbends <- c(15,17,21,25,30,40)  # begin at 15, end 40
   vm <-
     ceiling(vertbends[which(distbends>miles)[1]-1] +
                         ( (vertbends[which(distbends>miles)[1]]-
@@ -283,12 +283,12 @@ heightItem <- function(scale) {
 heightTAxis <- function(scale) {
   return(height("axisToLegend",scale)+
            height("axisLabel",scale)+
-           2*height("gap",scale))
+           5*height("gap",scale))
 }
 heightXAxis <- function(scale) {
   return(height("axisToLegend",scale)+
            height("axisLabel",scale)+
-           2*height("gap",scale))
+           3*height("gap",scale))
 }
 height <- function(what,scale) {
   if (what=="label") return(20/scale)
@@ -296,7 +296,7 @@ height <- function(what,scale) {
   else if (what=="gap") return(3/scale)
   else if (what=="connector") return(150/scale)
   else if (what=="summary") return(200/scale)
-  else if (what=="axisToLegend") return(25/scale)
+  else if (what=="axisToLegend") return(27/scale)
   else if (what=="axisLabel") return(35/scale)
   else stop(paste0("don't know what ",what," is"))
 }

@@ -449,7 +449,8 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
     grlist <- drawXAxis(grlist,distance,
                         startsAndStops=startsAndStops,
                         showStops,distPerPoint,
-                        imperial=imperial,underLine=TRUE)
+                        imperial=imperial,underLine=TRUE,
+                        lineAtZero=TRUE)
   }
   if (powerDistance) grlist <- drawPower(grlist,powersm,distance,
                                          segment=track$segment,
@@ -483,6 +484,7 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
 
     grlist <- drawXAxis(grlist,distance,startsAndStops=startsAndStops,
                         showStops=FALSE,distPerPoint,imperial=imperial,
+                        underLine=FALSE,
                         lineAtZero=!(cadDistance|hrDistance|powerDistance))
     grlist <- drawXTConnect(grlist,distance,walltime,
                             startsAndStops=startsAndStops,
@@ -522,7 +524,7 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
   g <- grlist[["g"]]
 
   plot.width <- 0.5*(ngraphpoints/600)+0.75
-  plot.height <- 0.5*(((ymax-ymin)*vertmult/(5280*distPerPoint))/600)*1.1 + 2
+  plot.height <- 0.5*(((ymax-ymin)*vertmult/(5280*distPerPoint))/600)*1.1 + 2.5
 
   if (!missing(savefn))
     ggsave(savefn,width=plot.width,height=plot.height,

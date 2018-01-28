@@ -301,9 +301,9 @@ drawXAxis <- function(ggp,distance,startsAndStops,
       yDistAxis <- yXAxis
       yDistScale <- yDistAxis - height("axisToLegend",heightFactor)
       yDistLabel <- yDistScale - height("axisLabel",heightFactor)
-      ymin <- yDistLabel - 2*height("gap",heightFactor)
+      ymin <- yDistLabel - 3*height("gap",heightFactor)
     } else {
-      yDistAxis <- yXAxis - height("gap",heightFactor)
+      yDistAxis <- yXAxis  - height("gap",heightFactor)
       yDistScale <- yDistAxis - height("axisToLegend",heightFactor)
       yDistLabel <- yDistScale - height("axisLabel",heightFactor)
       ymin <- yDistLabel - height("gap",heightFactor)
