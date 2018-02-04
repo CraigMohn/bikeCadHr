@@ -6,7 +6,7 @@
 \usage{
 processSegments(trackdf, segInitIdleAggSecs = 60, segInitIdleAggMeters = 20,
   segBreakTimeMin = 3, nonsegTimeGapMax = 30, segSplitTimeStop = 3,
-  segMinObs = 4, segMinMeters = 10, segMinSecs = 10,
+  segMinObs = 4, segMinMeters = 20, segMinSecs = 20,
   ignoreSegInfo = FALSE, loud = FALSE, ...)
 }
 \arguments{

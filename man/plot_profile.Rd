@@ -16,7 +16,7 @@ plot_profile(track, summary, savefn, title = "Ride starting ",
   powerHigh = 400, powerColorLow = 9, powerColorHigh = 21,
   hrSmoothBW = 6, hrSmoothNN = 6, cadSmoothBW = 10, cadSmoothNN = 10,
   powerSmoothBW = 10, powerSmoothNN = 10, elevSmoothBWMeters = 15,
-  stopToleranceMeters = 10, minSecsRolling = 5, minNumPoints = 3000,
+  stopToleranceMeters = 20, minSecsRolling = 10, minNumPoints = 3000,
   imperial = TRUE)
 }
 \arguments{

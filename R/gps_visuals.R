@@ -321,8 +321,8 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                          cadSmoothBW=10,cadSmoothNN=10,
                          powerSmoothBW=10,powerSmoothNN=10,
                          elevSmoothBWMeters=15,
-                         stopToleranceMeters=10,
-                         minSecsRolling=5,
+                         stopToleranceMeters=20,
+                         minSecsRolling=10,
                          minNumPoints=3000,
                          imperial=TRUE) {
 
@@ -356,6 +356,7 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
   # grab the structure of starts and stops
   startsAndStops <- segSummary(time=walltime,dist=distance,
                                segment=track$segment,stopped=track$stopped,
+                               subsegment=track$subsegment,
                                stopDistTolerance=stopDistLim,
                                stopRunLength=minSecsRolling)
 

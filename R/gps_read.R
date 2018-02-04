@@ -411,7 +411,7 @@ processSegments <- function(trackdf,
                             segBreakTimeMin=3,
                             nonsegTimeGapMax=30,
                             segSplitTimeStop=3,
-                            segMinObs=4,segMinMeters=10,segMinSecs=10,
+                            segMinObs=4,segMinMeters=20,segMinSecs=20,
                             ignoreSegInfo=FALSE,loud=FALSE,...) {
 
   #  demand some small amount of consistency
@@ -421,8 +421,15 @@ processSegments <- function(trackdf,
   #
   timesecs <- cumsum(trackdf$deltatime)
 # usually will choose to set cadence to 0 if not moving, so will have no effect
-  stopped <- trackdf$speed.m.s==0  &
-               (is.na(trackdf$cadence.rpm) | trackdf$cadence.rpm==0)
+#  stopped <- trackdf$speed.m.s==0  &
+#                (is.na(trackdf$cadence.rpm) | trackdf$cadence.rpm==0)
+# try to catch random gps drift if sensors shut down at stop
+#   using filter on neightbors, not a ts, remove that to hush dplyr warnings
+  temp <- as.vector(stats::filter(trackdf$speed.m.s, rep(1/5,5)))
+  temp[is.na(temp)] <- trackdf$speed.m.s[is.na(temp)]
+  stopped <- ((temp < 0.1 & trackdf$speed.m.s < 0.3) |
+                trackdf$speed.m.s==0)     &
+            ((is.na(trackdf$cadence.rpm) | trackdf$cadence.rpm==0))
   stopped[length(stopped)] <-TRUE
   starting <- !stopped & lag_one(stopped)
   starting[1] <- TRUE
@@ -478,10 +485,14 @@ processSegments <- function(trackdf,
     newseg <- newseg | needsplit
   }
 
+  ############################################################################
   # collapse too-short segments together  join them with previous segment
   #     (stops and start/stops occur at end of segment)
+  #     build subsegment id to identify these for subsequent
   tempdf <-  trackdf %>% dplyr::select(timestamp.s,distance.m)
   newseg[1] <- TRUE  # do this before regenerate segment variable
+  newsegBase <- newseg
+
   tempdf$segment <- cumsum(newseg)
   #  stack the last obs on bottom of newseg for diff'ing
   segobs <- newseg
@@ -529,6 +540,7 @@ processSegments <- function(trackdf,
     }
     newseg <- newseg & !needjoin
   }
+  newsegJoins <- newseg
 
   ###  now allow the first segment to include starts/stop issues at beginning
   insidefirstseg <- (cumsum(trackdf$deltatime) <= segInitIdleAggSecs)  |
@@ -542,10 +554,27 @@ processSegments <- function(trackdf,
     }
     newseg <- newseg & !needjoin
   }
+  newsegStarted <- newseg
 
   #  these are only modifications to the track data tibble
   newseg[1] <- TRUE
   trackdf$segment <- cumsum(newseg)
+  ###  flag "stop-py" parts of segment glued on the end
+  ###   and "start-ty" parts of (first) segment
+  ###   subseg > 1 is stop-py
+  ###   subseg == 0 is start-ty
+  trackdf$newsegBase=newsegBase
+  trackdf <- trackdf %>%
+          dplyr::mutate(joinseg=cumsum(newsegJoins)) %>%
+          dplyr::group_by(joinseg) %>%
+          dplyr::mutate(subsegment=cumsum(newsegBase)) %>%
+          dplyr::ungroup() %>%
+          dplyr::group_by(segment) %>%
+          dplyr::mutate(starting = joinseg < max(joinseg) ) %>%
+          dplyr::ungroup() %>%
+          dplyr::mutate(subsegment=if_else(starting, as.integer(0), subsegment)) %>%
+          dplyr::select(-joinseg,-starting,-newsegBase)
+
   trackdf$stopped <- stopped
   if (loud) {
     cat("ending with ",sum(newseg)," segments\n")

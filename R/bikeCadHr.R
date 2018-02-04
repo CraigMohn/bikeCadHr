@@ -77,6 +77,7 @@ tedious <- utils::globalVariables(c("alphachar","alphahour","distlegend",
                                     "verticalMultiplier","color","hjust","label",
                                     "yend","group","timeBeg","timeEnd","pauseSize",
                                     "timelaststop","segbegtime","segendtime",
-                                    "movingrun","maxdist","startofstop","sosNA"))
+                                    "movingrun","maxdist","startofstop","sosNA",
+                                    "joinseg","subsegment"))
 
 
