@@ -331,3 +331,14 @@ kmFromMeters <- function(meters) {
 feetFromMeters <- function(meters) {
   return(meters*3.28084)
 }
+pointsFromMatrix <- function(dataMat) {
+  dmCol <- ncol(dataMat)
+  dmRow <- nrow(dataMat)
+  row <- matrix(rep(seq(1:dmRow),dmCol),ncol=dmCol)
+  col <- t(matrix(rep(seq(1:dmCol),dmRow),ncol=dmRow))
+  dmPoint <- !is.na(as.vector(dataMat))
+  return(as_tibble(list(x=as.vector(col)[dmPoint],
+                        y=as.vector(row)[dmPoint],
+                        z=as.vector(dataMat)[dmPoint])))
+}
+

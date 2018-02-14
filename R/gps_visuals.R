@@ -15,6 +15,10 @@
 #'    startbutton.date(int),startbutton.time(int),segment(numeric),
 #'    and speed.m.s for speed coloring
 #' @param outfile name of output file, extension is either .tiff or .jpg
+#' @param plotly use plotly to draw 3D track in viewer
+#' @param localElevFile file containing raster object with elevations on lat/lon
+#' @param plotlySize number which is rough target for size of grid
+#' @param plotlyVertScale number which will multiply vertical scaling
 #' @param maptitle string containing title
 #' @param definedmaps list, each named entry is a list of two vectors of
 #'    length two, named lat and lon, containing the min and max of the
@@ -50,10 +54,12 @@
 #' @param jpeg.quality the "quality" of the JPEG image, a percentage. Smaller
 #'    values will give more compression but also more degradation of the image
 #'
-#' @return NULL
+#' @return NULL or plotly object
 #'
 #' @export
 map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
+                      plotly=FALSE,localElevFile="",
+                      plotlySize=250,plotlyVertScale=1,
                       maptype="maptoolkit-topo",minTiles=50,
                       mapsize=c(1600,1200),fine.map=FALSE,margin.factor=0.08,
                       draw.speed=FALSE,
@@ -71,6 +77,8 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
     outfiletype <- "tiff"
   } else if (substr(outfile,nchar(outfile)-3,nchar(outfile))==".jpg") {
     outfiletype <- "jpeg"
+  } else if (outfile=="none") {
+    outfiletype <- "none"
   } else {
     stop("invalid output filetype")
   }
@@ -117,85 +125,16 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
       }
       marginfactor <- 0.0
     }
-    if (min(lat.max-lat.min,lon.max-lon.min) > .005){
-      latwide <- lat.max - lat.min
-      lonwide <- lon.max - lon.min
-      map.lat.max.dd <- lat.max+latwide*marginfactor
-      if (!missing(maptitle)) map.lat.max.dd <- lat.max+latwide*0.05
-      map.lat.min.dd <- lat.min-latwide*marginfactor
-      map.lon.max.dd <- lon.max+lonwide*marginfactor
-      map.lon.min.dd <- lon.min-lonwide*marginfactor
-      map <- OpenStreetMap::openmap(c(map.lat.max.dd, map.lon.min.dd),
-                        c(map.lat.min.dd, map.lon.max.dd),
-                        type=maptype,minNumTiles=minTiles)
-      #native mercator-for longlat add:
-      #                map <- openproj(map,projection="+proj=longlat")
-    } else {
-     cat("\n",outfile," not created, map too small")
-        return(NULL)
-    }
-    map.lat.min <- map$bbox[["p2"]][2] * (180 / (2 ^ 31))
-    map.lat.max <- map$bbox[["p1"]][2] * (180 / (2 ^ 31))
-    map.lon.min <- map$bbox[["p1"]][1] * (180 / (2 ^ 31))
-    map.lon.max <- map$bbox[["p2"]][1] * (180 / (2 ^ 31))
-    aspectcorrect <- 1  #  using mercator, better than latlon at northern lats
-    aspectratio <- (map.lon.max - map.lon.min)/(map.lat.max-map.lat.min)
-    if (aspectratio > mapsize[1]/mapsize[2]) {
-      mapwidth <- mapsize[1]
-      mapheight <- mapsize[1]/aspectratio
-    } else {
-      mapwidth <- mapsize[2]*aspectratio
-      mapheight <- mapsize[2]
-    }
-    #  expand limits so any segments that have their middle cut out will
-    #        be wrongly rendered, but off-map
-    #    (except perhaps near corners, not worth fixing now, maybe never)
-    mapdf <- geodf[geodf$lon>=map.lon.min.dd-.01 &
-                   geodf$lon<=map.lon.max.dd+.01 &
-                   geodf$lat>=map.lat.min.dd-.01 &
-                   geodf$lat<=map.lat.max.dd+.01,]
-    trackstarts <- unique(mapdf$start.time)
-    cat("\noutfile=",outfile)
-    if (outfiletype=="jpeg") {
-      jpeg(outfile, width = mapwidth,height=mapheight,quality=jpeg.quality)
-    } else if (outfiletype=="tiff") {
-      tiff(outfile, width = mapwidth, height = mapheight,
-           type="cairo",compression="zip+p")
-    }
-    par(mar = rep(0,4))
-    plot(map)
-    if (!missing(maptitle)) title(main=as.character(maptitle),
-           cex.main=2*mapheight/800,col="gray57",line=-3*(mapheight/800))
-    if (!draw.speed) {
-      if (line.color=="plasma") {
-        colorvec <- viridis::plasma(length(trackstarts),begin=0.0,end=0.7)
-      } else if (line.color=="viridis") {
-        colorvec <- viridis::viridis(length(trackstarts),begin=0.1,end=0.9)
-      } else if (line.color=="rainbow") {
-        colorvec <- rainbow(length(trackstarts),start=0.2,end=0.9)
-      } else if (line.color=="heat") {
-        colorvec <- heat.colors(length(trackstarts))
-      } else if (line.color=="red-blue") {
-        colorvec <- colorRampPalette(c("red","blue"))(101)
 
-      } else {
-        colorvec <- rep(line.color,length(trackstarts))
-      }
-      for (trkstarttime in trackstarts) {
-        draw.color <- colorvec[which(trackstarts == trkstarttime)]
-        for (seg in unique(mapdf[mapdf$start.time==trkstarttime,]$segment)) {
-          use = mapdf$start.time==trkstarttime & mapdf$segment==seg &
-               (lead_one(mapdf$segment)==mapdf$segment |
-                lag_one(mapdf$segment)==mapdf$segment) # can't do 1 pt lines
-          if(sum(use)>0) {
-            temp <-
-               OpenStreetMap::projectMercator(mapdf$lat[use],mapdf$lon[use])
-            lines(temp[,1], temp[,2],type = "l",
-            col = scales::alpha(draw.color, line.alpha), lwd = line.width)
-          }
-        }
-     }
-    } else {
+    latwide <- lat.max - lat.min
+    lonwide <- lon.max - lon.min
+    map.lat.max.dd <- lat.max+latwide*marginfactor
+    if (!missing(maptitle)) map.lat.max.dd <- lat.max+latwide*0.05
+    map.lat.min.dd <- lat.min-latwide*marginfactor
+    map.lon.max.dd <- lon.max+lonwide*marginfactor
+    map.lon.min.dd <- lon.min-lonwide*marginfactor
+
+    if (draw.speed) {
       if (speed.color=="plasma") {
         spdcolors <- rev(plasma(101))
       } else if (speed.color=="magma") {
@@ -208,17 +147,164 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
         spdcolors <- colorRampPalette(c("red","blue","green"))(101)
       } else {
         spdcolors <- colorRampPalette(c("red","orange","cornflowerblue",
-                      "dodgerblue","blue","darkorchid","purple","magenta"))(101)
+                                        "dodgerblue","blue","darkorchid","purple","magenta"))(101)
       }
-      speed <- mapdf$speed.m.s*2.23694
+      speed <- geodf$speed.m.s*2.23694
       speed[speed>40] <- 40
       speed[speed<3] <- 3
-      colorvec <- spdcolors[floor(100*(speed - 3)/37) + 1]
-      temp <- OpenStreetMap::projectMercator(mapdf$lat, mapdf$lon)
-      points(temp[,1], temp[,2], pch=speed.pch, col=alpha(colorvec,speed.alpha),
-             lwd=speed.ptsize)
+      geodf$colorvec <- spdcolors[floor(100*(speed - 3)/37) + 1]
+    } else {
+      if (line.color=="plasma") {
+        geodf$colorvec <- viridis::plasma(length(trackstarts),begin=0.0,end=0.7)
+      } else if (line.color=="viridis") {
+        geodf$colorvec <- viridis::viridis(length(trackstarts),begin=0.1,end=0.9)
+      } else if (line.color=="rainbow") {
+        geodf$colorvec <- rainbow(length(trackstarts),start=0.2,end=0.9)
+      } else if (line.color=="heat") {
+        geodf$colorvec <- heat.colors(length(trackstarts))
+      } else if (line.color=="red-blue") {
+        geodf$colorvec <- colorRampPalette(c("red","blue"))(101)
+      } else {
+        geodf$colorvec <- rep(line.color,length(trackstarts))
+      }
     }
-    dev.off()
+    if (outfiletype != "none") {
+      if (min(lat.max-lat.min,lon.max-lon.min) > .005){
+        map <- OpenStreetMap::openmap(c(map.lat.max.dd, map.lon.min.dd),
+                                      c(map.lat.min.dd, map.lon.max.dd),
+                                      type=maptype,minNumTiles=minTiles)
+        #native mercator-for longlat add:
+        #                map <- openproj(map,projection="+proj=longlat")
+      } else {
+        cat("\n",outfile," not created, map too small")
+        return(NULL)
+      }
+      map.lat.min <- map$bbox[["p2"]][2] * (180 / (2 ^ 31))
+      map.lat.max <- map$bbox[["p1"]][2] * (180 / (2 ^ 31))
+      map.lon.min <- map$bbox[["p1"]][1] * (180 / (2 ^ 31))
+      map.lon.max <- map$bbox[["p2"]][1] * (180 / (2 ^ 31))
+      aspectcorrect <- 1  #  using mercator, better than latlon at northern lats
+      aspectratio <- (map.lon.max - map.lon.min)/(map.lat.max-map.lat.min)
+      if (aspectratio > mapsize[1]/mapsize[2]) {
+        mapwidth <- mapsize[1]
+        mapheight <- mapsize[1]/aspectratio
+      } else {
+        mapwidth <- mapsize[2]*aspectratio
+        mapheight <- mapsize[2]
+      }
+    }
+
+    #  expand limits so any segments that have their middle cut out will
+    #        be wrongly rendered, but off-map
+    #    (except perhaps near corners, not worth fixing now, maybe never)
+    mapdf <- geodf[geodf$lon>=map.lon.min.dd-.01 &
+                   geodf$lon<=map.lon.max.dd+.01 &
+                   geodf$lat>=map.lat.min.dd-.01 &
+                   geodf$lat<=map.lat.max.dd+.01,]
+    trackstarts <- unique(mapdf$start.time)
+    if (outfiletype!="none") {
+      cat("\noutfile=",outfile)
+      if (outfiletype=="jpeg") {
+        jpeg(outfile, width = mapwidth,height=mapheight,quality=jpeg.quality)
+      } else if (outfiletype=="tiff") {
+        tiff(outfile, width = mapwidth, height = mapheight,
+             type="cairo",compression="zip+p")
+      }
+      par(mar = rep(0,4))
+      plot(map)
+      if (!missing(maptitle)) title(main=as.character(maptitle),
+           cex.main=2*mapheight/800,col="gray57",line=-3*(mapheight/800))
+      if (!draw.speed) {
+        for (trkstarttime in trackstarts) {
+          draw.color <- mapdf$colorvec[which(trackstarts == trkstarttime)]
+          for (seg in unique(mapdf[mapdf$start.time==trkstarttime,]$segment)) {
+            use = mapdf$start.time==trkstarttime & mapdf$segment==seg &
+                 (lead_one(mapdf$segment)==mapdf$segment |
+                  lag_one(mapdf$segment)==mapdf$segment) # can't do 1 pt lines
+            if(sum(use)>0) {
+              temp <-
+                 OpenStreetMap::projectMercator(mapdf$lat[use],mapdf$lon[use])
+              lines(temp[,1], temp[,2],type = "l",
+              col = scales::alpha(draw.color, line.alpha), lwd = line.width)
+            }
+          }
+        }
+      } else {
+        temp <- OpenStreetMap::projectMercator(mapdf$lat, mapdf$lon)
+        points(temp[,1], temp[,2], pch=speed.pch, col=alpha(mapdf$colorvec,speed.alpha),
+               lwd=speed.ptsize)
+      }
+      dev.off()
+    }
+    if (plotly) {
+      if (localElevFile != "") {
+        elevations <- NULL
+        load(localElevFile)
+        ttt <- raster::crop(elevations,
+                     c(map.lon.min.dd,map.lon.max.dd,
+                       map.lat.min.dd,map.lat.max.dd))
+        ttt[is.na(ttt[])] <- 0
+        #  scaling factor - reduce so smallest dim is 400 cells
+ttt0 <<- ttt
+        sfact <- max(1,floor(min(dim(ttt))/plotlySize))
+        if (sfact > 1)
+          ttt <- raster::aggregate(ttt,fact=sfact,fun=mean,
+                                   expand=TRUE,na.rm=TRUE)
+ttt1 <<- ttt
+        yscale <- 1.4
+        zscale <- 0.15*plotlyVertScale
+
+        # now put the tracks onto this raster and replace altitude from map
+        tt <- raster::rasterize(cbind(mapdf$lon,mapdf$lat),ttt,mask=TRUE)
+tt <<- tt
+        mmm <- raster::as.matrix(ttt)
+        mmm <- mmm[,ncol(mmm):1]  #  flip east/west since row 1 is top
+        ttt <- NULL
+        ppp <- raster::as.matrix(tt)
+        ppp <- ppp[,ncol(ppp):1]
+        pathpts <- pointsFromMatrix(ppp)
+        pathpts$z <- pathpts$z + 2.5
+print("")
+print(summary(pathpts$z))
+print(summary(as.vector(mmm)))
+        ax <- list(title="longitude",zeroline=FALSE,
+                   showline=FALSE,showticklabels=FALSE,showgrid=FALSE)
+        ay <- list(title="latitude",zeroline=FALSE,
+                   showline=FALSE,showticklabels=FALSE,showgrid=FALSE)
+        az <- list(title="elevation",zeroline=FALSE,
+                   showline=FALSE,showticklabels=FALSE,showgrid=FALSE)
+        p <- plotly::plot_ly(z = ~mmm,
+                             colors = c("blue","yellow")) %>%
+          plotly::add_surface(opacity=1.0) %>%
+          plotly::add_trace(data=pathpts,
+                            x = ~x ,
+                            y = ~y,
+                            z= ~z,
+                            type = "scatter3d", mode = "markers",
+                            #line = list(width = 2, color = "black", reverscale = FALSE),
+                            marker = list(size = 2, color = "black"),
+                            opacity=1)   %>%
+          plotly::layout(scene=list(xaxis=ax,yaxis=ay,zaxis=az,
+                                  aspectmode = "manual",
+                                  aspectratio = list(x=1,y=yscale,z=zscale),
+                                  camera=list(up=c(0,1,0),
+                                              eye=c(0,1.25,0)) ) )
+      } else {
+        yscale <- 1.4
+        zscale <- 0.15*plotlyVertScale
+        p <- plotly::plot_ly(mapdf,
+                        x = ~lon,
+                        y = ~lat,
+                        z = ~altitude.m+5,
+                        type = 'scatter3d', mode = 'markers',
+                        opacity = 1,
+                        #line = list(width = 2, color = ~colorvec, reverscale = FALSE)) %>%
+                        marker = list(size = 1.5, color = ~colorvec)) %>%
+                     plotly::layout(scene = list(aspectmode = "manual",
+                                    aspectratio = list(x=1, y=yscale, z=2*zscale) ))
+      }
+      return(p)
+    }
   }
   return(NULL)
 }

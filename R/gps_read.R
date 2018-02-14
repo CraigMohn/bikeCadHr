@@ -424,7 +424,9 @@ processSegments <- function(trackdf,
 #  stopped <- trackdf$speed.m.s==0  &
 #                (is.na(trackdf$cadence.rpm) | trackdf$cadence.rpm==0)
 # try to catch random gps drift if sensors shut down at stop
-#   using filter on neightbors, not a ts, remove that to hush dplyr warnings
+#   using filter on neightors, not a ts, remove that to hush dplyr warnings
+#   measured gps speed 0-0.2 mph indoors on window sill = 0.08 m/s
+#   (0.5-1.0 when warming up 10 feet inside window)
   temp <- as.vector(stats::filter(trackdf$speed.m.s, rep(1/5,5)))
   temp[is.na(temp)] <- trackdf$speed.m.s[is.na(temp)]
   stopped <- ((temp < 0.1 & trackdf$speed.m.s < 0.3) |

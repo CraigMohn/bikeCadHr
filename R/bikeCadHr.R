@@ -55,15 +55,17 @@
 #' @importFrom grDevices colorRampPalette dev.off heat.colors
 #'                       jpeg rainbow tiff
 #' @importFrom graphics lines par plot points title
+#' @importFrom plotly plot_ly layout add_surface add_trace
 #' @importFrom stats approx median quantile setNames weighted.mean
 #' @importFrom scales alpha
 #' @importFrom fitdc read_fit
 #' @importFrom OpenStreetMap openmap projectMercator
-#' @importFrom raster pointDistance
+#' @importFrom raster pointDistance crop rasterize as.matrix
 #' @importFrom lubridate mday month year second minute hour ymd_hms
 #' @importFrom doParallel registerDoParallel stopImplicitCluster
 #' @importFrom foreach foreach %dopar% %do%
 #' @importFrom parallel detectCores
+#' @importFrom htmlwidgets saveWidget
 #'
 #' @name bikeCadHr
 NULL

@@ -8,7 +8,8 @@ update_gps_variables(outdir, fitrootdir, gpxrootdir, merge.files = list(c(NA,
   NA)), fitexcludes = c("bad", "short"), gpxexcludes = c("bad", "short",
   "nosegs"), prefer.gpx = c(""), rebuild.all.fit = FALSE,
   rebuild.all.gpx = FALSE, drawprofile = TRUE, drawprofile.both = FALSE,
-  elevationChar = "|", cadCont = TRUE, drawmap = TRUE,
+  elevationChar = "|", plotly = FALSE, localElevFile = "",
+  maptype = "maptoolkit-topo", cadCont = TRUE, drawmap = TRUE,
   drawmap.both = FALSE, cores = 4, loud = FALSE, ...)
 }
 \arguments{
@@ -45,6 +46,16 @@ the ride}
 the ride for both the .fit files and .gpx files}
 
 \item{elevationChar}{character to use when printing the elevation profile}
+
+\item{plotly}{if TRUE use plotly to draw 3D track in viewer}
+
+\item{localElevFile}{file containing raster object with elevations on lat/lon}
+
+\item{maptype}{map to use as background (\code{"maptoolkit-topo"} or
+\code{"bing"} or \code{"osm"} or \code{"stamen-terrain"} or
+\code{"esri-topo"}  or \code{"stamen-watercolor"} or \code{"mapbox"} or
+\code{"esri"} or \code{"osm-public-transport"} or \code{"opencyclemap"}
+or \code{"apple-iphoto"} or \code{"skobbler"})}
 
 \item{cadCont}{display cadence as continuous rather than categorical}
 

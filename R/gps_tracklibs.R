@@ -34,9 +34,16 @@
 #' @param drawprofile.both create a .png file in the output directory profiling
 #'    the ride for both the .fit files and .gpx files
 #' @param elevationChar character to use when printing the elevation profile
+#' @param plotly if TRUE use plotly to draw 3D track in viewer
+#' @param localElevFile file containing raster object with elevations on lat/lon
 #' @param cadCont display cadence as continuous rather than categorical
 #' @param drawmap create a .tiff file in the output directory mapping
 #'    the ride with speed-varying color
+#' @param maptype map to use as background (\code{"maptoolkit-topo"} or
+#'       \code{"bing"} or \code{"osm"} or \code{"stamen-terrain"} or
+#'       \code{"esri-topo"}  or \code{"stamen-watercolor"} or \code{"mapbox"} or
+#'       \code{"esri"} or \code{"osm-public-transport"} or \code{"opencyclemap"}
+#'       or \code{"apple-iphoto"} or \code{"skobbler"})
 #' @param drawmap.both create a .tiff file in the output directory mapping
 #'    the ride with speed-varying color for both the .fit files and the .gox files
 #' @param cores numer of cores (default is #CPUs - 1)
@@ -54,9 +61,11 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
                   fitexcludes=c("bad","short"),gpxexcludes=c("bad","short","nosegs"),prefer.gpx=c(""),
                   rebuild.all.fit=FALSE,rebuild.all.gpx=FALSE,
                   drawprofile=TRUE,drawprofile.both=FALSE,elevationChar="|",
+                  plotly=FALSE,localElevFile="",maptype="maptoolkit-topo",
                   cadCont=TRUE,
                   drawmap=TRUE,drawmap.both=FALSE,cores=4,loud=FALSE,...) {
 
+  nomap <- maptype=="none"
   num_drawn <- 0
   num_mapped <- 0
   old_wd <- getwd()
@@ -126,12 +135,19 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
                        savefn=paste0(outdir,"/",ridefn,"profile.pdf"))
           num_drawn <- 1
         }
-        if (drawmap) {
-          map_rides(fittracks[fittracks$startbutton.date==idate&
+        if (drawmap | plotly) {
+          if (nomap) {
+            outfile <- "none"
+          } else {
+            outfile <- paste0(outdir,"/",ridefn,"map.jpg")
+          }
+          p <- map_rides(fittracks[fittracks$startbutton.date==idate&
                     fittracks$startbutton.time==itime,],
                     draw.speed=TRUE,minTiles=200,
-                    outfile=paste0(outdir,"/",ridefn,"map.jpg"),mapsize=c(3840,2400),
-                    speed.color="speedcolors",maptype="maptoolkit-topo")
+                    outfile=outfile,mapsize=c(3840,2400),
+                    plotly=plotly,localElevFile=localElevFile,
+                    speed.color="speedcolors",maptype=maptype)
+          if (plotly) htmlwidgets::saveWidget(p, paste0(outdir,"/",ridefn,"map.html"))
           num_mapped <- 1
         }
       }
@@ -200,11 +216,19 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
                                       elevationShape=elevationChar,
                                       cadCont=cadCont,
                                       savefn=paste0(outdir,"/",ridefn,"profile.png"))
-        if (drawmap &(num_mapped==0 | drawmap.both))
-          map_rides(gpxtracks[gpxtracks$startbutton.date==idate&
+        if ((drawmap | plotly) &(num_mapped==0 | drawmap.both)) {
+          if (nomap) {
+            outfile <- "none"
+          } else {
+            outfile <- paste0(outdir,"/",ridefn,"map.jpg")
+          }
+          p<-map_rides(gpxtracks[gpxtracks$startbutton.date==idate&
                               gpxtracks$startbutton.time==itime,],
-                  outfile=paste0(outdir,"/",ridefn,"map.jpg"),mapsize=c(1920,1200),
+                  outfile=outfile,mapsize=c(1920,1200),maptype=maptype,
+                  plotly=plotly,localElevFile=localElevFile,
                   draw.speed=TRUE,speed.color="magma")
+          if (plotly) htmlwidgets::saveWidget(p, paste0(outdir,"/",ridefn,"map.html"))
+        }
       }
     }
   }
