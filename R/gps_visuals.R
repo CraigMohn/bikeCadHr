@@ -245,18 +245,15 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
                        map.lat.min.dd,map.lat.max.dd))
         ttt[is.na(ttt[])] <- 0
         #  scaling factor - reduce so smallest dim is 400 cells
-ttt0 <<- ttt
         sfact <- max(1,floor(min(dim(ttt))/plotlySize))
         if (sfact > 1)
           ttt <- raster::aggregate(ttt,fact=sfact,fun=mean,
                                    expand=TRUE,na.rm=TRUE)
-ttt1 <<- ttt
-        yscale <- 1.4
+        yscale <- yRatio(ttt)
         zscale <- 0.15*plotlyVertScale
 
         # now put the tracks onto this raster and replace altitude from map
         tt <- raster::rasterize(cbind(mapdf$lon,mapdf$lat),ttt,mask=TRUE)
-tt <<- tt
         mmm <- raster::as.matrix(ttt)
         mmm <- mmm[,ncol(mmm):1]  #  flip east/west since row 1 is top
         ttt <- NULL
@@ -264,9 +261,6 @@ tt <<- tt
         ppp <- ppp[,ncol(ppp):1]
         pathpts <- pointsFromMatrix(ppp)
         pathpts$z <- pathpts$z + 2.5
-print("")
-print(summary(pathpts$z))
-print(summary(as.vector(mmm)))
         ax <- list(title="longitude",zeroline=FALSE,
                    showline=FALSE,showticklabels=FALSE,showgrid=FALSE)
         ay <- list(title="latitude",zeroline=FALSE,
@@ -290,8 +284,11 @@ print(summary(as.vector(mmm)))
                                   camera=list(up=c(0,1,0),
                                               eye=c(0,1.25,0)) ) )
       } else {
-        yscale <- 1.4
-        zscale <- 0.15*plotlyVertScale
+        yscale <- yRatioPts(xmin=min(mapdf$lon),
+                            xmax=max(mapdf$lon),
+                            ymin=min(mapdf$lat),
+                            ymax=max(mapdf$lat))
+        zscale <- 0.30*plotlyVertScale
         p <- plotly::plot_ly(mapdf,
                         x = ~lon,
                         y = ~lat,
