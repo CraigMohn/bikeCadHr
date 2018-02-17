@@ -7,3 +7,7 @@ addons:
     packages:
       - libgdal-dev
       - libproj-dev
+
+env:
+  - RGL_USE_NULL=TRUE
+  
