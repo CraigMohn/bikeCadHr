@@ -99,5 +99,5 @@ Data fields in the summary:
  Speed and rolling time measures do not align perfectly between computers and/or
  GPS units becuase of differences in autopause begin/end delays, an effect which
  is more pronounced with more stops.  GPS data are measurements of events, and
- as such reflect sampling variation which is probably larger than you expect}
+ as such reflect sampling variation which is probably larger than you expect. }
 }
