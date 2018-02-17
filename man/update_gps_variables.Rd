@@ -8,8 +8,8 @@ update_gps_variables(outdir, fitrootdir, gpxrootdir, merge.files = list(c(NA,
   NA)), fitexcludes = c("bad", "short"), gpxexcludes = c("bad", "short",
   "nosegs"), prefer.gpx = c(""), rebuild.all.fit = FALSE,
   rebuild.all.gpx = FALSE, drawprofile = TRUE, drawprofile.both = FALSE,
-  elevationChar = "|", plotly = FALSE, localElevFile = "",
-  maptype = "maptoolkit-topo", cadCont = TRUE, drawmap = TRUE,
+  elevationChar = "|", plotly = FALSE, rgl = FALSE, localElevFile = "",
+  maptype = "bing", cadCont = TRUE, drawmap = TRUE,
   drawmap.both = FALSE, cores = 4, loud = FALSE, ...)
 }
 \arguments{
@@ -48,6 +48,8 @@ the ride for both the .fit files and .gpx files}
 \item{elevationChar}{character to use when printing the elevation profile}
 
 \item{plotly}{if TRUE use plotly to draw 3D track in viewer}
+
+\item{rgl}{if TRUE use rgl to draw 3D track in viewer}
 
 \item{localElevFile}{file containing raster object with elevations on lat/lon}
 

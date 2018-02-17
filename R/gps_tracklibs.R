@@ -35,6 +35,7 @@
 #'    the ride for both the .fit files and .gpx files
 #' @param elevationChar character to use when printing the elevation profile
 #' @param plotly if TRUE use plotly to draw 3D track in viewer
+#' @param rgl if TRUE use rgl to draw 3D track in viewer
 #' @param localElevFile file containing raster object with elevations on lat/lon
 #' @param cadCont display cadence as continuous rather than categorical
 #' @param drawmap create a .tiff file in the output directory mapping
@@ -61,7 +62,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
                   fitexcludes=c("bad","short"),gpxexcludes=c("bad","short","nosegs"),prefer.gpx=c(""),
                   rebuild.all.fit=FALSE,rebuild.all.gpx=FALSE,
                   drawprofile=TRUE,drawprofile.both=FALSE,elevationChar="|",
-                  plotly=FALSE,localElevFile="",maptype="maptoolkit-topo",
+                  plotly=FALSE,rgl=FALSE,localElevFile="",maptype="bing",
                   cadCont=TRUE,
                   drawmap=TRUE,drawmap.both=FALSE,cores=4,loud=FALSE,...) {
 
@@ -145,7 +146,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
                     fittracks$startbutton.time==itime,],
                     draw.speed=TRUE,minTiles=200,
                     outfile=outfile,mapsize=c(3840,2400),
-                    plotly=plotly,localElevFile=localElevFile,
+                    plotly=plotly,rgl=rgl,localElevFile=localElevFile,
                     speed.color="speedcolors",maptype=maptype)
           if (plotly) htmlwidgets::saveWidget(p, paste0(outdir,"/",ridefn,"map.html"))
           num_mapped <- 1
@@ -225,7 +226,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
           p<-map_rides(gpxtracks[gpxtracks$startbutton.date==idate&
                               gpxtracks$startbutton.time==itime,],
                   outfile=outfile,mapsize=c(1920,1200),maptype=maptype,
-                  plotly=plotly,localElevFile=localElevFile,
+                  plotly=plotly,rgl=rgl,localElevFile=localElevFile,
                   draw.speed=TRUE,speed.color="magma")
           if (plotly) htmlwidgets::saveWidget(p, paste0(outdir,"/",ridefn,"map.html"))
         }

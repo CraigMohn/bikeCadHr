@@ -16,9 +16,10 @@
 #'    and speed.m.s for speed coloring
 #' @param outfile name of output file, extension is either .tiff or .jpg
 #' @param plotly use plotly to draw 3D track in viewer
+#' @param rgl use rgl openGL to draw 3D track in viewer
 #' @param localElevFile file containing raster object with elevations on lat/lon
-#' @param plotlySize number which is rough target for size of grid
-#' @param plotlyVertScale number which will multiply vertical scaling
+#' @param plot3DSize number which is rough target for size of grid for plotly/rgl
+#' @param plot3DVertScale number which will multiply vertical scaling for plotly/rgl
 #' @param maptitle string containing title
 #' @param definedmaps list, each named entry is a list of two vectors of
 #'    length two, named lat and lon, containing the min and max of the
@@ -58,16 +59,15 @@
 #'
 #' @export
 map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
-                      plotly=FALSE,localElevFile="",
-                      plotlySize=250,plotlyVertScale=1,
-                      maptype="maptoolkit-topo",minTiles=50,
+                      plotly=FALSE,rgl=FALSE,localElevFile="",
+                      plot3DSize=300,plot3DVertScale=1,
+                      maptype="bing",minTiles=50,
                       mapsize=c(1600,1200),fine.map=FALSE,margin.factor=0.08,
                       draw.speed=FALSE,
                       line.color="magenta",line.width=3,line.alpha=0.8,
                       speed.color="speedcolors",speed.alpha=0.7,
                       speed.ptsize=6,speed.pch=19,
                       jpeg.quality=90) {
-
   ##  geodf: a tibble or dataframe containing at least:
         #  position_lat.dd,position_lon.dd,(or lat,lon)(both numeric),
         #  startbutton.time(int),segment(numeric)
@@ -236,31 +236,41 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
       }
       dev.off()
     }
-    if (plotly) {
+    if (plotly | rgl) {
       if (localElevFile != "") {
         elevations <- NULL
         load(localElevFile)
         ttt <- raster::crop(elevations,
-                     c(map.lon.min.dd,map.lon.max.dd,
-                       map.lat.min.dd,map.lat.max.dd))
+                            c(map.lon.min.dd,map.lon.max.dd,
+                              map.lat.min.dd,map.lat.max.dd))
         ttt[is.na(ttt[])] <- 0
         #  scaling factor - reduce so smallest dim is 400 cells
-        sfact <- max(1,floor(min(dim(ttt))/plotlySize))
+        sfact <- max(1,floor(min(dim(ttt))/plot3DSize))
         if (sfact > 1)
           ttt <- raster::aggregate(ttt,fact=sfact,fun=mean,
                                    expand=TRUE,na.rm=TRUE)
-        yscale <- yRatio(ttt)
-        zscale <- 0.15*plotlyVertScale
-
         # now put the tracks onto this raster and replace altitude from map
         tt <- raster::rasterize(cbind(mapdf$lon,mapdf$lat),ttt,mask=TRUE)
-        mmm <- raster::as.matrix(ttt)
-        mmm <- mmm[,ncol(mmm):1]  #  flip east/west since row 1 is top
-        ttt <- NULL
         ppp <- raster::as.matrix(tt)
         ppp <- ppp[,ncol(ppp):1]
         pathpts <- pointsFromMatrix(ppp)
-        pathpts$z <- pathpts$z + 2.5
+
+        yscale <- yRatio(ttt)
+        zscale <- 0.15*plot3DVertScale
+      } else {
+        yscale <- yRatioPts(xmin=min(mapdf$lon),
+                            xmax=max(mapdf$lon),
+                            ymin=min(mapdf$lat),
+                            ymax=max(mapdf$lat))
+        zscale <- 0.30*plot3DVertScale
+      }
+    }
+    p <- NULL
+    if (plotly) {
+      if (localElevFile != "") {
+        mmm <- raster::as.matrix(ttt)
+        mmm <- mmm[,ncol(mmm):1]  #  flip east/west since row 1 is top
+        pathpts$z <- pathpts$z + 5
         ax <- list(title="longitude",zeroline=FALSE,
                    showline=FALSE,showticklabels=FALSE,showgrid=FALSE)
         ay <- list(title="latitude",zeroline=FALSE,
@@ -284,11 +294,6 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
                                   camera=list(up=c(0,1,0),
                                               eye=c(0,1.25,0)) ) )
       } else {
-        yscale <- yRatioPts(xmin=min(mapdf$lon),
-                            xmax=max(mapdf$lon),
-                            ymin=min(mapdf$lat),
-                            ymax=max(mapdf$lat))
-        zscale <- 0.30*plotlyVertScale
         p <- plotly::plot_ly(mapdf,
                         x = ~lon,
                         y = ~lat,
@@ -297,13 +302,78 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
                         opacity = 1,
                         #line = list(width = 2, color = ~colorvec, reverscale = FALSE)) %>%
                         marker = list(size = 1.5, color = ~colorvec)) %>%
-                     plotly::layout(scene = list(aspectmode = "manual",
-                                    aspectratio = list(x=1, y=yscale, z=2*zscale) ))
+             plotly::layout(scene = list(aspectmode = "manual",
+                            aspectratio = list(x=1, y=yscale, z=zscale) ))
       }
-      return(p)
+    }
+    if (rgl) {
+      if (localElevFile != "") {
+        mmmrgl <- raster::as.matrix(ttt)
+        mmmrgl[mmmrgl<0] <- 0
+        #mmmrgl <- mmmrgl[nrow(mmmrgl):1,ncol(mmmrgl):1]
+        #pathelevs <- raster::extract(ttt,cbind(mapdf$lon,mapdf$lat)) + 1.5
+        xmin <- map.lon.min.dd
+        xmax <- map.lon.max.dd
+        ymin <- map.lat.min.dd
+        ymax <- map.lat.max.dd
+        xlen <-
+          (raster::pointDistance(cbind(xmin,ymin),cbind(xmax,ymin),lonlat=TRUE) +
+           raster::pointDistance(cbind(xmin,ymax),cbind(xmax,ymax),lonlat=TRUE)) /
+                2
+        ylen <-
+          (raster::pointDistance(cbind(xmin,ymin),cbind(xmin,ymax),lonlat=TRUE) +
+           raster::pointDistance(cbind(xmax,ymin),cbind(xmax,ymax),lonlat=TRUE)) /
+                2
+        xperdeg <- xlen / (xmax - xmin)
+        yperdeg <- ylen / (ymax - ymin)
+        x <- seq(0,xlen,length.out=nrow(mmmrgl))
+        y <- seq(0,ylen,length.out=ncol(mmmrgl))
+        pathpts$x <- pathpts$x*(ylen/ncol(mmmrgl))
+        pathpts$y <- pathpts$y*(xlen/nrow(mmmrgl))
+
+        terrcolors <- colorRampPalette(c("blue","turquoise","aquamarine",
+                                         "palegreen","yellowgreen",
+                                         "chartreuse","greenyellow","green",
+                                         "limegreen","forestgreen","darkgreen",
+                                         "yellow","gold","goldenrod",
+                                         "sienna","brown","gray75",
+                                         "gray85","gray95","gray97","white"))(201)
+        colidx <- floor(200*(mmmrgl/1500)) + 1
+        colidx[colidx>201] <- 201
+        col <- terrcolors[colidx]
+        ypath <- (mapdf$lon - xmin)*yperdeg
+        xpath <- (ymax - mapdf$lat)*xperdeg
+        xpath <- pathpts$y
+        ypath <- ylen - pathpts$x
+        zpath <- pathpts$z + 5
+        par3d("windowRect"= c(100,100,1200,1000))
+        userMatrix <- matrix(c(-0.02,-0.80,0.632,0,1,0,0.04,0,
+                               -0.03,0.60,0.80,0,0,0,0,1),ncol=4,nrow=4)
+        rgl::rgl.clear()
+        rgl::surface3d(x,y,mmmrgl,color=col)
+        rgl::material3d(alpha=1.0,point_antialias=TRUE,smooth=TRUE,shininess=15)
+        for (trkstarttime in trackstarts) {
+          for (seg in unique(mapdf[mapdf$start.time==trkstarttime,]$segment)) {
+            use = mapdf$start.time==trkstarttime & mapdf$segment==seg &
+              (lead_one(mapdf$segment)==mapdf$segment |
+                 lag_one(mapdf$segment)==mapdf$segment) # can't do 1 pt lines
+            if (sum(use)>0) {
+              #points3d(xpath[use],ypath[use],pathelevs[use],
+              points3d(xpath,ypath,zpath,
+                      size=4,col = "black")
+            }
+          }
+        }
+        rgl::aspect3d(x=1,y=1/yscale,z=zscale)
+        rgl::rgl.clear("lights")
+        rgl::rgl.light(theta = 45, phi = 45, viewpoint.rel=TRUE)
+        rgl::rgl.viewpoint(userMatrix=userMatrix,type="modelviewpoint")
+      } else {
+
+      }
     }
   }
-  return(NULL)
+  return(p)
 }
 
 

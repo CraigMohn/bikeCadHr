@@ -52,6 +52,7 @@
 #' @import magrittr tibble dplyr stringr ggplot2
 #' @import viridis
 #' @import XML
+#' @import rgl
 #' @importFrom grDevices colorRampPalette dev.off heat.colors
 #'                       jpeg rainbow tiff
 #' @importFrom graphics lines par plot points title

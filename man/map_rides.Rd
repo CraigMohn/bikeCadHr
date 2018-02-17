@@ -5,12 +5,12 @@
 \title{plot ride track data on a map}
 \usage{
 map_rides(geodf, outfile, maptitle, definedmaps, usemap, plotly = FALSE,
-  localElevFile = "", plotlySize = 250, plotlyVertScale = 1,
-  maptype = "maptoolkit-topo", minTiles = 50, mapsize = c(1600, 1200),
-  fine.map = FALSE, margin.factor = 0.08, draw.speed = FALSE,
-  line.color = "magenta", line.width = 3, line.alpha = 0.8,
-  speed.color = "speedcolors", speed.alpha = 0.7, speed.ptsize = 6,
-  speed.pch = 19, jpeg.quality = 90)
+  rgl = FALSE, localElevFile = "", plot3DSize = 300,
+  plot3DVertScale = 1, maptype = "bing", minTiles = 50,
+  mapsize = c(1600, 1200), fine.map = FALSE, margin.factor = 0.08,
+  draw.speed = FALSE, line.color = "magenta", line.width = 3,
+  line.alpha = 0.8, speed.color = "speedcolors", speed.alpha = 0.7,
+  speed.ptsize = 6, speed.pch = 19, jpeg.quality = 90)
 }
 \arguments{
 \item{geodf}{data frame or tibble containing at least: position_lat.dd,
@@ -30,11 +30,13 @@ latitude andf longitude of the map area}
 
 \item{plotly}{use plotly to draw 3D track in viewer}
 
+\item{rgl}{use rgl openGL to draw 3D track in viewer}
+
 \item{localElevFile}{file containing raster object with elevations on lat/lon}
 
-\item{plotlySize}{number which is rough target for size of grid}
+\item{plot3DSize}{number which is rough target for size of grid for plotly/rgl}
 
-\item{plotlyVertScale}{number which will multiply vertical scaling}
+\item{plot3DVertScale}{number which will multiply vertical scaling for plotly/rgl}
 
 \item{maptype}{map to use as background (\code{"maptoolkit-topo"} or
 \code{"bing"} or \code{"osm"} or \code{"stamen-terrain"} or
