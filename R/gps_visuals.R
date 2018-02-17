@@ -133,41 +133,6 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
     map.lat.min.dd <- lat.min-latwide*marginfactor
     map.lon.max.dd <- lon.max+lonwide*marginfactor
     map.lon.min.dd <- lon.min-lonwide*marginfactor
-
-    if (draw.speed) {
-      if (speed.color=="plasma") {
-        spdcolors <- rev(plasma(101))
-      } else if (speed.color=="magma") {
-        spdcolors <- rev(magma(101))
-      } else if (speed.color=="heat") {
-        spdcolors <- rev(heat.colors(101))
-      } else if (speed.color=="rainbow") {
-        spdcolors <- (rainbow(101,start=0.15,end=1))
-      } else if (speed.color=="red-blue-green") {
-        spdcolors <- colorRampPalette(c("red","blue","green"))(101)
-      } else {
-        spdcolors <- colorRampPalette(c("red","orange","cornflowerblue",
-                                        "dodgerblue","blue","darkorchid","purple","magenta"))(101)
-      }
-      speed <- geodf$speed.m.s*2.23694
-      speed[speed>40] <- 40
-      speed[speed<3] <- 3
-      geodf$colorvec <- spdcolors[floor(100*(speed - 3)/37) + 1]
-    } else {
-      if (line.color=="plasma") {
-        geodf$colorvec <- viridis::plasma(length(trackstarts),begin=0.0,end=0.7)
-      } else if (line.color=="viridis") {
-        geodf$colorvec <- viridis::viridis(length(trackstarts),begin=0.1,end=0.9)
-      } else if (line.color=="rainbow") {
-        geodf$colorvec <- rainbow(length(trackstarts),start=0.2,end=0.9)
-      } else if (line.color=="heat") {
-        geodf$colorvec <- heat.colors(length(trackstarts))
-      } else if (line.color=="red-blue") {
-        geodf$colorvec <- colorRampPalette(c("red","blue"))(101)
-      } else {
-        geodf$colorvec <- rep(line.color,length(trackstarts))
-      }
-    }
     if (outfiletype != "none") {
       if (min(lat.max-lat.min,lon.max-lon.min) > .005){
         map <- OpenStreetMap::openmap(c(map.lat.max.dd, map.lon.min.dd),
@@ -202,6 +167,42 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
                    geodf$lat>=map.lat.min.dd-.01 &
                    geodf$lat<=map.lat.max.dd+.01,]
     trackstarts <- unique(mapdf$start.time)
+
+    if (draw.speed) {
+      if (speed.color=="plasma") {
+        spdcolors <- rev(plasma(101))
+      } else if (speed.color=="magma") {
+        spdcolors <- rev(magma(101))
+      } else if (speed.color=="heat") {
+        spdcolors <- rev(heat.colors(101))
+      } else if (speed.color=="rainbow") {
+        spdcolors <- (rainbow(101,start=0.15,end=1))
+      } else if (speed.color=="red-blue-green") {
+        spdcolors <- colorRampPalette(c("red","blue","green"))(101)
+      } else {
+        spdcolors <- colorRampPalette(c("red","orange","cornflowerblue",
+                                        "dodgerblue","blue","darkorchid","purple","magenta"))(101)
+      }
+      speed <- mapdf$speed.m.s*2.23694
+      speed[speed>40] <- 40
+      speed[speed<3] <- 3
+      mapdf$colorvec <- spdcolors[floor(100*(speed - 3)/37) + 1]
+    } else {
+      if (line.color=="plasma") {
+        mapdf$colorvec <- viridis::plasma(length(trackstarts),begin=0.0,end=0.7)
+      } else if (line.color=="viridis") {
+        mapdf$colorvec <- viridis::viridis(length(trackstarts),begin=0.1,end=0.9)
+      } else if (line.color=="rainbow") {
+        mapdf$colorvec <- rainbow(length(trackstarts),start=0.2,end=0.9)
+      } else if (line.color=="heat") {
+        mapdf$colorvec <- heat.colors(length(trackstarts))
+      } else if (line.color=="red-blue") {
+        mapdf$colorvec <- colorRampPalette(c("red","blue"))(101)
+      } else {
+        mapdf$colorvec <- rep(line.color,nrow(mapdf))
+      }
+    }
+
     if (outfiletype!="none") {
       cat("\noutfile=",outfile)
       if (outfiletype=="jpeg") {
@@ -297,39 +298,33 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
         p <- plotly::plot_ly(mapdf,
                         x = ~lon,
                         y = ~lat,
-                        z = ~altitude.m+5,
+                        z = ~altitude.m,
                         type = 'scatter3d', mode = 'markers',
                         opacity = 1,
-                        #line = list(width = 2, color = ~colorvec, reverscale = FALSE)) %>%
                         marker = list(size = 1.5, color = ~colorvec)) %>%
              plotly::layout(scene = list(aspectmode = "manual",
                             aspectratio = list(x=1, y=yscale, z=zscale) ))
       }
     }
     if (rgl) {
+      xmin <- map.lon.min.dd
+      xmax <- map.lon.max.dd
+      ymin <- map.lat.min.dd
+      ymax <- map.lat.max.dd
+      xlen <-
+        (raster::pointDistance(cbind(xmin,ymin),cbind(xmax,ymin),lonlat=TRUE) +
+           raster::pointDistance(cbind(xmin,ymax),cbind(xmax,ymax),lonlat=TRUE)) /
+        2
+      ylen <-
+        (raster::pointDistance(cbind(xmin,ymin),cbind(xmin,ymax),lonlat=TRUE) +
+           raster::pointDistance(cbind(xmax,ymin),cbind(xmax,ymax),lonlat=TRUE)) /
+        2
+
       if (localElevFile != "") {
         mmmrgl <- raster::as.matrix(ttt)
         mmmrgl[mmmrgl<0] <- 0
-        #mmmrgl <- mmmrgl[nrow(mmmrgl):1,ncol(mmmrgl):1]
-        #pathelevs <- raster::extract(ttt,cbind(mapdf$lon,mapdf$lat)) + 1.5
-        xmin <- map.lon.min.dd
-        xmax <- map.lon.max.dd
-        ymin <- map.lat.min.dd
-        ymax <- map.lat.max.dd
-        xlen <-
-          (raster::pointDistance(cbind(xmin,ymin),cbind(xmax,ymin),lonlat=TRUE) +
-           raster::pointDistance(cbind(xmin,ymax),cbind(xmax,ymax),lonlat=TRUE)) /
-                2
-        ylen <-
-          (raster::pointDistance(cbind(xmin,ymin),cbind(xmin,ymax),lonlat=TRUE) +
-           raster::pointDistance(cbind(xmax,ymin),cbind(xmax,ymax),lonlat=TRUE)) /
-                2
-        xperdeg <- xlen / (xmax - xmin)
-        yperdeg <- ylen / (ymax - ymin)
         x <- seq(0,xlen,length.out=nrow(mmmrgl))
         y <- seq(0,ylen,length.out=ncol(mmmrgl))
-        pathpts$x <- pathpts$x*(ylen/ncol(mmmrgl))
-        pathpts$y <- pathpts$y*(xlen/nrow(mmmrgl))
 
         terrcolors <- colorRampPalette(c("blue","turquoise","aquamarine",
                                          "palegreen","yellowgreen",
@@ -341,36 +336,41 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
         colidx <- floor(200*(mmmrgl/1500)) + 1
         colidx[colidx>201] <- 201
         col <- terrcolors[colidx]
-        ypath <- (mapdf$lon - xmin)*yperdeg
-        xpath <- (ymax - mapdf$lat)*xperdeg
-        xpath <- pathpts$y
-        ypath <- ylen - pathpts$x
-        zpath <- pathpts$z + 5
-        par3d("windowRect"= c(100,100,1200,1000))
-        userMatrix <- matrix(c(-0.02,-0.80,0.632,0,1,0,0.04,0,
+      }
+      xpath <- xlen * (1 - (mapdf$lat-ymin)/(ymax-ymin))
+      ypath <- ylen * (mapdf$lon-xmin)/(xmax-xmin)
+      if (localElevFile != "") {
+        #  pull elevations from map data
+        zpath <- raster::extract(ttt,cbind(mapdf$lon,mapdf$lat)) + 3
+        pathcol <- "magenta"
+      } else {
+        zpath <- mapdf$altitude.m
+        pathcol <- mapdf$colorvec
+      }
+
+      par3d("windowRect"= c(100,100,1200,1000))
+      userMatrix <- matrix(c(-0.02,-0.80,0.632,0,1,0,0.04,0,
                                -0.03,0.60,0.80,0,0,0,0,1),ncol=4,nrow=4)
-        rgl::rgl.clear()
-        rgl::surface3d(x,y,mmmrgl,color=col)
-        rgl::material3d(alpha=1.0,point_antialias=TRUE,smooth=TRUE,shininess=15)
-        for (trkstarttime in trackstarts) {
-          for (seg in unique(mapdf[mapdf$start.time==trkstarttime,]$segment)) {
-            use = mapdf$start.time==trkstarttime & mapdf$segment==seg &
-              (lead_one(mapdf$segment)==mapdf$segment |
-                 lag_one(mapdf$segment)==mapdf$segment) # can't do 1 pt lines
-            if (sum(use)>0) {
-              #points3d(xpath[use],ypath[use],pathelevs[use],
-              points3d(xpath,ypath,zpath,
-                      size=4,col = "black")
-            }
+      rgl::rgl.clear()
+      if (localElevFile != "") rgl::surface3d(x,y,mmmrgl,color=col)
+      rgl::material3d(alpha=1.0,point_antialias=TRUE,smooth=TRUE,shininess=15)
+      for (trkstarttime in trackstarts) {
+        for (seg in unique(mapdf[mapdf$start.time==trkstarttime,]$segment)) {
+          use = mapdf$start.time==trkstarttime & mapdf$segment==seg &
+            (lead_one(mapdf$segment)==mapdf$segment |
+               lag_one(mapdf$segment)==mapdf$segment) # can't do 1 pt lines
+          if (sum(use)>0) {
+            #points3d(xpath[use],ypath[use],pathelevs[use],
+            lines3d(xpath,ypath,zpath,
+                    size=7,col = pathcol)
           }
         }
-        rgl::aspect3d(x=1,y=1/yscale,z=zscale)
-        rgl::rgl.clear("lights")
-        rgl::rgl.light(theta = 45, phi = 45, viewpoint.rel=TRUE)
-        rgl::rgl.viewpoint(userMatrix=userMatrix,type="modelviewpoint")
-      } else {
-
       }
+      rgl::aspect3d(x=1,y=1/yscale,z=zscale)
+      rgl::rgl.clear("lights")
+      rgl::rgl.light(theta = 45, phi = 45, viewpoint.rel=TRUE)
+      rgl::rgl.viewpoint(userMatrix=userMatrix,type="modelviewpoint")
+
     }
   }
   return(p)
