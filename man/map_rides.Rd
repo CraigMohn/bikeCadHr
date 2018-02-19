@@ -6,11 +6,13 @@
 \usage{
 map_rides(geodf, outfile, maptitle, definedmaps, usemap, plotly = FALSE,
   rgl = FALSE, localElevFile = "", plot3DSize = 300,
-  plot3DVertScale = 1, maptype = "bing", minTiles = 50,
-  mapsize = c(1600, 1200), fine.map = FALSE, margin.factor = 0.08,
-  draw.speed = FALSE, line.color = "magenta", line.width = 3,
-  line.alpha = 0.8, speed.color = "speedcolors", speed.alpha = 0.7,
-  speed.ptsize = 6, speed.pch = 19, jpeg.quality = 90)
+  plot3DVertScale = 1, rglShininess = 0,
+  rglLightPars = "viewpoint.rel=TRUE", rglLights = TRUE, maptype = "bing",
+  minTiles = 50, mapsize = c(1600, 1200), fine.map = FALSE,
+  margin.factor = 0.08, draw.speed = FALSE, line.color = "magenta",
+  line.width = 3, line.alpha = 0.8, speed.color = "speedcolors",
+  speed.alpha = 0.7, speed.ptsize = 6, speed.pch = 19,
+  jpeg.quality = 90)
 }
 \arguments{
 \item{geodf}{data frame or tibble containing at least: position_lat.dd,
@@ -37,6 +39,12 @@ latitude andf longitude of the map area}
 \item{plot3DSize}{number which is rough target for size of grid for plotly/rgl}
 
 \item{plot3DVertScale}{number which will multiply vertical scaling for plotly/rgl}
+
+\item{rglShininess}{number controlling surface shininess in rgl rendering}
+
+\item{rglLightPars}{string containing parameters for rgl.light call}
+
+\item{rglLights}{logical indicating whether to turn on lighting}
 
 \item{maptype}{map to use as background (\code{"maptoolkit-topo"} or
 \code{"bing"} or \code{"osm"} or \code{"stamen-terrain"} or
