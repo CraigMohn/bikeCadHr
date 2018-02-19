@@ -189,18 +189,19 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
       mapdf$colorvec <- spdcolors[floor(100*(speed - 3)/37) + 1]
     } else {
       if (line.color=="plasma") {
-        mapdf$colorvec <- viridis::plasma(length(trackstarts),begin=0.0,end=0.7)
+        mapcvec <- viridis::plasma(length(trackstarts),begin=0.0,end=0.7)
       } else if (line.color=="viridis") {
-        mapdf$colorvec <- viridis::viridis(length(trackstarts),begin=0.1,end=0.9)
+        mapcvec <- viridis::viridis(length(trackstarts),begin=0.1,end=0.9)
       } else if (line.color=="rainbow") {
-        mapdf$colorvec <- rainbow(length(trackstarts),start=0.2,end=0.9)
+        mapcvec <- rainbow(length(trackstarts),start=0.2,end=0.9)
       } else if (line.color=="heat") {
-        mapdf$colorvec <- heat.colors(length(trackstarts))
+        mapcvec <- heat.colors(length(trackstarts))
       } else if (line.color=="red-blue") {
-        mapdf$colorvec <- colorRampPalette(c("red","blue"))(101)
+        mapcvec <- colorRampPalette(c("red","blue"))(101)
       } else {
-        mapdf$colorvec <- rep(line.color,nrow(mapdf))
+        mapcvec <- rep(line.color,length(trackstarts))
       }
+      mapdf$colorvec <- mapcvec[match(mapdf$start.time, trackstarts)]
     }
 
     if (outfiletype!="none") {
@@ -226,13 +227,17 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
               temp <-
                  OpenStreetMap::projectMercator(mapdf$lat[use],mapdf$lon[use])
               lines(temp[,1], temp[,2],type = "l",
-              col = scales::alpha(draw.color, line.alpha), lwd = line.width)
+                    col = scales::alpha(mapdf$colorvec[use][[1]], line.alpha),
+                    lwd = line.width)
             }
           }
         }
       } else {
         temp <- OpenStreetMap::projectMercator(mapdf$lat, mapdf$lon)
-        points(temp[,1], temp[,2], pch=speed.pch, col=alpha(mapdf$colorvec,speed.alpha),
+        points(temp[,1],
+               temp[,2],
+               pch=speed.pch,
+               col=scales::alpha(mapdf$colorvec,speed.alpha),
                lwd=speed.ptsize)
       }
       dev.off()
@@ -268,10 +273,11 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
     }
     p <- NULL
     if (plotly) {
+      print("building plotly image")
       if (localElevFile != "") {
         mmm <- raster::as.matrix(ttt)
         mmm <- mmm[,ncol(mmm):1]  #  flip east/west since row 1 is top
-        pathpts$z <- pathpts$z + 5
+        pathpts$z <- pathpts$z + 10
         ax <- list(title="longitude",zeroline=FALSE,
                    showline=FALSE,showticklabels=FALSE,showgrid=FALSE)
         ay <- list(title="latitude",zeroline=FALSE,
@@ -307,6 +313,7 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
       }
     }
     if (rgl) {
+      print("building rgl image")
       xmin <- map.lon.min.dd
       xmax <- map.lon.max.dd
       ymin <- map.lat.min.dd
@@ -353,7 +360,7 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
                                -0.03,0.60,0.80,0,0,0,0,1),ncol=4,nrow=4)
       rgl::rgl.clear()
       if (localElevFile != "") rgl::surface3d(x,y,mmmrgl,color=col)
-      rgl::material3d(alpha=1.0,point_antialias=TRUE,smooth=TRUE,shininess=15)
+      rgl::material3d(alpha=1.0,point_antialias=TRUE,smooth=TRUE,shininess=5)
       for (trkstarttime in trackstarts) {
         for (seg in unique(mapdf[mapdf$start.time==trkstarttime,]$segment)) {
           use = mapdf$start.time==trkstarttime & mapdf$segment==seg &
@@ -361,16 +368,16 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
                lag_one(mapdf$segment)==mapdf$segment) # can't do 1 pt lines
           if (sum(use)>0) {
             #points3d(xpath[use],ypath[use],pathelevs[use],
-            lines3d(xpath,ypath,zpath,
-                    size=7,col = pathcol)
+            lines3d(xpath[use],ypath[use],zpath[use],
+                    lwd=2,col = pathcol)
           }
         }
       }
-      rgl::aspect3d(x=1,y=1/yscale,z=zscale)
+      rgl::aspect3d(x=1,y=1/yscale,z=0.5*zscale)
       rgl::rgl.clear("lights")
-      rgl::rgl.light(theta = 45, phi = 45, viewpoint.rel=TRUE)
+      rgl::rgl.light(theta = 0, phi = 25, viewpoint.rel=TRUE)
       rgl::rgl.viewpoint(userMatrix=userMatrix,type="modelviewpoint")
-
+      #rgl::writeWebGL()
     }
   }
   return(p)
