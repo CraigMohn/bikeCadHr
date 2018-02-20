@@ -260,11 +260,14 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
                             c(map.lon.min.dd,map.lon.max.dd,
                               map.lat.min.dd,map.lat.max.dd))
         ttt[is.na(ttt[])] <- 0
-        #  scaling factor - reduce so smallest dim is 400 cells
-        sfact <- max(1,floor(min(dim(ttt))/plot3DSize))
+        print(paste0(ttt@ncols," columns by ",ttt@nrows," rows"))
+        #  scaling factor - reduce so smallest dim is X cells
+        sfact <- max(1,floor(min(ttt@ncols,ttt@nrows)/plot3DSize))
+        print(paste0("shrinking resolution by a factor of ",sfact))
         if (sfact > 1)
           ttt <- raster::aggregate(ttt,fact=sfact,fun=mean,
                                    expand=TRUE,na.rm=TRUE)
+        print(paste0(ttt@ncols," columns by ",ttt@nrows," rows"))
         # now put the tracks onto this raster and replace altitude from map
         if (nrow(mapdf) > 0) {
           tt <- raster::rasterize(cbind(mapdf$lon,mapdf$lat),ttt,mask=TRUE)
@@ -299,9 +302,9 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
                    showline=FALSE,showticklabels=FALSE,showgrid=FALSE)
         p <- plotly::plot_ly(z = ~mmm,
                              colors = c("blue","yellow")) %>%
-          plotly::add_surface(opacity=1.0) %>%
-          { if(nrow(mapdf)> 0) {
-                  plotly::add_trace(data=pathpts,
+          plotly::add_surface(opacity=1.0)
+        if(nrow(mapdf)> 0) {
+             p <- plotly::add_trace(p,data=pathpts,
                                     x = ~x ,
                                     y = ~y,
                                     z= ~z,
@@ -309,13 +312,13 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
                                     mode = "markers",
                                     marker = list(size = 2,
                                                   color = "black"),
-                                                  opacity=1)} else .
-                   }  %>%
-          plotly::layout(scene=list(xaxis=ax,yaxis=ay,zaxis=az,
-                                  aspectmode = "manual",
-                                  aspectratio = list(x=1,y=yscale,z=zscale),
-                                  camera=list(up=c(0,1,0),
-                                              eye=c(0,1.25,0)) ) )
+                                                  opacity=1)
+      }
+        p <- plotly::layout(p,scene=list(xaxis=ax,yaxis=ay,zaxis=az,
+                                       aspectmode = "manual",
+                                       aspectratio = list(x=1,y=yscale,z=zscale),
+                                       camera=list(up=c(0,1,0),
+                                                   eye=c(0,1.25,0)) ) )
       } else {
         p <- plotly::plot_ly(mapdf,
                         x = ~lon,
@@ -394,9 +397,10 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
       }
       rgl::aspect3d(x=1,y=1/yscale,z=0.5*zscale)
       rgl::rgl.clear("lights")
-      if (rglLights) rgl::rgl.light(theta = 0, phi = 25, viewpoint.rel=TRUE)
+      if (rglLights) rgl::rgl.light(theta = 0, phi = 25,
+                                    viewpoint.rel=TRUE, specular="black")
+      # rgl::rgl.light(theta = 0, phi = 25, viewpoint.rel=TRUE)
       rgl::rgl.viewpoint(userMatrix=userMatrix,type="modelviewpoint")
-      #rgl::writeWebGL()
     }
   }
   return(p)
