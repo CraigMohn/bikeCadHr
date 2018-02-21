@@ -404,8 +404,8 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
       rgl::rgl.clear("lights")
       if (rglLights) rgl::rgl.light(theta = 0, phi = 25,
                                     viewpoint.rel=TRUE, specular="black")
-      # rgl::rgl.light(theta = 0, phi = 25, viewpoint.rel=TRUE)
       rgl::rgl.viewpoint(userMatrix=userMatrix,type="modelviewpoint")
+      pan3d(2)  # right button for panning, doesn't play well with zoom)
     }
   }
   return(p)

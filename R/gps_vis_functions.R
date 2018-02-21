@@ -358,3 +358,28 @@ yRatioPts <- function(xmin,xmax,ymin,ymax) {
      raster::pointDistance(cbind(xmax,ymin),cbind(xmax,ymax),lonlat=TRUE)) / 2
   return(height/width)
 }
+#  this is taken straight from the documentation for package nat (where
+#     it isn't actually exposed), which claims it came from rgl
+pan3d <- function(button) {
+  start <- list()
+  begin <- function(x, y) {
+    start$userMatrix <<- rgl::par3d("userMatrix")
+    start$viewport <<- rgl::par3d("viewport")
+    start$scale <<- rgl::par3d("scale")
+    start$projection <<- rgl::rgl.projection()
+    start$pos <<- rgl::rgl.window2user( x/start$viewport[3],
+                                        1 - y/start$viewport[4],
+                                        0.5,
+                                        projection = start$projection)
+  }
+  update <- function(x, y) {
+    xlat <- (rgl::rgl.window2user( x/start$viewport[3],
+                                   1 - y/start$viewport[4],
+                                   0.5,
+                                   projection = start$projection) - start$pos)*start$scale
+    mouseMatrix <- rgl::translationMatrix(xlat[1], xlat[2], xlat[3])
+    rgl::par3d(userMatrix = start$userMatrix %*% t(mouseMatrix) )
+  }
+  rgl::rgl.setMouseCallbacks(button, begin, update)
+  cat("Callbacks set on button", button, "of rgl device", rgl.cur(), "\n")
+}
