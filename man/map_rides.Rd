@@ -6,7 +6,7 @@
 \usage{
 map_rides(geodf, outfile, maptitle, definedmaps, usemap, plotly = FALSE,
   rgl = FALSE, localElevFile = "", plot3DSize = 300,
-  plot3DVertScale = 1, rglShininess = 0,
+  plot3DVertScale = 1, rglColorMaxElev = 3000, rglShininess = 0,
   rglLightPars = "viewpoint.rel=TRUE", rglLights = TRUE, maptype = "bing",
   minTiles = 50, mapsize = c(1600, 1200), fine.map = FALSE,
   margin.factor = 0.08, draw.speed = FALSE, line.color = "magenta",
@@ -39,6 +39,9 @@ latitude andf longitude of the map area}
 \item{plot3DSize}{number which is rough target for size of grid for plotly/rgl}
 
 \item{plot3DVertScale}{number which will multiply vertical scaling for plotly/rgl}
+
+\item{rglColorMaxElev}{the upper limit of elevation, anything above this will
+be colored the same in the rgl}
 
 \item{rglShininess}{number controlling surface shininess in rgl rendering}
 

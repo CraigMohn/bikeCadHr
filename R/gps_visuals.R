@@ -20,6 +20,8 @@
 #' @param localElevFile file containing raster object with elevations on lat/lon
 #' @param plot3DSize number which is rough target for size of grid for plotly/rgl
 #' @param plot3DVertScale number which will multiply vertical scaling for plotly/rgl
+#' @param rglColorMaxElev the upper limit of elevation, anything above this will
+#'      be colored the same in the rgl
 #' @param rglShininess number controlling surface shininess in rgl rendering
 #' @param rglLights logical indicating whether to turn on lighting
 #' @param rglLightPars string containing parameters for rgl.light call
@@ -64,6 +66,7 @@
 map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
                       plotly=FALSE,rgl=FALSE,localElevFile="",
                       plot3DSize=300,plot3DVertScale=1,
+                      rglColorMaxElev=3000,
                       rglShininess=0,rglLightPars="viewpoint.rel=TRUE",
                       rglLights=TRUE,
                       maptype="bing",minTiles=50,
@@ -313,7 +316,7 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
                                     marker = list(size = 2,
                                                   color = "black"),
                                                   opacity=1)
-      }
+        }
         p <- plotly::layout(p,scene=list(xaxis=ax,yaxis=ay,zaxis=az,
                                        aspectmode = "manual",
                                        aspectratio = list(x=1,y=yscale,z=zscale),
@@ -359,7 +362,7 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
                                          "yellow","gold","goldenrod",
                                          "sienna","brown","gray75",
                                          "gray85","gray95","gray97","white"))(201)
-        colidx <- floor(200*(mmmrgl/1500)) + 1
+        colidx <- floor(200*(mmmrgl/rglColorMaxElev)) + 1
         colidx[colidx>201] <- 201
         col <- terrcolors[colidx]
       }
@@ -375,7 +378,7 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
           pathcol <- mapdf$colorvec
         }
       }
-      par3d("windowRect"= c(100,100,1200,1000))
+      rgl::par3d("windowRect"= c(100,100,1200,1000),mouseMode = "trackball")
       userMatrix <- matrix(c(-0.02,-0.80,0.632,0,1,0,0.04,0,
                                -0.03,0.60,0.80,0,0,0,0,1),ncol=4,nrow=4)
       rgl::rgl.clear()
@@ -383,14 +386,16 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
       rgl::material3d(alpha=1.0,point_antialias=TRUE,smooth=TRUE,shininess=rglShininess)
       if (nrow(mapdf) > 0) {
         for (trkstarttime in trackstarts) {
+          print(paste0("adding track ",trkstarttime))
           for (seg in unique(mapdf[mapdf$start.time==trkstarttime,]$segment)) {
             use = mapdf$start.time==trkstarttime & mapdf$segment==seg &
               (lead_one(mapdf$segment)==mapdf$segment |
                  lag_one(mapdf$segment)==mapdf$segment) # can't do 1 pt lines
+            if (length(pathcol) > 1) pathcol <- pathcol[use]
             if (sum(use)>0) {
               #points3d(xpath[use],ypath[use],pathelevs[use],
-              lines3d(xpath[use],ypath[use],zpath[use],
-                      lwd=2,col = pathcol)
+              rgl::lines3d(xpath[use],ypath[use],zpath[use],
+                      lwd=2,col = pathcol, alpha=1.0)
             }
           }
         }
