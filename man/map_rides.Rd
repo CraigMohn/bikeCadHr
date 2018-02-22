@@ -7,7 +7,7 @@
 map_rides(geodf, outfile, maptitle, definedmaps, usemap, plotly = FALSE,
   rgl = FALSE, localElevFile = "", plot3DSize = 300,
   plot3DVertScale = 1, rglColorMaxElev = 3000, rglShininess = 0,
-  rglLightPars = "viewpoint.rel=TRUE", rglLights = TRUE, maptype = "bing",
+  rglLightPars = "viewpoint.rel=TRUE", rglLights = TRUE, maptype = "osm",
   minTiles = 50, mapsize = c(1600, 1200), fine.map = FALSE,
   margin.factor = 0.08, draw.speed = FALSE, line.color = "magenta",
   line.width = 3, line.alpha = 0.8, speed.color = "speedcolors",

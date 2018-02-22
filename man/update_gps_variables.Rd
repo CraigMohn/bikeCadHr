@@ -9,8 +9,8 @@ update_gps_variables(outdir, fitrootdir, gpxrootdir, merge.files = list(c(NA,
   "nosegs"), prefer.gpx = c(""), rebuild.all.fit = FALSE,
   rebuild.all.gpx = FALSE, drawprofile = TRUE, drawprofile.both = FALSE,
   elevationChar = "|", plotly = FALSE, rgl = FALSE, localElevFile = "",
-  maptype = "bing", cadCont = TRUE, drawmap = TRUE,
-  drawmap.both = FALSE, cores = 4, loud = FALSE, ...)
+  maptype = "osm", cadCont = TRUE, drawmap = TRUE, drawmap.both = FALSE,
+  cores = 4, loud = FALSE, ...)
 }
 \arguments{
 \item{outdir}{string containing location of output data pair files}
