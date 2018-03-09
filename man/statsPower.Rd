@@ -4,7 +4,7 @@
 \alias{statsPower}
 \title{generate power statistics for a track}
 \usage{
-statsPower(trackdf, powerCalibrateTime = 600, ...)
+statsPower(trackdf, powerCalibrateTime = 0, ...)
 }
 \arguments{
 \item{trackdf}{data frame or tibble with gps track data}

@@ -258,7 +258,7 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
     if (plotly | rgl) {
       if (localElevFile != "") {
         elevations <- NULL
-        load(localElevFile)
+        elevations <- raster::raster(localElevFile)
         ttt <- raster::crop(elevations,
                             c(map.lon.min.dd,map.lon.max.dd,
                               map.lat.min.dd,map.lat.max.dd))

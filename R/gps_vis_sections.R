@@ -144,8 +144,8 @@ drawSummary <- function(ggp,summary,title){
       paste0(round(2.23694*summary$speed.rolling.m.s[1],digits=2)," mph avg"),
       paste0(round(summary$avgcadence.withzeros[1],digits=1),
              " cad avg(incl/zeros)"),
-      paste0(round(summary$session.total.calories[1],digits=0)," kCal burned"),
-      paste0(round(summary$avgpower.postcal.nozeros[1],digits=0)," watts post-cal(excl/zeros)"))
+      paste0(round(summary$session.total.calories[1],digits=0)," kC burned"),
+      paste0(round(summary$avgpower.postcal.nozeros[1],digits=0)," Watts(excl/zeros)"))
   summaryTextFrame <- data.frame(xposSum,yposSum,summarylabels)
   if ((summary$pct.trkpts.cad < .95)|(is.na(summary$avgpower.postcal.nozeros)))
     summaryTextFrame <- summaryTextFrame[-8,]

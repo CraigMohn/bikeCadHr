@@ -677,7 +677,7 @@ statsCadence <- function(trackdf,
 #'    \code{\link{statsStops}}
 #'
 #' @export
-statsPower <- function(trackdf,powerCalibrateTime=600,...) {
+statsPower <- function(trackdf,powerCalibrateTime=0,...) {
   powerpos <- !is.na(trackdf$power.watts) & trackdf$power.watts > 0
   powerNum <- sum(trackdf$power.watts[powerpos]*
                     trackdf$deltatime[powerpos]  )
