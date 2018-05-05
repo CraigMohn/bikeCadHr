@@ -37,6 +37,7 @@
 #' @param plotly if TRUE use plotly to draw 3D track in viewer
 #' @param rgl if TRUE use rgl to draw 3D track in viewer
 #' @param localElevFile file containing raster object with elevations on lat/lon
+#' @param plot3DVertScale number which will multiply vertical scaling for plotly/rgl
 #' @param cadCont display cadence as continuous rather than categorical
 #' @param drawmap create a .tiff file in the output directory mapping
 #'    the ride with speed-varying color
@@ -63,6 +64,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
                   rebuild.all.fit=FALSE,rebuild.all.gpx=FALSE,
                   drawprofile=TRUE,drawprofile.both=FALSE,elevationChar="|",
                   plotly=FALSE,rgl=FALSE,localElevFile="",maptype="osm",
+                  plot3DVertScale=1,
                   cadCont=TRUE,
                   drawmap=TRUE,drawmap.both=FALSE,cores=4,loud=FALSE,...) {
 
@@ -147,6 +149,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
                     draw.speed=TRUE,minTiles=200,
                     outfile=outfile,mapsize=c(3840,2400),
                     plotly=plotly,rgl=rgl,localElevFile=localElevFile,
+                    plot3DVertScale=plot3DVertScale,
                     speed.color="speedcolors",maptype=maptype)
           if (plotly) htmlwidgets::saveWidget(p, paste0(outdir,"/",ridefn,"map.html"))
           num_mapped <- 1

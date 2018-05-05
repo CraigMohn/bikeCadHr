@@ -9,8 +9,8 @@ update_gps_variables(outdir, fitrootdir, gpxrootdir, merge.files = list(c(NA,
   "nosegs"), prefer.gpx = c(""), rebuild.all.fit = FALSE,
   rebuild.all.gpx = FALSE, drawprofile = TRUE, drawprofile.both = FALSE,
   elevationChar = "|", plotly = FALSE, rgl = FALSE, localElevFile = "",
-  maptype = "osm", cadCont = TRUE, drawmap = TRUE, drawmap.both = FALSE,
-  cores = 4, loud = FALSE, ...)
+  maptype = "osm", plot3DVertScale = 1, cadCont = TRUE, drawmap = TRUE,
+  drawmap.both = FALSE, cores = 4, loud = FALSE, ...)
 }
 \arguments{
 \item{outdir}{string containing location of output data pair files}
@@ -58,6 +58,8 @@ the ride for both the .fit files and .gpx files}
 \code{"esri-topo"}  or \code{"stamen-watercolor"} or \code{"mapbox"} or
 \code{"esri"} or \code{"osm-public-transport"} or \code{"opencyclemap"}
 or \code{"apple-iphoto"} or \code{"skobbler"})}
+
+\item{plot3DVertScale}{number which will multiply vertical scaling for plotly/rgl}
 
 \item{cadCont}{display cadence as continuous rather than categorical}
 
