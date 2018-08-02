@@ -4,12 +4,16 @@
 \alias{update_gps_variables}
 \title{add/replace ride data in all tbl pairs}
 \usage{
-update_gps_variables(outdir, fitrootdir, gpxrootdir, merge.files = list(c(NA,
-  NA)), fitexcludes = c("bad", "short"), gpxexcludes = c("bad", "short",
-  "nosegs"), prefer.gpx = c(""), rebuild.all.fit = FALSE,
-  rebuild.all.gpx = FALSE, drawprofile = TRUE, drawprofile.both = FALSE,
-  elevationChar = "|", plotly = FALSE, rgl = FALSE, localElevFile = "",
-  maptype = "osm", plot3DVertScale = 1, cadCont = TRUE, drawmap = TRUE,
+update_gps_variables(outdir, fitrootdir, gpxrootdir,
+  merge.files = list(c(NA, NA)), fitexcludes = c("bad", "short"),
+  gpxexcludes = c("bad", "short", "nosegs"), prefer.gpx = c(""),
+  rebuild.all.fit = FALSE, rebuild.all.gpx = FALSE,
+  drawprofile = TRUE, drawprofile.both = FALSE, elevationChar = "|",
+  plotly = FALSE, rgl = FALSE, rasterDir = NULL,
+  localElevFile = "", maptype = "bing", featureDataSource = "Raster",
+  townLevel = 9, roadLevel = 3, waterALevel = 4, waterLLevel = 5,
+  rglColorScheme = "default", useImageRaster = FALSE,
+  plot3DVertScale = 1, cadCont = TRUE, drawmap = TRUE,
   drawmap.both = FALSE, cores = 4, loud = FALSE, ...)
 }
 \arguments{
@@ -51,6 +55,8 @@ the ride for both the .fit files and .gpx files}
 
 \item{rgl}{if TRUE use rgl to draw 3D track in viewer}
 
+\item{rasterDir}{character location of base directory to load and save raster files}
+
 \item{localElevFile}{file containing raster object with elevations on lat/lon}
 
 \item{maptype}{map to use as background (\code{"maptoolkit-topo"} or
@@ -58,6 +64,35 @@ the ride for both the .fit files and .gpx files}
 \code{"esri-topo"}  or \code{"stamen-watercolor"} or \code{"mapbox"} or
 \code{"esri"} or \code{"osm-public-transport"} or \code{"opencyclemap"}
 or \code{"apple-iphoto"} or \code{"skobbler"})}
+
+\item{featureDataSource}{character,  "Raster" to load saved raster data
+from directory specified , "none" to show none}
+
+\item{townLevel}{numeric, display towns ranked this number or higher:
+3=all towns     5=larger towns (in US >50k)}
+
+\item{roadLevel}{numeric, display roads ranked this number or higher:
+2=Service Drive, Bike Path, etc      3=Local Street
+4=Secondary Hwy                      5=Primary Hwy/Transit}
+
+\item{waterALevel}{numeric, display areal water ranked this number or higher:
+2=res/treatmentpond/pit/quarry       3=lake/pond/swamp/stream
+4=class 2 or 3 bigger than 1k ha     5=named lake/pond/swamp/stream
+6=large lake/pond/swamp/stream       7=Ocean/Bay/Est/Sound
+8=glacier}
+
+\item{waterLLevel}{numeric, display linear water ranked this number or higher:
+2=canal/ditch                        3=braided stream
+4=stream/river                       5=named stream/river
+6=named stream/river containing the string "RIV"}
+
+\item{rglColorScheme}{name of color scheme from
+c("default","beach","viridis","plasma","terrain","oleron","snow","oslo",
+  "desert","lajolla","niccoli","bright",
+  "bing","maptoolkit-topo","nps","apple-iphoto")}
+
+\item{useImageRaster}{logical, use the image raster from saved openStreetmap
+colrings of the map surface}
 
 \item{plot3DVertScale}{number which will multiply vertical scaling for plotly/rgl}
 

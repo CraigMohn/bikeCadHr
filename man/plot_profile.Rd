@@ -6,18 +6,19 @@
   data summaries to convey performance patterns}
 \usage{
 plot_profile(track, summary, savefn, title = "Ride starting ",
-  palette = "plasma", naPlotColor = "gray88", verticalMultiplier = NA,
-  ppm = NA, elevationShape = 46, hrDistance = TRUE, cadDistance = TRUE,
-  powerDistance = TRUE, hrTime = TRUE, cadTime = TRUE, powerTime = TRUE,
-  showTime = TRUE, showSummary = TRUE, showStops = TRUE, hrLow = 100,
-  hrHigh = 170, hrColorLow = 11, hrColorHigh = 26, cadLow = 65,
-  cadTarget = 88, cadCont = TRUE, cadContLow = 50, cadContHigh = 100,
-  cadColorLow = 4, cadColorMid = 10, cadColorHigh = 15, powerLow = 75,
+  palette = "plasma", naPlotColor = "gray88",
+  verticalMultiplier = NA, ppm = NA, elevationShape = 46,
+  hrDistance = TRUE, cadDistance = TRUE, powerDistance = TRUE,
+  hrTime = TRUE, cadTime = TRUE, powerTime = TRUE, showTime = TRUE,
+  showSummary = TRUE, showStops = TRUE, hrLow = 100, hrHigh = 170,
+  hrColorLow = 11, hrColorHigh = 26, cadTarget = 88,
+  cadCont = TRUE, cadLow = 50, cadHigh = 120, cadColorLow = 4,
+  cadColorMid = 10, cadColorHigh = 15, powerLow = 75,
   powerHigh = 400, powerColorLow = 9, powerColorHigh = 21,
-  hrSmoothBW = 6, hrSmoothNN = 6, cadSmoothBW = 10, cadSmoothNN = 10,
-  powerSmoothBW = 10, powerSmoothNN = 10, elevSmoothBWMeters = 15,
-  stopToleranceMeters = 20, minSecsRolling = 10, minNumPoints = 3000,
-  imperial = TRUE)
+  hrSmoothBW = 6, hrSmoothNN = 6, cadSmoothBW = 10,
+  cadSmoothNN = 10, powerSmoothBW = 10, powerSmoothNN = 10,
+  elevSmoothBWMeters = 15, stopToleranceMeters = 20,
+  minSecsRolling = 10, minNumPoints = 3000, imperial = TRUE)
 }
 \arguments{
 \item{track}{data frame or tibble containing track details including
@@ -71,16 +72,14 @@ ranges from 25 to 60 depending on the length being plotted}
 colors are from same palette as speeds, number is the speed corresponding
 to the desired limit on the range of heartrates}
 
-\item{cadLow}{low cadence limit}
-
 \item{cadTarget}{target cadence range minimum}
 
 \item{cadCont}{display cadence as a continuos color map}
 
-\item{cadContLow}{lower cadence limit for continuous color, all
+\item{cadLow}{lower cadence limit for continuous color, all
 lower cadences are displayed as same color}
 
-\item{cadContHigh}{upper cadence limit for continuous color, all
+\item{cadHigh}{upper cadence limit for continuous color, all
 higher cadences are displayed as same color}
 
 \item{cadColorLow}{set color for cadence at cadLow or below}

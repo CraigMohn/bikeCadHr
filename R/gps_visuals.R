@@ -17,8 +17,31 @@
 #' @param outfile name of output file, extension is either .tiff or .jpg
 #' @param plotly use plotly to draw 3D track in viewer
 #' @param rgl use rgl openGL to draw 3D track in viewer
+#' @param rasterDir character location of base directory to load and save raster files
 #' @param localElevFile file containing raster object with elevations on lat/lon
 #' @param plot3DSize number which is rough target for size of grid for plotly/rgl
+#' @param featureDataSource character,  "Raster" to load saved raster data
+#'    from directory specified , "none" to show none
+#' @param townLevel numeric, display towns ranked this number or higher:
+#'    3=all towns     5=larger towns (in US >50k)
+#' @param roadLevel numeric, display roads ranked this number or higher:
+#'    2=Service Drive, Bike Path, etc      3=Local Street
+#'    4=Secondary Hwy                      5=Primary Hwy/Transit
+#' @param waterALevel numeric, display areal water ranked this number or higher:
+#'    2=res/treatmentpond/pit/quarry       3=lake/pond/swamp/stream
+#'    4=class 2 or 3 bigger than 1k ha     5=named lake/pond/swamp/stream
+#'    6=large lake/pond/swamp/stream       7=Ocean/Bay/Est/Sound
+#'    8=glacier
+#' @param waterLLevel numeric, display linear water ranked this number or higher:
+#'    2=canal/ditch                        3=braided stream
+#'    4=stream/river                       5=named stream/river
+#'    6=named stream/river containing the string "RIV"
+#' @param rglColorScheme name of color scheme from
+#'     c("default","beach","viridis","plasma","terrain","oleron","snow","oslo",
+#'       "desert","lajolla","niccoli","bright",
+#'       "bing","maptoolkit-topo","nps","apple-iphoto")
+#' @param useImageRaster logical, use the image raster from saved openStreetmap
+#'    colrings of the map surface
 #' @param plot3DVertScale number which will multiply vertical scaling for plotly/rgl
 #' @param rglColorMaxElev the upper limit of elevation, anything above this will
 #'      be colored the same in the rgl
@@ -64,8 +87,12 @@
 #'
 #' @export
 map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
+                      rasterDir=NULL,
                       plotly=FALSE,rgl=FALSE,localElevFile="",
                       plot3DSize=300,plot3DVertScale=1,
+                      featureDataSource="none",
+                      townLevel=3,roadLevel=4,waterALevel=4,waterLLevel=5,
+                      rglColorScheme="default",useImageRaster=FALSE,
                       rglColorMaxElev=3000,
                       rglShininess=0,rglLightPars="viewpoint.rel=TRUE",
                       rglLights=TRUE,
@@ -255,43 +282,44 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
       }
       dev.off()
     }
-    if (plotly | rgl) {
-      if (localElevFile != "") {
-        elevations <- NULL
-        elevations <- raster::raster(localElevFile)
-        ttt <- raster::crop(elevations,
-                            c(map.lon.min.dd,map.lon.max.dd,
-                              map.lat.min.dd,map.lat.max.dd))
-        ttt[is.na(ttt[])] <- 0
-        print(paste0(ttt@ncols," columns by ",ttt@nrows," rows"))
-        #  scaling factor - reduce so smallest dim is X cells
-        sfact <- max(1,floor(min(ttt@ncols,ttt@nrows)/plot3DSize))
-        print(paste0("shrinking resolution by a factor of ",sfact))
-        if (sfact > 1)
-          ttt <- raster::aggregate(ttt,fact=sfact,fun=mean,
-                                   expand=TRUE,na.rm=TRUE)
-        print(paste0(ttt@ncols," columns by ",ttt@nrows," rows"))
-        # now put the tracks onto this raster and replace altitude from map
-        if (nrow(mapdf) > 0) {
-          tt <- raster::rasterize(cbind(mapdf$lon,mapdf$lat),ttt,mask=TRUE)
-          ppp <- raster::as.matrix(tt)
-          ppp <- ppp[,ncol(ppp):1]
-          pathpts <- pointsFromMatrix(ppp)
-        } else {
-          pathpts <- pointsFromMatrix(ttt)[1,]  #pick 1 point from map for track
-        }
-        yscale <- yRatio(ttt)
-        zscale <- 0.15*plot3DVertScale
-      } else {
-        yscale <- yRatioPts(xmin=min(mapdf$lon),
-                            xmax=max(mapdf$lon),
-                            ymin=min(mapdf$lat),
-                            ymax=max(mapdf$lat))
-        zscale <- 0.30*plot3DVertScale
-      }
+    if (rgl) {
+      maptrack3d::draw3dMap(paths=mapdf,
+                  trackCurve=TRUE,
+                  trackCurveElevFromRaster=TRUE,
+                  trackCurveHeight=15,
+                  mapWindow=c(map.lon.min.dd,map.lon.max.dd,
+                              map.lat.min.dd,map.lat.max.dd),
+                  USStatevec=NULL,
+                  rasterFileSetNames=localElevFile,
+                  elevDataSource="Raster",
+                  featureDataSource=featureDataSource,
+                  townLevel=townLevel,roadLevel=roadLevel,
+                  waterALevel=waterALevel,waterLLevel=waterLLevel,
+                  vScale=plot3DVertScale,maxElev=rglColorMaxElev,
+                  rglColorScheme=rglColorScheme,useImageRaster=useImageRaster,
+                  rasterDir=rasterDir,
+                  res3d=2400)
     }
     p <- NULL
     if (plotly) {
+      elevations <- NULL
+      elevations <- raster::raster(paste0(rasterDir,"/",
+                                          localElevFile,"/",
+                                          localElevFile,"elevs.grd"))
+      ttt <- raster::crop(elevations,
+                          c(map.lon.min.dd,map.lon.max.dd,
+                            map.lat.min.dd,map.lat.max.dd))
+      ttt[is.na(ttt[])] <- 0
+      if (nrow(mapdf) > 0) {
+        tt <- raster::rasterize(cbind(mapdf$lon,mapdf$lat),ttt,mask=TRUE)
+        ppp <- raster::as.matrix(tt)
+        ppp <- ppp[,ncol(ppp):1]
+        pathpts <- pointsFromMatrix(ppp)
+      } else {
+        pathpts <- pointsFromMatrix(ttt)[1,]  #pick 1 point from map for track
+      }
+      yscale <- yRatio(ttt)
+      zscale <- 0.15*plot3DVertScale
       print("building plotly image")
       if (localElevFile != "") {
         mmm <- raster::as.matrix(ttt)
@@ -333,79 +361,6 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
              plotly::layout(scene = list(aspectmode = "manual",
                             aspectratio = list(x=1, y=yscale, z=zscale) ))
       }
-    }
-    if (rgl) {
-      print("building rgl image")
-      xmin <- map.lon.min.dd
-      xmax <- map.lon.max.dd
-      ymin <- map.lat.min.dd
-      ymax <- map.lat.max.dd
-      xlen <-
-        (raster::pointDistance(cbind(xmin,ymin),cbind(xmax,ymin),lonlat=TRUE) +
-           raster::pointDistance(cbind(xmin,ymax),cbind(xmax,ymax),lonlat=TRUE)) /
-        2
-      ylen <-
-        (raster::pointDistance(cbind(xmin,ymin),cbind(xmin,ymax),lonlat=TRUE) +
-           raster::pointDistance(cbind(xmax,ymin),cbind(xmax,ymax),lonlat=TRUE)) /
-        2
-
-      if (localElevFile != "") {
-        mmmrgl <- raster::as.matrix(ttt)
-        mmmrgl[mmmrgl<0] <- 0
-        x <- seq(0,xlen,length.out=nrow(mmmrgl))
-        y <- seq(0,ylen,length.out=ncol(mmmrgl))
-
-        terrcolors <- colorRampPalette(c("blue","turquoise","aquamarine",
-                                         "palegreen","yellowgreen",
-                                         "chartreuse","greenyellow","green",
-                                         "limegreen","forestgreen","darkgreen",
-                                         "yellow","gold","goldenrod",
-                                         "sienna","brown","gray75",
-                                         "gray85","gray95","gray97","white"))(201)
-        colidx <- floor(200*(mmmrgl/rglColorMaxElev)) + 1
-        colidx[colidx>201] <- 201
-        col <- terrcolors[colidx]
-      }
-      if (nrow(mapdf) > 0) {
-        xpath <- xlen * (1 - (mapdf$lat-ymin)/(ymax-ymin))
-        ypath <- ylen * (mapdf$lon-xmin)/(xmax-xmin)
-        if (localElevFile != "") {
-          #  pull elevations from map data
-          zpath <- raster::extract(ttt,cbind(mapdf$lon,mapdf$lat)) + 3
-          pathcol <- "magenta"
-        } else {
-          zpath <- mapdf$altitude.m
-          pathcol <- mapdf$colorvec
-        }
-      }
-      rgl::par3d("windowRect"= c(100,100,1200,1000),mouseMode = "trackball")
-      userMatrix <- matrix(c(-0.02,-0.80,0.632,0,1,0,0.04,0,
-                               -0.03,0.60,0.80,0,0,0,0,1),ncol=4,nrow=4)
-      rgl::rgl.clear()
-      if (localElevFile != "") rgl::surface3d(x,y,mmmrgl,color=col)
-      rgl::material3d(alpha=1.0,point_antialias=TRUE,smooth=TRUE,shininess=rglShininess)
-      if (nrow(mapdf) > 0) {
-        for (trkstarttime in trackstarts) {
-          print(paste0("adding track ",trkstarttime))
-          for (seg in unique(mapdf[mapdf$start.time==trkstarttime,]$segment)) {
-            use = mapdf$start.time==trkstarttime & mapdf$segment==seg &
-              (lead_one(mapdf$segment)==mapdf$segment |
-                 lag_one(mapdf$segment)==mapdf$segment) # can't do 1 pt lines
-            if (length(pathcol) > 1) pathcol <- pathcol[use]
-            if (sum(use)>0) {
-              #points3d(xpath[use],ypath[use],pathelevs[use],
-              rgl::lines3d(xpath[use],ypath[use],zpath[use],
-                      lwd=2,col = pathcol, alpha=1.0)
-            }
-          }
-        }
-      }
-      rgl::aspect3d(x=1,y=1/yscale,z=0.5*zscale)
-      rgl::rgl.clear("lights")
-      if (rglLights) rgl::rgl.light(theta = 0, phi = 25,
-                                    viewpoint.rel=TRUE, specular="black")
-      rgl::rgl.viewpoint(userMatrix=userMatrix,type="modelviewpoint")
-      pan3d(2)  # right button for panning, doesn't play well with zoom)
     }
   }
   return(p)
@@ -454,11 +409,10 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
 #' @param hrColorHigh set color for hrHigh and higher
 #'    colors are from same palette as speeds, number is the speed corresponding
 #'    to the desired limit on the range of heartrates
-#' @param cadLow low cadence limit
 #' @param cadTarget target cadence range minimum
-#' @param cadContLow lower cadence limit for continuous color, all
+#' @param cadLow lower cadence limit for continuous color, all
 #'    lower cadences are displayed as same color
-#' @param cadContHigh upper cadence limit for continuous color, all
+#' @param cadHigh upper cadence limit for continuous color, all
 #'    higher cadences are displayed as same color
 #' @param cadColorLow set color for cadence at cadLow or below
 #' @param cadColorMid set color for cadence above low but below target
@@ -500,8 +454,8 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                          showStops=TRUE,
                          hrLow=100,hrHigh=170,
                          hrColorLow=11,hrColorHigh=26,
-                         cadLow=65,cadTarget=88,
-                         cadCont=TRUE,cadContLow=50,cadContHigh=100,
+                         cadTarget=88,
+                         cadCont=TRUE,cadLow=50,cadHigh=120,
                          cadColorLow=4,cadColorMid=10,cadColorHigh=15,
                          powerLow=75,powerHigh=400,
                          powerColorLow=9,powerColorHigh=21,
@@ -632,36 +586,84 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                         cadTime=cadTime,powerTime=powerTime,showTime=showTime)
 
   if (showSummary & !missing(summary))
-    grlist <- drawSummary(grlist,summary,title=title)
+    grlist <- drawSummary(ggp=grlist,summary=summary,title=title)
 
   if (!showTime) {
-    grlist <- drawXAxis(grlist,distance,
+    grlist <- drawXAxis(ggp=grlist,distance=distance,
                         startsAndStops=startsAndStops,
-                        showStops,distPerPoint,
+                        showStops=showStops,
+                        distPerPoint=distPerPoint,
                         imperial=imperial,underLine=TRUE,
                         lineAtZero=TRUE)
   }
-  if (powerDistance) grlist <- drawPower(grlist,powersm,distance,
-                                         segment=track$segment,
-                                         toofar=0,
-                                         powerLow,powerHigh,
-                                         powerColorLow,powerColorHigh,
-                                         minNumPoints,showlegend=TRUE)
-
-  if (cadDistance) grlist <- drawCadence(grlist,cadencesm,distance,
-                                         segment=track$segment,
-                                         toofar=0,
-                                         cadLow,cadTarget,
-                                         cadCont,cadContLow,cadContHigh,
-                                         cadColorLow,cadColorMid,cadColorHigh,
-                                         minNumPoints,showlegend=TRUE)
-
-  if (hrDistance) grlist <- drawHr(grlist,hrsm,distance,
+  ###  draw legends
+  if (showPower) grlist <- drawLegend(ggp=grlist,dvar=powersm,
+                                      xvar=distance,
+                                      legendtext="Power (watts)",
+                                      segment=track$segment,
+                                      toofar=0,
+                                      dLow=powerLow,
+                                      dHigh=powerHigh,
+                                      dColorLow=powerColorLow,
+                                      dColorHigh=powerColorHigh,
+                                      minNumPoints=minNumPoints)
+  if (showHr) grlist <- drawLegend(ggp=grlist,dvar=hrsm,
+                                   xvar=distance,
+                                   legendtext="Heart Rate (bpm)",
                                    segment=track$segment,
                                    toofar=0,
-                                   hrLow,hrHigh,
-                                   hrColorLow,hrColorHigh,
-                                   minNumPoints,showlegend=TRUE)
+                                   dLow=hrLow,
+                                   dHigh=hrHigh,
+                                   dColorLow=hrColorLow,
+                                   dColorHigh=hrColorHigh,
+                                   minNumPoints=minNumPoints)
+  if (showCad) grlist <- drawLegend(ggp=grlist,dvar=powersm,
+                                    xvar=distance,
+                                    legendtext="Cadence (rpm)",
+                                    segment=track$segment,
+                                    toofar=0,
+                                    dLowD=cadLow,
+                                    dTarget=cadTarget,
+                                    dCont=cadCont,
+                                    dLow=cadLow,
+                                    dHigh=cadHigh,
+                                    dColorLow=cadColorLow,
+                                    dColorMid=cadColorMid,
+                                    dColorHigh=cadColorHigh,
+                                    minNumPoints=minNumPoints)
+
+  grlist <- addGap(ggp=grlist,nrep=1)
+
+  if (powerDistance) grlist <- drawBar(ggp=grlist,dvar=powersm,
+                                       xvar=distance,
+                                       segment=track$segment,
+                                       toofar=0,
+                                       dLow=powerLow,
+                                       dHigh=powerHigh,
+                                       dColorLow=powerColorLow,
+                                       dColorHigh=powerColorHigh,
+                                       minNumPoints=minNumPoints)
+  if (hrDistance) grlist <- drawBar(ggp=grlist,dvar=hrsm,
+                                    xvar=distance,
+                                    segment=track$segment,
+                                    toofar=0,
+                                    dLow=hrLow,
+                                    dHigh=hrHigh,
+                                    dColorLow=hrColorLow,
+                                    dColorHigh=hrColorHigh,
+                                    minNumPoints=minNumPoints)
+  if (cadDistance) grlist <- drawBar(ggp=grlist,dvar=cadencesm,
+                                     xvar=distance,
+                                     segment=track$segment,
+                                     toofar=0,
+                                     dTarget=cadTarget,
+                                     dCont=cadCont,
+                                     dLow=cadLow,
+                                     dHigh=cadHigh,
+                                     dColorLow=cadColorLow,
+                                     dColorMid=cadColorMid,
+                                     dColorHigh=cadColorHigh,
+                                     minNumPoints=minNumPoints)
 
   if (showTime) {
     #  draw opaque white background where faint gridlines aren't helpful
@@ -683,27 +685,36 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                         distPerPoint,hoursPerPoint)
   }
 
-  if (powerTime) grlist <- drawPower(grlist,powersm,walltime,
-                                     segment=track$segment,
-                                     toofar=20,
-                                     powerLow,powerHigh,
-                                     powerColorLow,powerColorHigh,
-                                     minNumPoints,showlegend=!powerDistance)
-
-  if (cadTime) grlist <- drawCadence(grlist,cadencesm,walltime,
-                                     segment=track$segment,
-                                     toofar=20,
-                                     cadLow,cadTarget,
-                                     cadCont,cadContLow,cadContHigh,
-                                     cadColorLow,cadColorMid,cadColorHigh,
-                                     minNumPoints,showlegend=!cadDistance)
-
-  if (hrTime) grlist <- drawHr(grlist,hrsm,walltime,
-                               segment=track$segment,
-                               toofar=20,
-                               hrLow,hrHigh,
-                               hrColorLow,hrColorHigh,
-                               minNumPoints,showlegend=!hrDistance)
+  if (powerTime) grlist <-drawBar(ggp=grlist,dvar=powersm,
+                                  xvar=walltime,
+                                  segment=track$segment,
+                                  toofar=0,
+                                  dLow=powerLow,
+                                  dHigh=powerHigh,
+                                  dColorLow=powerColorLow,
+                                  dColorHigh=powerColorHigh,
+                                  minNumPoints=minNumPoints)
+  if (hrTime) grlist <- drawBar(ggp=grlist,dvar=hrsm,
+                                xvar=walltime,
+                                segment=track$segment,
+                                 toofar=0,
+                                 dLow=hrLow,
+                                 dHigh=hrHigh,
+                                 dColorLow=hrColorLow,
+                                 dColorHigh=hrColorHigh,
+                                 minNumPoints=minNumPoints)
+  if (cadTime) grlist <- drawBar(ggp=grlist,dvar=cadencesm,
+                                 xvar=walltime,
+                                 segment=track$segment,
+                                 toofar=0,
+                                 dTarget=cadTarget,
+                                 dCont=cadCont,
+                                 dLow=cadLow,
+                                 dHigh=cadHigh,
+                                 dColorLow=cadColorLow,
+                                 dColorMid=cadColorMid,
+                                 dColorHigh=cadColorHigh,
+                                 minNumPoints=minNumPoints)
 
 #  this is key to having text being kept at an appropriate size.
   ymax <- grlist[["ymax"]]

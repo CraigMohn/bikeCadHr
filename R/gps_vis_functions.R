@@ -1,8 +1,7 @@
-continuous_bar <- function(g,legendtext,xvar,vals,lowval,hival,
-                           lowcolor,hicolor,
-                           legendwidth,y.bottom,
-                           band.height,label.height,gap.height,
-                           showlegend=TRUE) {
+continuous_band <- function(g,xvar,vals,
+                            lowval,hival,
+                            lowcolor,hicolor,
+                            y.bottom,band.height) {
 
   #  map interval to color interval
   prtvalue <- lowcolor + (hicolor-lowcolor)*(vals-lowval)/(hival-lowval)
@@ -12,114 +11,101 @@ continuous_bar <- function(g,legendtext,xvar,vals,lowval,hival,
   prtalpha <- (prtvalue-lowcolor)/(hicolor-lowcolor) #higher vals more intense
   prtalpha[prtalpha<0.3] <- 0.3
 
-  y.band <- y.bottom + gap.height + (band.height/2)
-  #columns fo rlegend - description,lowvalue,colorbar,hivalue
+  y.band <- rep(y.bottom + (band.height/2),length(xvar))
+  valsDataFrame <- data.frame(xvar,prtvalue,prtalpha,vals,y.band,band.height)
+  g <- g +
+    ggplot2::geom_tile(data=valsDataFrame,
+                       aes(y=y.band,x=xvar,fill=prtvalue,color=prtvalue),
+                       alpha=0.6,
+                       height=band.height,
+                       show.legend = FALSE)
+  return(g)
+}
+discrete_band <- function(g,xvar,vals,
+                          lowval,hival,
+                          lowcolor,midcolor,hicolor,
+                          y.bottom,band.height) {
+
+  prtvalue  <-  rep(NA,length(vals))
+  prtvalue[!is.na(vals) & vals>0 & vals<lowval] <- lowcolor
+  prtvalue[!is.na(vals) & vals>=lowval & vals<hival] <- midcolor
+  prtvalue[!is.na(vals) & vals>=hival] <- hicolor
+
+  y.band <- y.bottom + (band.height/2)
+  valsDataFrame <- data.frame(xvar,y.band,vals,prtvalue,band.height)
+  g <- g +
+    ggplot2::geom_tile(data=valsDataFrame,
+                       aes(y=y.band,x=xvar,fill=prtvalue,color=prtvalue),
+                       height=band.height,show.legend=FALSE)
+  return(g)
+}
+continuous_legend <- function(g,legendtext,xvar,
+                              lowval,hival,
+                              lowcolor,hicolor,
+                              legendwidth,y.bottom,
+                              legend.height) {
+
+  #columns for legend - description,lowvalue,colorbar,hivalue
   width.legend <- c(5,2,4,2)
   column.legend <- c(0,cumsum(width.legend)[-4])*legendwidth
-  if (showlegend) {
-    xtext.legend <- c(0,column.legend[3],column.legend[3],column.legend[4])
-    ytext.legend <- rep(y.band+(band.height/2)+gap.height+(label.height/2),4)
-    alpha.legend <- c(1,1,0,1)
-    hjust.legend <- c(0,1,0,0)
-    legendlabels <- c(legendtext,paste0(lowval," "),"",paste0("  ",hival))
-  } else {
-    xtext.legend <- 0
-    ytext.legend <- y.band+(band.height/2)+gap.height+(label.height/2)
-    legendlabels <- legendtext
-    alpha.legend <- 1
-    hjust.legend <- 0
-  }
+  xtext.legend <- c(0,column.legend[3],column.legend[3],column.legend[4])
+  ytext.legend <- rep(y.bottom+(legend.height/2),4)
+  alpha.legend <- c(1,1,0,1)
+  hjust.legend <- c(0,1,0,0)
+  legendlabels <- c(legendtext,paste0(lowval," "),"",paste0("  ",hival))
   legendpos <- xvar>=column.legend[3] & xvar<=column.legend[4]
   prtlegend <- seq(lowcolor,hicolor,length.out=sum(legendpos))
   x.legend <- xvar[legendpos]
   y.legend <- rep(ytext.legend[1],length(x.legend))
 
-  y.band <- rep(y.band,length(xvar))
-  valsDataFrame <- data.frame(xvar,prtvalue,prtalpha,vals,y.band,band.height)
-  valsLegendFrame <- data.frame(x.legend,y.legend,prtlegend,label.height)
+  y.band <- rep(y.bottom+(legend.height/2),length(xvar))
+  valsLegendFrame <- data.frame(x.legend,y.legend,prtlegend,legend.height)
   valsTextFrame <- data.frame(xtext.legend,ytext.legend,
                               legendlabels,alpha.legend,hjust.legend)
-  if (showlegend) {
-    g <- g +
-      ggplot2::geom_tile(data=valsLegendFrame,
-                         aes(y=y.legend,x=x.legend,fill=prtlegend,
-                             color=prtlegend),
-                         height=label.height,alpha=1,show.legend = FALSE)
-  }
   g <- g +
-#    ggplot2::geom_rect(xmin=0,xmax=max(xvar),
-#                       ymin=y.bottom+gap.height,
-#                       ymax=y.bottom+gap.height+band.height,fill="gray69") +
-    ggplot2::geom_tile(data=valsDataFrame,
-                       aes(y=y.band,x=xvar,fill=prtvalue,color=prtvalue),
-                       alpha=0.6,
-                       height=band.height,
-                       show.legend = FALSE) +
+    ggplot2::geom_tile(data=valsLegendFrame,
+                       aes(y=y.legend,x=x.legend,fill=prtlegend,
+                           color=prtlegend),
+                       height=legend.height,alpha=1,show.legend = FALSE) +
     ggplot2::geom_text(data=valsTextFrame,
                        aes(x=xtext.legend,y=ytext.legend,label=legendlabels,
                            hjust=hjust.legend,alpha=alpha.legend),
                        size=2,color="black",fontface="italic",show.legend = FALSE)
   return(g)
 }
-discrete_bar <- function(g,legendtext,xvar,vals,lowval,hival,
-                         lowcolor,midcolor,hicolor,
-                         legendwidth,y.bottom,
-                         band.height,label.height,gap.height,
-                         showlegend=TRUE) {
-  if (showlegend) {
-    legendlabels <- c(legendtext,
+discrete_legend <- function(g,legendtext,xvar,
+                            lowval,hival,
+                            lowcolor,midcolor,hicolor,
+                            legendwidth,y.bottom,
+                            legend.height) {
+   legendlabels <- c(legendtext,
                       paste0(" < ",lowval,"  "),
                       paste0(" ",lowval,"-",hival," "),
                       paste0(" >= ",hival," "))
-    legendcolors <- c(NA,lowcolor,midcolor,hicolor)
-  } else {
-    legendlabels <- c(legendtext)
-    legendcolors <- NA
-  }
-  prtvalue  <-  rep(NA,length(vals))
-  prtvalue[!is.na(vals) & vals>0 & vals<lowval] <- lowcolor
-  prtvalue[!is.na(vals) & vals>=lowval & vals<hival] <- midcolor
-  prtvalue[!is.na(vals) & vals>=hival] <- hicolor
+   legendcolors <- c(NA,lowcolor,midcolor,hicolor)
 
+   width.legend <- c(4,3,3,3)
+   x1.legend <- c(0,cumsum(width.legend[1:3]))*legendwidth
+   x2.legend <- cumsum(width.legend)*legendwidth
+   y1.legend <- y.bottom
+   y2.legend <- y1.legend+legend.height
 
-  y.band <- y.bottom + gap.height + (band.height/2)
-  width.legend <- c(4,3,3,3)
-  x1.legend <- c(0,cumsum(width.legend[1:3]))*legendwidth
-  x2.legend <- cumsum(width.legend)*legendwidth
-  y1.legend <- y.band+(band.height/2)+gap.height
-  y2.legend <- y1.legend+label.height
-
-  if (showlegend) {
-    xtext.legend <- c(0,(x1.legend[2:4]+x2.legend[2:4])/2)
-    ytext.legend <- rep(y.band+(band.height/2)+gap.height+(label.height/2),4)
-    alpha.legend <- c(0,1,1,1)
-    hjust.legend <- c(0,0.5,0.5,0.5)
-  } else {
-    xtext.legend <- 0
-    ytext.legend <- y.band+(band.height/2)+gap.height+(label.height/2)
-    legendlabels <- legendtext
-    alpha.legend <- 1
-    hjust.legend <- 0
-  }
-  valsDataFrame <- data.frame(xvar,y.band,vals,prtvalue,band.height)
-  valsTextFrame <- data.frame(x1.legend,x2.legend,y1.legend,y2.legend,
-                              xtext.legend,ytext.legend,legendlabels,
-                              legendcolors,alpha.legend,hjust.legend)
-  if (showlegend) {
-      g <- g +
+   xtext.legend <- c(0,(x1.legend[2:4]+x2.legend[2:4])/2)
+   ytext.legend <- rep(y.bottom+(legend.height/2),4)
+   alpha.legend <- c(0,1,1,1)
+   hjust.legend <- c(0,0.5,0.5,0.5)
+   valsTextFrame <- data.frame(x1.legend,x2.legend,y1.legend,y2.legend,
+                               xtext.legend,ytext.legend,legendlabels,
+                               legendcolors,alpha.legend,hjust.legend)
+   g <- g +
       ggplot2::geom_rect(data=valsTextFrame,
                          aes(xmin=x1.legend,xmax=x2.legend,fill=legendcolors,
                              alpha=alpha.legend),
                          ymin=y1.legend,ymax=y2.legend,inherit.aes=FALSE,
-                         show.legend=FALSE)
-  }
-  g <- g +
-    ggplot2::geom_tile(data=valsDataFrame,
-                       aes(y=y.band,x=xvar,fill=prtvalue,color=prtvalue),
-                       height=band.height,show.legend=FALSE)  +
-    ggplot2::geom_text(data=valsTextFrame,
-                       aes(x=xtext.legend,y=ytext.legend,label=legendlabels,
-                       hjust=hjust.legend),size=2,fontface="italic")
+                         show.legend=FALSE) +
+      ggplot2::geom_text(data=valsTextFrame,
+                         aes(x=xtext.legend,y=ytext.legend,label=legendlabels,
+                             hjust=hjust.legend),size=2,fontface="italic")
   return(g)
 }
 # build tibble with segment data
@@ -245,7 +231,7 @@ approxSegments <- function(xvar,yvar,segment,npoints,toofar=0) {
   return(list("xout"=xout,"yout"=yout))
 }
 #  return hr/cad legend width
-hrCadLegendWidth <- function(npoints,distPerPoint,minNumPoints) {
+dLegendWidth <- function(npoints,distPerPoint,minNumPoints) {
   return( distPerPoint*min(npoints,2000)/13 )
 }
 # return the number of points on the x-axis for data
@@ -283,24 +269,20 @@ verticalMult <- function(dist,imperial) {
 heightWith <- function(hrDistance,cadDistance,powerDistance,
                        hrTime,cadTime,powerTime,
                        headerTime,totalCall=FALSE,scale) {
-  itemH <- heightItem(scale)
   headerH <- heightXAxis(scale) + heightTAxis(scale) +
     + height("connector",scale)
   return( ifelse((!headerTime)&totalCall,heightXAxis(scale),0) +
-            ifelse(hrDistance,itemH,0) +
-            ifelse(cadDistance,itemH,0) +
-            ifelse(powerDistance,itemH,0) +
+            ifelse(hrDistance|hrTime,height("label",scale),0) +
+            ifelse(cadDistance|cadTime,height("label",scale),0) +
+            ifelse(powerDistance|powerTime,height("label",scale),0) +
+            ifelse(hrDistance,height("band",scale),0) +
+            ifelse(cadDistance,height("band",scale),0) +
+            ifelse(powerDistance,height("band",scale),0) +
             ifelse(headerTime,headerH,0) +
-            ifelse(hrTime,itemH,0) +
-            ifelse(cadTime,itemH,0) +
-            ifelse(powerTime,itemH,0)
+            ifelse(hrTime,height("band",scale),0) +
+            ifelse(cadTime,height("band",scale),0) +
+            ifelse(powerTime,height("band",scale),0)
   )
-}
-heightItem <- function(scale) {
-  topGaps <- 1
-  return(height("gap",scale) + height("band",scale) +
-         height("gap",scale) +
-         height("label",scale) + topGaps*height("gap",scale))
 }
 heightTAxis <- function(scale) {
   return(height("axisToLegend",scale)+
@@ -357,29 +339,4 @@ yRatioPts <- function(xmin,xmax,ymin,ymax) {
     (raster::pointDistance(cbind(xmin,ymin),cbind(xmin,ymax),lonlat=TRUE) +
      raster::pointDistance(cbind(xmax,ymin),cbind(xmax,ymax),lonlat=TRUE)) / 2
   return(height/width)
-}
-#  this is taken straight from the documentation for package nat (where
-#     it isn't actually exposed), which claims it came from rgl
-pan3d <- function(button) {
-  start <- list()
-  begin <- function(x, y) {
-    start$userMatrix <<- rgl::par3d("userMatrix")
-    start$viewport <<- rgl::par3d("viewport")
-    start$scale <<- rgl::par3d("scale")
-    start$projection <<- rgl::rgl.projection()
-    start$pos <<- rgl::rgl.window2user( x/start$viewport[3],
-                                        1 - y/start$viewport[4],
-                                        0.5,
-                                        projection = start$projection)
-  }
-  update <- function(x, y) {
-    xlat <- (rgl::rgl.window2user( x/start$viewport[3],
-                                   1 - y/start$viewport[4],
-                                   0.5,
-                                   projection = start$projection) - start$pos)*start$scale
-    mouseMatrix <- rgl::translationMatrix(xlat[1], xlat[2], xlat[3])
-    rgl::par3d(userMatrix = start$userMatrix %*% t(mouseMatrix) )
-  }
-  rgl::rgl.setMouseCallbacks(button, begin, update)
-  cat("Callbacks set on button", button, "of rgl device", rgl.cur(), "\n")
 }

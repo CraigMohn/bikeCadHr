@@ -36,7 +36,30 @@
 #' @param elevationChar character to use when printing the elevation profile
 #' @param plotly if TRUE use plotly to draw 3D track in viewer
 #' @param rgl if TRUE use rgl to draw 3D track in viewer
+#' @param rasterDir character location of base directory to load and save raster files
 #' @param localElevFile file containing raster object with elevations on lat/lon
+#' @param featureDataSource character,  "Raster" to load saved raster data
+#'    from directory specified , "none" to show none
+#' @param townLevel numeric, display towns ranked this number or higher:
+#'    3=all towns     5=larger towns (in US >50k)
+#' @param roadLevel numeric, display roads ranked this number or higher:
+#'    2=Service Drive, Bike Path, etc      3=Local Street
+#'    4=Secondary Hwy                      5=Primary Hwy/Transit
+#' @param waterALevel numeric, display areal water ranked this number or higher:
+#'    2=res/treatmentpond/pit/quarry       3=lake/pond/swamp/stream
+#'    4=class 2 or 3 bigger than 1k ha     5=named lake/pond/swamp/stream
+#'    6=large lake/pond/swamp/stream       7=Ocean/Bay/Est/Sound
+#'    8=glacier
+#' @param waterLLevel numeric, display linear water ranked this number or higher:
+#'    2=canal/ditch                        3=braided stream
+#'    4=stream/river                       5=named stream/river
+#'    6=named stream/river containing the string "RIV"
+#' @param rglColorScheme name of color scheme from
+#'     c("default","beach","viridis","plasma","terrain","oleron","snow","oslo",
+#'       "desert","lajolla","niccoli","bright",
+#'       "bing","maptoolkit-topo","nps","apple-iphoto")
+#' @param useImageRaster logical, use the image raster from saved openStreetmap
+#'    colrings of the map surface
 #' @param plot3DVertScale number which will multiply vertical scaling for plotly/rgl
 #' @param cadCont display cadence as continuous rather than categorical
 #' @param drawmap create a .tiff file in the output directory mapping
@@ -63,7 +86,11 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
                   fitexcludes=c("bad","short"),gpxexcludes=c("bad","short","nosegs"),prefer.gpx=c(""),
                   rebuild.all.fit=FALSE,rebuild.all.gpx=FALSE,
                   drawprofile=TRUE,drawprofile.both=FALSE,elevationChar="|",
-                  plotly=FALSE,rgl=FALSE,localElevFile="",maptype="osm",
+                  plotly=FALSE,rgl=FALSE,
+                  rasterDir=NULL,localElevFile="",maptype="bing",
+                  featureDataSource="Raster",
+                  townLevel=9,roadLevel=3,waterALevel=4,waterLLevel=5,
+                  rglColorScheme="default",useImageRaster=FALSE,
                   plot3DVertScale=1,
                   cadCont=TRUE,
                   drawmap=TRUE,drawmap.both=FALSE,cores=4,loud=FALSE,...) {
@@ -148,9 +175,14 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
                     fittracks$startbutton.time==itime,],
                     draw.speed=TRUE,minTiles=200,
                     outfile=outfile,mapsize=c(3840,2400),
+                    rasterDir=rasterDir,
                     plotly=plotly,rgl=rgl,localElevFile=localElevFile,
                     plot3DVertScale=plot3DVertScale,
-                    speed.color="speedcolors",maptype=maptype)
+                    speed.color="speedcolors",maptype=maptype,
+                    featureDataSource=featureDataSource,
+                    townLevel=townLevel,roadLevel=roadLevel,
+                    waterALevel=waterALevel,waterLLevel=waterLLevel,
+                    rglColorScheme=rglColorScheme,useImageRaster=useImageRaster)
           if (plotly) htmlwidgets::saveWidget(p, paste0(outdir,"/",ridefn,"map.html"))
           num_mapped <- 1
         }
@@ -230,7 +262,12 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
                               gpxtracks$startbutton.time==itime,],
                   outfile=outfile,mapsize=c(1920,1200),maptype=maptype,
                   plotly=plotly,rgl=rgl,localElevFile=localElevFile,
-                  draw.speed=TRUE,speed.color="magma")
+                  rasterDir=rasterDir,
+                  draw.speed=TRUE,speed.color="magma",
+                  featureDataSource=featureDataSource,
+                  townLevel=townLevel,roadLevel=roadLevel,
+                  waterALevel=waterALevel,waterLLevel=waterLLevel,
+                  rglColorScheme=rglColorScheme,useImageRaster=useImageRaster)
           if (plotly) htmlwidgets::saveWidget(p, paste0(outdir,"/",ridefn,"map.html"))
         }
       }

@@ -4,8 +4,8 @@
 \alias{statsGrade}
 \title{generate grade statistics for a track}
 \usage{
-statsGrade(trackdf, gradeSmoothWindowMeters = 7, gradeSmoothWindowNN = 10,
-  ...)
+statsGrade(trackdf, gradeSmoothWindowMeters = 7,
+  gradeSmoothWindowNN = 10, ...)
 }
 \arguments{
 \item{trackdf}{data frame or tibble with gps track data}

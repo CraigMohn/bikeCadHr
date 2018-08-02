@@ -53,6 +53,7 @@
 #' @import viridis
 #' @import XML
 #' @import rgl
+#' @import maptrack3d
 #' @importFrom grDevices colorRampPalette dev.off heat.colors
 #'                       jpeg rainbow tiff
 #' @importFrom graphics lines par plot points title

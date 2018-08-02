@@ -4,15 +4,18 @@
 \alias{map_rides}
 \title{plot ride track data on a map}
 \usage{
-map_rides(geodf, outfile, maptitle, definedmaps, usemap, plotly = FALSE,
-  rgl = FALSE, localElevFile = "", plot3DSize = 300,
-  plot3DVertScale = 1, rglColorMaxElev = 3000, rglShininess = 0,
-  rglLightPars = "viewpoint.rel=TRUE", rglLights = TRUE, maptype = "osm",
-  minTiles = 50, mapsize = c(1600, 1200), fine.map = FALSE,
-  margin.factor = 0.08, draw.speed = FALSE, line.color = "magenta",
-  line.width = 3, line.alpha = 0.8, speed.color = "speedcolors",
-  speed.alpha = 0.7, speed.ptsize = 6, speed.pch = 19,
-  jpeg.quality = 90)
+map_rides(geodf, outfile, maptitle, definedmaps, usemap,
+  rasterDir = NULL, plotly = FALSE, rgl = FALSE,
+  localElevFile = "", plot3DSize = 300, plot3DVertScale = 1,
+  featureDataSource = "none", townLevel = 3, roadLevel = 4,
+  waterALevel = 4, waterLLevel = 5, rglColorScheme = "default",
+  useImageRaster = FALSE, rglColorMaxElev = 3000, rglShininess = 0,
+  rglLightPars = "viewpoint.rel=TRUE", rglLights = TRUE,
+  maptype = "osm", minTiles = 50, mapsize = c(1600, 1200),
+  fine.map = FALSE, margin.factor = 0.08, draw.speed = FALSE,
+  line.color = "magenta", line.width = 3, line.alpha = 0.8,
+  speed.color = "speedcolors", speed.alpha = 0.7, speed.ptsize = 6,
+  speed.pch = 19, jpeg.quality = 90)
 }
 \arguments{
 \item{geodf}{data frame or tibble containing at least: position_lat.dd,
@@ -30,6 +33,8 @@ latitude andf longitude of the map area}
 
 \item{usemap}{string identifying area from list \eqn{definedmaps} or}
 
+\item{rasterDir}{character location of base directory to load and save raster files}
+
 \item{plotly}{use plotly to draw 3D track in viewer}
 
 \item{rgl}{use rgl openGL to draw 3D track in viewer}
@@ -39,6 +44,35 @@ latitude andf longitude of the map area}
 \item{plot3DSize}{number which is rough target for size of grid for plotly/rgl}
 
 \item{plot3DVertScale}{number which will multiply vertical scaling for plotly/rgl}
+
+\item{featureDataSource}{character,  "Raster" to load saved raster data
+from directory specified , "none" to show none}
+
+\item{townLevel}{numeric, display towns ranked this number or higher:
+3=all towns     5=larger towns (in US >50k)}
+
+\item{roadLevel}{numeric, display roads ranked this number or higher:
+2=Service Drive, Bike Path, etc      3=Local Street
+4=Secondary Hwy                      5=Primary Hwy/Transit}
+
+\item{waterALevel}{numeric, display areal water ranked this number or higher:
+2=res/treatmentpond/pit/quarry       3=lake/pond/swamp/stream
+4=class 2 or 3 bigger than 1k ha     5=named lake/pond/swamp/stream
+6=large lake/pond/swamp/stream       7=Ocean/Bay/Est/Sound
+8=glacier}
+
+\item{waterLLevel}{numeric, display linear water ranked this number or higher:
+2=canal/ditch                        3=braided stream
+4=stream/river                       5=named stream/river
+6=named stream/river containing the string "RIV"}
+
+\item{rglColorScheme}{name of color scheme from
+c("default","beach","viridis","plasma","terrain","oleron","snow","oslo",
+  "desert","lajolla","niccoli","bright",
+  "bing","maptoolkit-topo","nps","apple-iphoto")}
+
+\item{useImageRaster}{logical, use the image raster from saved openStreetmap
+colrings of the map surface}
 
 \item{rglColorMaxElev}{the upper limit of elevation, anything above this will
 be colored the same in the rgl}

@@ -4,10 +4,11 @@
 \alias{processSegments}
 \title{clean up and add start/stop segments to a track tibble, add flag for stopped}
 \usage{
-processSegments(trackdf, segInitIdleAggSecs = 60, segInitIdleAggMeters = 20,
-  segBreakTimeMin = 3, nonsegTimeGapMax = 30, segSplitTimeStop = 3,
-  segMinObs = 4, segMinMeters = 20, segMinSecs = 20,
-  ignoreSegInfo = FALSE, loud = FALSE, ...)
+processSegments(trackdf, segInitIdleAggSecs = 60,
+  segInitIdleAggMeters = 20, segBreakTimeMin = 3,
+  nonsegTimeGapMax = 30, segSplitTimeStop = 3, segMinObs = 4,
+  segMinMeters = 20, segMinSecs = 20, ignoreSegInfo = FALSE,
+  loud = FALSE, ...)
 }
 \arguments{
 \item{trackdf}{data frame or tibble with gps track data}

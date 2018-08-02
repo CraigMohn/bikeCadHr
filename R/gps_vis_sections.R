@@ -164,124 +164,91 @@ drawSummary <- function(ggp,summary,title){
   return(ggpreturn)
 
 }
-#  draw cadence bar graph
-drawCadence <- function(ggp,cadence,xvar,segment,toofar=0,
-                        cadLow,cadTarget,
-                        cadCont,cadContLow,cadContHigh,
-                        cadColorLow,cadColorMid,cadColorHigh,
-                        minNumPoints,showlegend=TRUE) {
+drawLegend <- function(ggp,dvar,xvar,segment,toofar=0,
+                       legendtext,
+                       dLowD=NA,dTarget=NA,
+                       dCont=TRUE,dLow=NA,dHigh=NA,
+                       dColorLow=NA,dColorMid=NA,dColorHigh=NA,
+                       minNumPoints) {
   ggpreturn <- ggp
   xend <- ggp[["xlast"]]
   g <- ggp[["g"]]
   npoints <- ggp[["npoints"]]
   heightFactor=ggp[["heightFactor"]]
   distPerPoint=ggp[["distPerPoint"]]
-  yCadTop <- ggp[["ymin"]]
-  ymin <- yCadTop - heightItem(scale=heightFactor)
-  # column width vectors sum to 13 in bar functionsd
-  cadLegendWidth <- hrCadLegendWidth(npoints,distPerPoint,minNumPoints)
+  ymin <- ggp[["ymin"]] - height("label",scale=heightFactor)
+  # column width vectors sum to 13 in bar functions
+  dLegendWidth <- dLegendWidth(npoints,distPerPoint,minNumPoints)
 
-  drawpts <- approxSegments(xvar=xvar,yvar=cadence,
+  drawpts <- approxSegments(xvar=xvar,yvar=dvar,
                             segment=segment,npoints=npoints,
                             toofar=toofar)
   xvardraw <- drawpts[[1]]*(xend/max(drawpts[[1]]))
   xvardraw[xvardraw>distPerPoint*npoints] <- distPerPoint*npoints
   xvardraw[xvardraw<0] <- 0
-  caddraw <- drawpts[[2]]
-  if (cadCont) {
-    g <- continuous_bar(g,legendtext="Cadence",xvar=xvardraw,vals=caddraw,
-                        lowval=cadContLow,hival=cadContHigh,
-                        lowcolor=cadColorLow,hicolor=cadColorHigh,
-                        legendwidth=cadLegendWidth,y.bottom=ymin,
-                        band.height=height("band",heightFactor),
-                        label.height=height("label",heightFactor),
-                        gap.height=height("gap",heightFactor),showlegend)
-    } else {
-    g <- discrete_bar(g,legendtext="Cadence",xvar=xvardraw,vals=caddraw,
-                      lowval=cadLow,hival=cadTarget,
-                      lowcolor=cadColorLow,midcolor=cadColorMid,
-                      hicolor=cadColorHigh,
-                      legendwidth=cadLegendWidth,y.bottom=ymin,
-                      band.height=height("band",heightFactor),
-                      label.height=height("label",heightFactor),
-                      gap.height=height("gap",heightFactor),showlegend)
+  if (dCont) {
+    g <- continuous_legend(g,legendtext=legendtext,
+                           xvar=xvardraw,
+                           lowval=dLow,hival=dHigh,
+                           lowcolor=dColorLow,hicolor=dColorHigh,
+                           legendwidth=dLegendWidth,y.bottom=ymin,
+                           legend.height=height("label",heightFactor))
+  } else {
+    g <- discrete_legend(g,legendtext=legendtext,
+                         xvar=xvardraw,
+                         lowval=dLowD,hival=dTarget,
+                         lowcolor=dColorLow,midcolor=dColorMid,
+                         hicolor=dColorHigh,
+                         legendwidth=dLegendWidth,y.bottom=ymin,
+                         legend.height=height("label",heightFactor))
   }
   ggpreturn[["g"]] <- g
   ggpreturn[["ymin"]] <- ymin
   return(ggpreturn)
 }
-drawHr <- function(ggp,hr,xvar,segment,toofar=0,
-                   hrLow,hrHigh,
-                   hrColorLow,hrColorHigh,
-                   minNumPoints,showlegend=TRUE) {
-
+drawBar <- function(ggp,dvar,xvar,segment,toofar=0,
+                    dTarget=NA,
+                    dCont=TRUE,dLow=NA,dHigh=NA,
+                    dColorLow=NA,dColorMid=NA,dColorHigh=NA,
+                    minNumPoints) {
   ggpreturn <- ggp
   xend <- ggp[["xlast"]]
   g <- ggp[["g"]]
   npoints <- ggp[["npoints"]]
   heightFactor=ggp[["heightFactor"]]
   distPerPoint=ggp[["distPerPoint"]]
-  yHrTop <- ggp[["ymin"]]
-  ymin <- yHrTop - heightItem(scale=heightFactor)
-  # column width vectors sum to 13 in bar functionsd
-  hrLegendWidth <- hrCadLegendWidth(npoints,distPerPoint,minNumPoints)
+  ymin <- ggp[["ymin"]] - height("band",scale=heightFactor)
 
-  drawpts <- approxSegments(xvar=xvar,yvar=hr,
+  drawpts <- approxSegments(xvar=xvar,yvar=dvar,
                             segment=segment,npoints=npoints,
                             toofar=toofar)
   xvardraw <- drawpts[[1]]*(xend/max(drawpts[[1]]))
   xvardraw[xvardraw>distPerPoint*npoints] <- distPerPoint*npoints
   xvardraw[xvardraw<0] <- 0
-  hrdraw <- drawpts[[2]]
-  g <- g +
-    ggplot2::geom_blank()
-  g <- continuous_bar(g,legendtext="Heart Rate",xvar=xvardraw,vals=hrdraw,
-                      lowval=hrLow,hival=hrHigh,
-                      lowcolor=hrColorLow,hicolor=hrColorHigh,
-                      legendwidth=hrLegendWidth,y.bottom=ymin,
-                      band.height=height("band",heightFactor),
-                      label.height=height("label",heightFactor),
-                      gap.height=height("gap",heightFactor),showlegend)
+  ddraw <- drawpts[[2]]
+  if (dCont) {
+    g <- continuous_band(g,xvar=xvardraw,vals=ddraw,
+                         lowval=dLow,hival=dHigh,
+                         lowcolor=dColorLow,hicolor=dColorHigh,
+                         y.bottom=ymin,
+                         band.height=height("band",heightFactor))
+  } else {
+    g <- discrete_band(g,xvar=xvardraw,vals=ddraw,
+                      lowval=dLow,hival=dTarget,
+                      lowcolor=dColorLow,midcolor=dColorMid,
+                      hicolor=dColorHigh,
+                      y.bottom=ymin,band.height=height("band",heightFactor))
+  }
   ggpreturn[["g"]] <- g
   ggpreturn[["ymin"]] <- ymin
   return(ggpreturn)
 }
-drawPower <- function(ggp,power,xvar,segment,toofar=0,
-                      powerLow,powerHigh,
-                      powerColorLow,powerColorHigh,
-                       minNumPoints,showlegend=TRUE) {
+addGap <- function(ggp,nrep=1) {
 
   ggpreturn <- ggp
-  xend <- ggp[["xlast"]]
-  g <- ggp[["g"]]
-  npoints <- ggp[["npoints"]]
   heightFactor=ggp[["heightFactor"]]
   distPerPoint=ggp[["distPerPoint"]]
-  yPowerTop <- ggp[["ymin"]]
-  ymin <- yPowerTop - heightItem(scale=heightFactor)
-  # column width vectors sum to 13 in bar functionsd
-  powerLegendWidth <- hrCadLegendWidth(npoints,distPerPoint,minNumPoints)
-
-  drawpts <- approxSegments(xvar=xvar,yvar=power,
-                            segment=segment,npoints=npoints,
-                            toofar=toofar)
-  xvardraw <- drawpts[[1]]*(xend/max(drawpts[[1]]))
-  xvardraw[xvardraw>distPerPoint*npoints] <- distPerPoint*npoints
-  xvardraw[xvardraw<0] <- 0
-  powerdraw <- drawpts[[2]]
-  powerdraw[!is.na(powerdraw) &
-              powerdraw<powerLow &
-              powerdraw>0.0] <- powerLow
-  g <- g +
-    ggplot2::geom_blank()
-  g <- continuous_bar(g,legendtext="Watts",xvar=xvardraw,vals=powerdraw,
-                      lowval=powerLow,hival=powerHigh,
-                      lowcolor=powerColorLow,hicolor=powerColorHigh,
-                      legendwidth=powerLegendWidth,y.bottom=ymin,
-                      band.height=height("band",heightFactor),
-                      label.height=height("label",heightFactor),
-                      gap.height=height("gap",heightFactor),showlegend)
-  ggpreturn[["g"]] <- g
+  ymin <- ggp[["ymin"]] - nrep*height("gap",scale=heightFactor)
   ggpreturn[["ymin"]] <- ymin
   return(ggpreturn)
 }

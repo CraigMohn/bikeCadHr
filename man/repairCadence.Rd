@@ -5,8 +5,8 @@
 \title{clean up cadence data for a track}
 \usage{
 repairCadence(trackdf, cadMax = 160, cadCorrectTooHigh = TRUE,
-  cadCorrectNA = FALSE, cadCorrectStopped = TRUE, cadCorrectWindowSec = 7,
-  loud = FALSE, ...)
+  cadCorrectNA = FALSE, cadCorrectStopped = TRUE,
+  cadCorrectWindowSec = 7, loud = FALSE, ...)
 }
 \arguments{
 \item{trackdf}{data frame or tibble with gps track data}

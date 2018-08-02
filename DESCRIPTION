@@ -1,14 +1,14 @@
 Package: bikeCadHr
 Type: Package
 Title: Analyze Cycling Cadence Data From GPS .fit and .gpx Files
-Version: 0.9.2
-Date: 2017-12-07
+Version: 0.9.3
+Date: 2018-08-02
 Author: Craig Mohn
 Maintainer: Craig Mohn <craig.mohn.projects@gmail.com>
 Depends: R (>= 2.15.0)
 Imports: magrittr, dplyr, tibble, lubridate, stringr,
     XML, fitdc, raster, OpenStreetMap, mapproj, ggplot2, viridis, scales, 
-    doParallel, foreach, parallel, plotly, htmlwidgets, rgl
+    doParallel, foreach, parallel, plotly, htmlwidgets, rgl, maptrack3d
 Description: Functions to process and clean up .fit and .gpx files containing
     cadence and heart rate data.  Store the data in pairs of tibbles, one 
     containing summary data about the ride, the other containing the track
@@ -19,4 +19,4 @@ Description: Functions to process and clean up .fit and .gpx files containing
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0
