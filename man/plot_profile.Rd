@@ -8,8 +8,9 @@
 plot_profile(track, summary, savefn, title = "Ride starting ",
   palette = "plasma", naPlotColor = "gray88",
   verticalMultiplier = NA, ppm = NA, elevationShape = 46,
-  hrDistance = TRUE, cadDistance = TRUE, powerDistance = TRUE,
-  hrTime = TRUE, cadTime = TRUE, powerTime = TRUE, showTime = TRUE,
+  speedDistance = TRUE, hrDistance = TRUE, cadDistance = TRUE,
+  powerDistance = TRUE, speedTime = TRUE, hrTime = TRUE,
+  cadTime = TRUE, powerTime = TRUE, showTime = TRUE,
   showSummary = TRUE, showStops = TRUE, hrLow = 100, hrHigh = 170,
   hrColorLow = 11, hrColorHigh = 26, cadTarget = 88,
   cadCont = TRUE, cadLow = 50, cadHigh = 120, cadColorLow = 4,
@@ -44,11 +45,15 @@ ranges from 25 to 60 depending on the length being plotted}
 
 \item{elevationShape}{shape to use for drawing the elevation plot}
 
+\item{speedDistance}{display speed data scaled by distance if available}
+
 \item{hrDistance}{display HR data scaled by distance if available}
 
 \item{cadDistance}{display cadence data scaled by distance if available}
 
 \item{powerDistance}{display power data scaled by distance if available}
+
+\item{speedTime}{display speed data scaled by time if available}
 
 \item{hrTime}{display HR data scaled by time if available}
 

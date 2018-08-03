@@ -266,22 +266,20 @@ verticalMult <- function(dist,imperial) {
                         (miles-distbends[which(distbends>miles)[1]-1]) )
   return(vm)
 }
-heightWith <- function(hrDistance,cadDistance,powerDistance,
-                       hrTime,cadTime,powerTime,
-                       headerTime,totalCall=FALSE,scale) {
+heightWith <- function(speedDistance,hrDistance,cadDistance,powerDistance,
+                       speedTime,hrTime,cadTime,powerTime,
+                       headerTime,scale) {
   headerH <- heightXAxis(scale) + heightTAxis(scale) +
     + height("connector",scale)
-  return( ifelse((!headerTime)&totalCall,heightXAxis(scale),0) +
-            ifelse(hrDistance|hrTime,height("label",scale),0) +
-            ifelse(cadDistance|cadTime,height("label",scale),0) +
-            ifelse(powerDistance|powerTime,height("label",scale),0) +
-            ifelse(hrDistance,height("band",scale),0) +
-            ifelse(cadDistance,height("band",scale),0) +
-            ifelse(powerDistance,height("band",scale),0) +
-            ifelse(headerTime,headerH,0) +
-            ifelse(hrTime,height("band",scale),0) +
-            ifelse(cadTime,height("band",scale),0) +
-            ifelse(powerTime,height("band",scale),0)
+  nlegends <- (speedDistance | speedTime) +
+              (hrDistance | hrTime) +
+              (cadDistance | cadTime) +
+              (powerDistance | powerTime)
+  nbands <- speedDistance + hrDistance + cadDistance + powerDistance +
+            speedTime + hrTime + cadTime + powerTime
+  return( ifelse(headerTime,headerH,heightXAxis(scale)) +
+          nlegends*height("label",scale) +
+          nbands*height("band",scale)
   )
 }
 heightTAxis <- function(scale) {

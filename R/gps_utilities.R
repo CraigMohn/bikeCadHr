@@ -93,7 +93,8 @@ smoothData <- function(yvec,xvar,bw,nneighbors=10,
     stop("smoothData needs xvar and yvec same length")
   #  ignore the scale factor, since we are using the kernel for weighting
   #            numerator and denominator
-  #  note this function fills in missing values with approximation
+  #  note this function fills in missing values with approximation unless
+  #   replaceNAs is FALSE
   if (!(is.vector(yvec) & is.vector(xvar) & length(yvec)==length(xvar)))
     stop("need 2 vectors of same length in smoothData")
   ypresent <- as.numeric(!is.na(yvec))

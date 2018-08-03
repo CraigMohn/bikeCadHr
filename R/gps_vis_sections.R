@@ -4,18 +4,17 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
                         distPerPoint,palette,naPlotColor,
                         vertMult,npoints,minNumPoints,
                         elevationShape,imperial,
-                        hrDistance,cadDistance,powerDistance,
-                        hrTime,cadTime,powerTime,showTime) {
+                        speedDistance,hrDistance,cadDistance,powerDistance,
+                        speedTime,hrTime,cadTime,powerTime,showTime) {
 
   ngraphpoints <- max(minNumPoints,npoints)
   dist <- distancevec[length(distancevec)]
   if (is.na(vertMult)|vertMult<=1)
     vertMult <- verticalMult(dist,imperial)
   heightFactor=vertMult/50
-  heightBelow <- heightWith(hrDistance,cadDistance,powerDistance,
-                             hrTime,cadTime,powerTime,
-                             showTime,totalCall=TRUE,
-                             scale=heightFactor)
+  heightBelow <- heightWith(speedDistance,hrDistance,cadDistance,powerDistance,
+                            speedTime,hrTime,cadTime,powerTime,
+                            showTime,scale=heightFactor)
 
   #  use equally spaced grid for plotting
   eProfilePts <- stats::approx(distancevec,elevationvec,n=npoints)
@@ -104,10 +103,15 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
                          alpha=0.7) +
 #   lay down a light background that lets some of the grid show through
     ggplot2::geom_ribbon(ggplot2::aes(ymax=elevMinShade,ymin=ymin),
-                         color="white",fill="white",alpha=0.7) +
-#    ggplot2::geom_ribbon(ggplot2::aes(ymax=elevation+5,ymin=elevation-5,
-#                         color=speed,fill=speed))
-    ggplot2::geom_line(ggplot2::aes(color=speed))
+                         color="white",fill="white",alpha=0.7)
+    if (speedDistance | speedTime) {
+      #  suppress ggplot2 legend if adding speed legend
+      g <- g +
+           ggplot2::geom_line(ggplot2::aes(color=speed),show.legend=F) +
+           ggplot2::theme(legend.position="none")
+    } else {
+      g <- g + ggplot2::geom_line(ggplot2::aes(color=speed))
+    }
 #    ggplot2::geom_point(ggplot2::aes(color=speed),shape=elevationShape,
 #                      size=1.25*heightFactor,alpha=0.6,
 #                      position=ggplot2::position_nudge(y=1.2))

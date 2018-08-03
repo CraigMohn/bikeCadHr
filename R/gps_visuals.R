@@ -393,9 +393,11 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
 #'    ranges from 25 to 60 depending on the length being plotted
 #' @param ppm override calculated default number of points per mile
 #' @param elevationShape shape to use for drawing the elevation plot
+#' @param speedDistance display speed data scaled by distance if available
 #' @param hrDistance display HR data scaled by distance if available
 #' @param cadDistance display cadence data scaled by distance if available
 #' @param powerDistance display power data scaled by distance if available
+#' @param speedTime display speed data scaled by time if available
 #' @param hrTime display HR data scaled by time if available
 #' @param cadTime display cadence data scaled by time if available
 #' @param powerTime display power data scaled by time if available
@@ -448,8 +450,9 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                          naPlotColor="gray88",
                          verticalMultiplier=NA,ppm=NA,
                          elevationShape=46,
-                         hrDistance=TRUE,cadDistance=TRUE,powerDistance=TRUE,
-                         hrTime=TRUE,cadTime=TRUE,powerTime=TRUE,
+                         speedDistance=TRUE,hrDistance=TRUE,
+                         cadDistance=TRUE,powerDistance=TRUE,
+                         speedTime=TRUE,hrTime=TRUE,cadTime=TRUE,powerTime=TRUE,
                          showTime=TRUE,showSummary=TRUE,
                          showStops=TRUE,
                          hrLow=100,hrHigh=170,
@@ -475,12 +478,14 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
   cadTime <- cadTime & any(!is.na(track$cadence.rpm))
   hrTime <- hrTime & any(!is.na(track$heart_rate.bpm))
   powerTime <- powerTime & any(!is.na(track$power.watts))
+  speedTime <- speedTime & showTime
   cadTime <- cadTime & showTime
   hrTime <- hrTime & showTime
   powerTime <- powerTime & showTime
   showHr <- hrDistance | hrTime
   showCad <- cadDistance | cadTime
   showPower <- powerDistance | powerTime
+  showSpeed <- speedDistance | speedTime
   ##  set up numeric time (in seconds) and smoothed variables
   walltime <- as.numeric(difftime(track$timestamp.s,track$timestamp.s[1],
                                   units="secs"))
@@ -514,11 +519,17 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
   elevsm <- smoothData(yvec=track$altitude.m,xvar=distance,
                        bw=elevsmbw,nneighbors=18,kernel="epanechnikov",
                        replaceNAs=TRUE)
-
+  speedsm <- track$speed.m.s
+  speedsm[speedsm==0] <- NA  #  don't display or average stops
+  speedsm <- smoothDataSegments(yvec=track$speed.m.s,xvar=walltime,
+                                segment=track$segment,
+                                bw=4,nneighbors=4,
+                                kernel="epanechnikov",
+                                replaceNAs=FALSE)
   if (showCad) {
     cadzero <- track$cadence.rpm == 0
     cadencetemp <- track$cadence.rpm
-    cadencetemp[cadzero] <- NA
+    cadencetemp[cadencetemp==0] <- NA
     cadencesm <- smoothDataSegments(yvec=cadencetemp,xvar=walltime,
                                     segment=track$segment,
                                     bw=cadSmoothBW,nneighbors=cadSmoothNN,
@@ -539,29 +550,24 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
     hrsm <- rep(NA,length(walltime))
   }
   if (showPower) {
-    powzero <- track$power.watts == 0
     powertemp <- track$power.watts
-    powertemp[powzero] <- NA
+    powertemp[powertemp==0] <- NA
     powersm <- smoothDataSegments(yvec=powertemp,xvar=walltime,
                                   segment=track$segment,
                                   bw=powerSmoothBW,nneighbors=powerSmoothNN,
                                   kernel="epanechnikov",
                                   replaceNAs=FALSE)
-    powersm[powzero] <- 0
   } else {
     powersm <- rep(NA,length(walltime))
   }
-  speedsm <- smoothDataSegments(yvec=track$speed.m.s,xvar=walltime,
-                                segment=track$segment,
-                                bw=4,nneighbors=4,
-                                kernel="epanechnikov",
-                                replaceNAs=TRUE)
   if (imperial) {
     elevsm <- feetFromMeters(elevsm)
     speedsm <- milesFromMeters(speedsm)*3600
+    speedLegendText <- "Speed (mph)"
   }
   else {
     speedsm <- kmFromMeters(speedsm)*3600
+    speedLegendText <- "Speed (kph)"
   }
 
   dist <- distance[length(distance)]
@@ -581,8 +587,9 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                         minNumPoints=minNumPoints,
                         elevationShape=elevationShape,
                         imperial=imperial,
-                        hrDistance=hrDistance,cadDistance=cadDistance,
-                        powerDistance=powerDistance,hrTime=hrTime,
+                        speedDistance=speedDistance,hrDistance=hrDistance,
+                        cadDistance=cadDistance,powerDistance=powerDistance,
+                        speedTime=speedTime,hrTime=hrTime,
                         cadTime=cadTime,powerTime=powerTime,showTime=showTime)
 
   if (showSummary & !missing(summary))
@@ -597,6 +604,16 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                         lineAtZero=TRUE)
   }
   ###  draw legends
+  if (showSpeed) grlist <- drawLegend(ggp=grlist,dvar=speedsm,
+                                      xvar=distance,
+                                      legendtext=speedLegendText,
+                                      segment=track$segment,
+                                      toofar=0,
+                                      dLow=ifelse(imperial,3,5),
+                                      dHigh=ifelse(imperial,40,67),
+                                      dColorLow=0,
+                                      dColorHigh=40,
+                                      minNumPoints=minNumPoints)
   if (showPower) grlist <- drawLegend(ggp=grlist,dvar=powersm,
                                       xvar=distance,
                                       legendtext="Power (watts)",
@@ -634,6 +651,15 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
 
   grlist <- addGap(ggp=grlist,nrep=1)
 
+  if (speedDistance) grlist <- drawBar(ggp=grlist,dvar=speedsm,
+                                       xvar=distance,
+                                       segment=track$segment,
+                                       toofar=0,
+                                       dLow=ifelse(imperial,3,5),
+                                       dHigh=ifelse(imperial,40,67),
+                                       dColorLow=0,
+                                       dColorHigh=40,
+                                       minNumPoints=minNumPoints)
   if (powerDistance) grlist <- drawBar(ggp=grlist,dvar=powersm,
                                        xvar=distance,
                                        segment=track$segment,
@@ -685,6 +711,15 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                         distPerPoint,hoursPerPoint)
   }
 
+  if (speedTime) grlist <-drawBar(ggp=grlist,dvar=speedsm,
+                                  xvar=walltime,
+                                  segment=track$segment,
+                                  toofar=0,
+                                  dLow=ifelse(imperial,3,5),
+                                  dHigh=ifelse(imperial,40,67),
+                                  dColorLow=0,
+                                  dColorHigh=40,
+                                  minNumPoints=minNumPoints)
   if (powerTime) grlist <-drawBar(ggp=grlist,dvar=powersm,
                                   xvar=walltime,
                                   segment=track$segment,
