@@ -8,18 +8,20 @@
 plot_profile(track, summary, savefn, title = "Ride starting ",
   palette = "plasma", naPlotColor = "gray88",
   verticalMultiplier = NA, ppm = NA, elevationShape = 46,
-  speedDistance = TRUE, hrDistance = TRUE, cadDistance = TRUE,
-  powerDistance = TRUE, speedTime = TRUE, hrTime = TRUE,
-  cadTime = TRUE, powerTime = TRUE, showTime = TRUE,
-  showSummary = TRUE, showStops = TRUE, hrLow = 100, hrHigh = 170,
-  hrColorLow = 11, hrColorHigh = 26, cadTarget = 88,
-  cadCont = TRUE, cadLow = 50, cadHigh = 120, cadColorLow = 4,
-  cadColorMid = 10, cadColorHigh = 15, powerLow = 75,
-  powerHigh = 400, powerColorLow = 9, powerColorHigh = 21,
-  hrSmoothBW = 6, hrSmoothNN = 6, cadSmoothBW = 10,
-  cadSmoothNN = 10, powerSmoothBW = 10, powerSmoothNN = 10,
-  elevSmoothBWMeters = 15, stopToleranceMeters = 20,
-  minSecsRolling = 10, minNumPoints = 3000, imperial = TRUE)
+  speedDistance = TRUE, gradeDistance = TRUE, hrDistance = TRUE,
+  cadDistance = TRUE, powerDistance = TRUE, speedTime = TRUE,
+  gradeTime = TRUE, hrTime = TRUE, cadTime = TRUE,
+  powerTime = TRUE, showTime = TRUE, showSummary = TRUE,
+  showStops = TRUE, hrLow = 100, hrHigh = 170, hrColorLow = 11,
+  hrColorHigh = 26, cadTarget = 88, cadCont = TRUE, cadLow = 50,
+  cadHigh = 120, cadColorLow = 4, cadColorMid = 10,
+  cadColorHigh = 15, powerLow = 75, powerHigh = 400,
+  powerColorLow = 9, powerColorHigh = 21, hrSmoothBW = 6,
+  hrSmoothNN = 6, cadSmoothBW = 10, cadSmoothNN = 10,
+  gradeSmoothBW = 13, gradeSmoothNN = 13, powerSmoothBW = 10,
+  powerSmoothNN = 10, elevSmoothBWMeters = 15,
+  stopToleranceMeters = 20, minSecsRolling = 10, minNumPoints = 3000,
+  imperial = TRUE)
 }
 \arguments{
 \item{track}{data frame or tibble containing track details including
@@ -47,6 +49,8 @@ ranges from 25 to 60 depending on the length being plotted}
 
 \item{speedDistance}{display speed data scaled by distance if available}
 
+\item{gradeDistance}{display speed data scaled by distance if available}
+
 \item{hrDistance}{display HR data scaled by distance if available}
 
 \item{cadDistance}{display cadence data scaled by distance if available}
@@ -54,6 +58,8 @@ ranges from 25 to 60 depending on the length being plotted}
 \item{powerDistance}{display power data scaled by distance if available}
 
 \item{speedTime}{display speed data scaled by time if available}
+
+\item{gradeTime}{display grade data scaled by time if available}
 
 \item{hrTime}{display HR data scaled by time if available}
 
@@ -112,6 +118,12 @@ for cadence data}
 
 \item{cadSmoothNN}{number of points (on each side) to use in
 smoothing kernel for cadence data}
+
+\item{gradeSmoothBW}{bandwidth (in seconds) for smoothing kernel
+for grade data}
+
+\item{gradeSmoothNN}{number of points (on each side) to use in
+smoothing kernel for grade data}
 
 \item{powerSmoothBW}{bandwidth (in seconds) for smoothing kernel
 for power data}

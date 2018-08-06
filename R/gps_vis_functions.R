@@ -266,17 +266,22 @@ verticalMult <- function(dist,imperial) {
                         (miles-distbends[which(distbends>miles)[1]-1]) )
   return(vm)
 }
-heightWith <- function(speedDistance,hrDistance,cadDistance,powerDistance,
-                       speedTime,hrTime,cadTime,powerTime,
+heightWith <- function(speedDistance,gradeDistance,
+                       hrDistance,cadDistance,powerDistance,
+                       speedTime,gradeTime,
+                       hrTime,cadTime,powerTime,
                        headerTime,scale) {
   headerH <- heightXAxis(scale) + heightTAxis(scale) +
     + height("connector",scale)
   nlegends <- (speedDistance | speedTime) +
+              (gradeDistance | gradeTime) +
               (hrDistance | hrTime) +
               (cadDistance | cadTime) +
               (powerDistance | powerTime)
-  nbands <- speedDistance + hrDistance + cadDistance + powerDistance +
-            speedTime + hrTime + cadTime + powerTime
+  nbands <- speedDistance + gradeDistance +
+            hrDistance + cadDistance + powerDistance +
+            speedTime + gradeTime +
+            hrTime + cadTime + powerTime
   return( ifelse(headerTime,headerH,heightXAxis(scale)) +
           nlegends*height("label",scale) +
           nbands*height("band",scale)

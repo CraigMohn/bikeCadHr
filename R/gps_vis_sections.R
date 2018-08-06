@@ -4,16 +4,20 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
                         distPerPoint,palette,naPlotColor,
                         vertMult,npoints,minNumPoints,
                         elevationShape,imperial,
-                        speedDistance,hrDistance,cadDistance,powerDistance,
-                        speedTime,hrTime,cadTime,powerTime,showTime) {
+                        speedDistance,gradeDistance,
+                        hrDistance,cadDistance,powerDistance,
+                        speedTime,gradeTime,
+                        hrTime,cadTime,powerTime,showTime) {
 
   ngraphpoints <- max(minNumPoints,npoints)
   dist <- distancevec[length(distancevec)]
   if (is.na(vertMult)|vertMult<=1)
     vertMult <- verticalMult(dist,imperial)
   heightFactor=vertMult/50
-  heightBelow <- heightWith(speedDistance,hrDistance,cadDistance,powerDistance,
-                            speedTime,hrTime,cadTime,powerTime,
+  heightBelow <- heightWith(speedDistance,gradeDistance,
+                            hrDistance,cadDistance,powerDistance,
+                            speedTime,gradeTime,
+                            hrTime,cadTime,powerTime,
                             showTime,scale=heightFactor)
 
   #  use equally spaced grid for plotting
