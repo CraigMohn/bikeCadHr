@@ -4,21 +4,15 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
                         distPerPoint,palette,naPlotColor,
                         vertMult,npoints,minNumPoints,
                         elevationShape,imperial,
-                        speedDistance,gradeDistance,
-                        hrDistance,cadDistance,powerDistance,
-                        speedTime,gradeTime,
-                        hrTime,cadTime,powerTime,showTime) {
+                        orderBands,showTime) {
 
   ngraphpoints <- max(minNumPoints,npoints)
   dist <- distancevec[length(distancevec)]
   if (is.na(vertMult)|vertMult<=1)
     vertMult <- verticalMult(dist,imperial)
   heightFactor=vertMult/50
-  heightBelow <- heightWith(speedDistance,gradeDistance,
-                            hrDistance,cadDistance,powerDistance,
-                            speedTime,gradeTime,
-                            hrTime,cadTime,powerTime,
-                            showTime,scale=heightFactor)
+  heightBelow <- heightWith(ordervec=orderBands,showTime=showTime,
+                            plotscale=heightFactor)
 
   #  use equally spaced grid for plotting
   eProfilePts <- stats::approx(distancevec,elevationvec,n=npoints)
@@ -108,7 +102,7 @@ drawProfile <- function(distancevec,elevationvec,speedvec,
 #   lay down a light background that lets some of the grid show through
     ggplot2::geom_ribbon(ggplot2::aes(ymax=elevMinShade,ymin=ymin),
                          color="white",fill="white",alpha=0.7)
-    if (speedDistance | speedTime) {
+    if (!is.na(orderBands[["speed"]])) {
       #  suppress ggplot2 legend if adding speed legend
       g <- g +
            ggplot2::geom_line(ggplot2::aes(color=speed),show.legend=F) +
@@ -172,7 +166,8 @@ drawSummary <- function(ggp,summary,title){
   return(ggpreturn)
 
 }
-drawLegend <- function(ggp,dvar,xvar,segment,toofar=0,
+drawLegend <- function(ggp,dvar,xvar,y.band,
+                       segment,toofar=0,
                        legendtext,
                        dLowD=NA,dTarget=NA,
                        dCont=TRUE,dLow=NA,dHigh=NA,
@@ -184,7 +179,6 @@ drawLegend <- function(ggp,dvar,xvar,segment,toofar=0,
   npoints <- ggp[["npoints"]]
   heightFactor=ggp[["heightFactor"]]
   distPerPoint=ggp[["distPerPoint"]]
-  ymin <- ggp[["ymin"]] - height("label",scale=heightFactor)
   # column width vectors sum to 13 in bar functions
   dLegendWidth <- dLegendWidth(npoints,distPerPoint,minNumPoints)
 
@@ -199,7 +193,7 @@ drawLegend <- function(ggp,dvar,xvar,segment,toofar=0,
                            xvar=xvardraw,
                            lowval=dLow,hival=dHigh,
                            lowcolor=dColorLow,hicolor=dColorHigh,
-                           legendwidth=dLegendWidth,y.bottom=ymin,
+                           legendwidth=dLegendWidth,y.bottom=y.band,
                            legend.height=height("label",heightFactor))
   } else {
     g <- discrete_legend(g,legendtext=legendtext,
@@ -207,14 +201,14 @@ drawLegend <- function(ggp,dvar,xvar,segment,toofar=0,
                          lowval=dLowD,hival=dTarget,
                          lowcolor=dColorLow,midcolor=dColorMid,
                          hicolor=dColorHigh,
-                         legendwidth=dLegendWidth,y.bottom=ymin,
+                         legendwidth=dLegendWidth,y.bottom=y.band,
                          legend.height=height("label",heightFactor))
   }
   ggpreturn[["g"]] <- g
-  ggpreturn[["ymin"]] <- ymin
   return(ggpreturn)
 }
-drawBar <- function(ggp,dvar,xvar,segment,toofar=0,
+drawBar <- function(ggp,dvar,xvar,y.band,
+                    segment,toofar=0,
                     dTarget=NA,
                     dCont=TRUE,dLow=NA,dHigh=NA,
                     dColorLow=NA,dColorMid=NA,dColorHigh=NA,
@@ -225,7 +219,6 @@ drawBar <- function(ggp,dvar,xvar,segment,toofar=0,
   npoints <- ggp[["npoints"]]
   heightFactor=ggp[["heightFactor"]]
   distPerPoint=ggp[["distPerPoint"]]
-  ymin <- ggp[["ymin"]] - height("band",scale=heightFactor)
 
   drawpts <- approxSegments(xvar=xvar,yvar=dvar,
                             segment=segment,npoints=npoints,
@@ -238,17 +231,17 @@ drawBar <- function(ggp,dvar,xvar,segment,toofar=0,
     g <- continuous_band(g,xvar=xvardraw,vals=ddraw,
                          lowval=dLow,hival=dHigh,
                          lowcolor=dColorLow,hicolor=dColorHigh,
-                         y.bottom=ymin,
+                         y.bottom=y.band,
                          band.height=height("band",heightFactor))
   } else {
     g <- discrete_band(g,xvar=xvardraw,vals=ddraw,
                       lowval=dLow,hival=dTarget,
                       lowcolor=dColorLow,midcolor=dColorMid,
                       hicolor=dColorHigh,
-                      y.bottom=ymin,band.height=height("band",heightFactor))
+                      y.bottom=y.band,
+                      band.height=height("band",heightFactor))
   }
   ggpreturn[["g"]] <- g
-  ggpreturn[["ymin"]] <- ymin
   return(ggpreturn)
 }
 addGap <- function(ggp,nrep=1) {
@@ -256,7 +249,7 @@ addGap <- function(ggp,nrep=1) {
   ggpreturn <- ggp
   heightFactor=ggp[["heightFactor"]]
   distPerPoint=ggp[["distPerPoint"]]
-  ymin <- ggp[["ymin"]] - nrep*height("gap",scale=heightFactor)
+  ymin <- ggp[["ymin"]] - nrep*height("gap",plotscale=heightFactor)
   ggpreturn[["ymin"]] <- ymin
   return(ggpreturn)
 }

@@ -166,8 +166,6 @@ segSummary <- function(time,dist,segment,stopped,subsegment,
                                         locEnd=segdata$distStop,
                                         timeBeg=segdata$timeMove,
                                         timeEnd=segdata$timeStop))
-#segSumFrame <<- segSumFrame
-#segdata <<- segdata
   stopSumFrame <- tibble::as_tibble(list(stopNum=c(0,segment[newseg]),
                                          locBeg=c(0.0,segdata$distStop),
                                          locEnd=c(segdata$distMove,dist[length(dist)]),
@@ -266,45 +264,34 @@ verticalMult <- function(dist,imperial) {
                         (miles-distbends[which(distbends>miles)[1]-1]) )
   return(vm)
 }
-heightWith <- function(speedDistance,gradeDistance,
-                       hrDistance,cadDistance,powerDistance,
-                       speedTime,gradeTime,
-                       hrTime,cadTime,powerTime,
-                       headerTime,scale) {
-  headerH <- heightXAxis(scale) + heightTAxis(scale) +
-    + height("connector",scale)
-  nlegends <- (speedDistance | speedTime) +
-              (gradeDistance | gradeTime) +
-              (hrDistance | hrTime) +
-              (cadDistance | cadTime) +
-              (powerDistance | powerTime)
-  nbands <- speedDistance + gradeDistance +
-            hrDistance + cadDistance + powerDistance +
-            speedTime + gradeTime +
-            hrTime + cadTime + powerTime
-  return( ifelse(headerTime,headerH,heightXAxis(scale)) +
-          nlegends*height("label",scale) +
-          nbands*height("band",scale)
+heightWith <- function(ordervec,showTime,plotscale) {
+  headerH <- heightXAxis(plotscale) + heightTAxis(plotscale) +
+    + height("connector",plotscale)
+  nlegends <- sum(!is.na(ordervec))
+  nbands <- 2*nlegends
+  return( ifelse(showTime,headerH,heightXAxis(plotscale)) +
+          nlegends*height("label",plotscale) +
+          nbands*height("band",plotscale)
   )
 }
-heightTAxis <- function(scale) {
-  return(height("axisToLegend",scale)+
-           height("axisLabel",scale)+
-           5*height("gap",scale))
+heightTAxis <- function(plotscale) {
+  return(height("axisToLegend",plotscale)+
+           height("axisLabel",plotscale)+
+           5*height("gap",plotscale))
 }
-heightXAxis <- function(scale) {
-  return(height("axisToLegend",scale)+
-           height("axisLabel",scale)+
-           3*height("gap",scale))
+heightXAxis <- function(plotscale) {
+  return(height("axisToLegend",plotscale)+
+           height("axisLabel",plotscale)+
+           3*height("gap",plotscale))
 }
-height <- function(what,scale) {
-  if (what=="label") return(20/scale)
-  else if (what=="band") return(35/scale)
-  else if (what=="gap") return(3/scale)
-  else if (what=="connector") return(150/scale)
-  else if (what=="summary") return(200/scale)
-  else if (what=="axisToLegend") return(27/scale)
-  else if (what=="axisLabel") return(35/scale)
+height <- function(what,plotscale) {
+  if (what=="label") return(20/plotscale)
+  else if (what=="band") return(35/plotscale)
+  else if (what=="gap") return(3/plotscale)
+  else if (what=="connector") return(150/plotscale)
+  else if (what=="summary") return(200/plotscale)
+  else if (what=="axisToLegend") return(27/plotscale)
+  else if (what=="axisLabel") return(35/plotscale)
   else stop(paste0("don't know what ",what," is"))
 }
 milesFromMeters <- function(meters) {
