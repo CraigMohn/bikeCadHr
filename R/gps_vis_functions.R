@@ -32,7 +32,8 @@ discrete_band <- function(g,xvar,vals,
   prtvalue[!is.na(vals) & vals>=hival] <- hicolor
 
   y.band <- y.bottom + (band.height/2)
-  valsDataFrame <- data.frame(xvar,y.band,vals,prtvalue,band.height)
+  valsDataFrame <- data.frame(xvar,y.band,vals,prtvalue,band.height,
+                              row.names=NULL)
   g <- g +
     ggplot2::geom_tile(data=valsDataFrame,
                        aes(y=y.band,x=xvar,fill=prtvalue,color=prtvalue),
@@ -96,7 +97,8 @@ discrete_legend <- function(g,legendtext,xvar,
    hjust.legend <- c(0,0.5,0.5,0.5)
    valsTextFrame <- data.frame(x1.legend,x2.legend,y1.legend,y2.legend,
                                xtext.legend,ytext.legend,legendlabels,
-                               legendcolors,alpha.legend,hjust.legend)
+                               legendcolors,alpha.legend,hjust.legend,
+                               row.names=NULL)
    g <- g +
       ggplot2::geom_rect(data=valsTextFrame,
                          aes(xmin=x1.legend,xmax=x2.legend,fill=legendcolors,
@@ -288,9 +290,9 @@ height <- function(what,plotscale) {
   if (what=="label") return(20/plotscale)
   else if (what=="band") return(35/plotscale)
   else if (what=="gap") return(3/plotscale)
-  else if (what=="connector") return(150/plotscale)
+  else if (what=="connector") return(100/plotscale)
   else if (what=="summary") return(200/plotscale)
-  else if (what=="axisToLegend") return(27/plotscale)
+  else if (what=="axisToLegend") return(20/plotscale)
   else if (what=="axisLabel") return(35/plotscale)
   else stop(paste0("don't know what ",what," is"))
 }

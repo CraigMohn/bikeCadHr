@@ -7,21 +7,18 @@
 \usage{
 plot_profile(track, summary, savefn, title = "Ride starting ",
   palette = "plasma", naPlotColor = "gray88",
-  verticalMultiplier = NA, ppm = NA, elevationShape = 46,
-  speedDistance = TRUE, gradeDistance = TRUE, hrDistance = TRUE,
-  cadDistance = TRUE, powerDistance = TRUE, speedTime = TRUE,
-  gradeTime = TRUE, hrTime = TRUE, cadTime = TRUE,
-  powerTime = TRUE, showTime = TRUE, showSummary = TRUE,
-  showStops = TRUE, hrLow = 100, hrHigh = 170, hrColorLow = 11,
-  hrColorHigh = 26, cadTarget = 88, cadCont = TRUE, cadLow = 50,
-  cadHigh = 120, cadColorLow = 4, cadColorMid = 10,
-  cadColorHigh = 15, powerLow = 75, powerHigh = 400,
-  powerColorLow = 9, powerColorHigh = 21, hrSmoothBW = 6,
-  hrSmoothNN = 6, cadSmoothBW = 10, cadSmoothNN = 10,
-  gradeSmoothBW = 13, gradeSmoothNN = 13, powerSmoothBW = 10,
-  powerSmoothNN = 10, elevSmoothBWMeters = 15,
-  stopToleranceMeters = 20, minSecsRolling = 10, minNumPoints = 3000,
-  imperial = TRUE)
+  verticalMultiplier = NA, ppm = NA, displayBands = c("speed",
+  "grade", "cadence", "power", "heartrate"), elevationShape = 46,
+  showTime = TRUE, showSummary = TRUE, showStops = TRUE,
+  hrLow = 100, hrHigh = 170, hrColorLow = 11, hrColorHigh = 26,
+  cadTarget = 88, cadCont = TRUE, cadLow = 50, cadHigh = 120,
+  cadColorLow = 4, cadColorMid = 10, cadColorHigh = 15,
+  powerLow = 75, powerHigh = 400, powerColorLow = 9,
+  powerColorHigh = 21, hrSmoothBW = 6, hrSmoothNN = 6,
+  cadSmoothBW = 10, cadSmoothNN = 10, gradeSmoothBW = 13,
+  gradeSmoothNN = 13, powerSmoothBW = 10, powerSmoothNN = 10,
+  elevSmoothBWMeters = 15, stopToleranceMeters = 20,
+  minSecsRolling = 10, minNumPoints = 3000, imperial = TRUE)
 }
 \arguments{
 \item{track}{data frame or tibble containing track details including
@@ -45,33 +42,17 @@ ranges from 25 to 60 depending on the length being plotted}
 
 \item{ppm}{override calculated default number of points per mile}
 
+\item{displayBands}{character vector of variables displayed under profile,
+in order from top to bottom}
+
 \item{elevationShape}{shape to use for drawing the elevation plot}
-
-\item{speedDistance}{display speed data scaled by distance if available}
-
-\item{gradeDistance}{display speed data scaled by distance if available}
-
-\item{hrDistance}{display HR data scaled by distance if available}
-
-\item{cadDistance}{display cadence data scaled by distance if available}
-
-\item{powerDistance}{display power data scaled by distance if available}
-
-\item{speedTime}{display speed data scaled by time if available}
-
-\item{gradeTime}{display grade data scaled by time if available}
-
-\item{hrTime}{display HR data scaled by time if available}
-
-\item{cadTime}{display cadence data scaled by time if available}
-
-\item{powerTime}{display power data scaled by time if available}
 
 \item{showTime}{draw time axis - use FALSE to suppress,}
 
 \item{showSummary}{display summary results if supplied}
 
-\item{showStops}{draw row with short and long stops on distance axis}
+\item{showStops}{draw marks for short and long stops on distance axis if
+time axis not drawn}
 
 \item{hrLow}{heartrates below this are same color}
 

@@ -285,7 +285,7 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
     if (rgl) {
       maptrack3d::draw3dMap(paths=mapdf,
                   trackCurve=TRUE,
-                  trackCurveElevFromRaster=TRUE,
+                  trackCurveElevFromRaster=FALSE,
                   trackCurveHeight=15,
                   mapWindow=c(map.lon.min.dd,map.lon.max.dd,
                               map.lat.min.dd,map.lat.max.dd),
@@ -395,7 +395,8 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
 #' @param displayBands character vector of variables displayed under profile,
 #'    in order from top to bottom
 #' @param elevationShape shape to use for drawing the elevation plot
-#' @param showStops draw row with short and long stops on distance axis
+#' @param showStops draw marks for short and long stops on distance axis if
+#'   time axis not drawn
 #' @param showTime draw time axis - use FALSE to suppress,
 #' @param showSummary display summary results if supplied
 #' @param cadCont display cadence as a continuos color map
@@ -476,12 +477,11 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                any(!is.na(track$power.watts)),
                any(!is.na(track$heart_rate.bpm)))
   names(hasdata) <- allBands
-  displayBands <- displayBands[displayBands %in% allBands]
+  displayBands <- unique(displayBands[displayBands %in% allBands])
   displayBands <- displayBands[hasdata[displayBands]]
   orderBands <- match(allBands,displayBands)
   names(orderBands) <- allBands
   numBands <- sum(!is.na(orderBands))
-
   ##  set up numeric time (in seconds) and smoothed variables
   walltime <- as.numeric(difftime(track$timestamp.s,track$timestamp.s[1],
                                   units="secs"))
@@ -637,10 +637,10 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                            legendtext="Grade",
                            segment=track$segment,
                            toofar=0,
-                           dLow=-0.22,
-                           dHigh=0.22,
-                           dColorLow=0,
-                           dColorHigh=40,
+                           dLow=-0.15,
+                           dHigh=0.15,
+                           dColorLow=40,
+                           dColorHigh=0,
                            minNumPoints=minNumPoints)
   if (!is.na(orderBands["heartrate"]))
     grlist <- drawLegend(ggp=grlist,dvar=hrsm,
@@ -709,10 +709,10 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                         orderBands["grade"]*height("band",y.scale),
                       segment=rep(1,length(distance)),
                       toofar=0,
-                      dLow=-0.22,
-                      dHigh=0.22,
-                      dColorLow=0,
-                      dColorHigh=40,
+                      dLow=-0.15,
+                      dHigh=0.15,
+                      dColorLow=40,
+                      dColorHigh=0,
                       minNumPoints=minNumPoints)
   if (!is.na(orderBands["heartrate"]))
     grlist <- drawBar(ggp=grlist,dvar=hrsm,
@@ -794,10 +794,10 @@ plot_profile <- function(track,summary,savefn,title="Ride starting ",
                          orderBands["grade"]*height("band",y.scale),
                        segment=rep(1,length(distance)),
                        toofar=0,
-                       dLow=-0.22,
-                       dHigh=0.22,
-                       dColorLow=0,
-                       dColorHigh=40,
+                       dLow=-0.15,
+                       dHigh=0.15,
+                       dColorLow=40,
+                       dColorHigh=0,
                        minNumPoints=minNumPoints)
     if (!is.na(orderBands["heartrate"]))
       grlist <- drawBar(ggp=grlist,dvar=hrsm,
