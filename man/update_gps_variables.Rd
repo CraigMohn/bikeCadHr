@@ -13,8 +13,10 @@ update_gps_variables(outdir, fitrootdir, gpxrootdir,
   localElevFile = "", maptype = "bing", featureDataSource = "Raster",
   townLevel = 9, roadLevel = 3, waterALevel = 4, waterLLevel = 5,
   rglColorScheme = "default", useImageRaster = FALSE,
-  plot3DVertScale = 1, cadCont = TRUE, drawmap = TRUE,
-  drawmap.both = FALSE, cores = 4, loud = FALSE, ...)
+  trackCurveElevFromRaster = FALSE, trackCurveHeight = 15,
+  res3d = 3000, plot3DVertScale = 1, cadCont = TRUE,
+  drawmap = TRUE, drawmap.both = FALSE, cores = 4, loud = FALSE,
+  ...)
 }
 \arguments{
 \item{outdir}{string containing location of output data pair files}
@@ -93,6 +95,12 @@ c("default","beach","viridis","plasma","terrain","oleron","snow","oslo",
 
 \item{useImageRaster}{logical, use the image raster from saved openStreetmap
 colrings of the map surface}
+
+\item{trackCurveElevFromRaster}{logical, see help for draw3dMap}
+
+\item{trackCurveHeight}{numeric, see help for draw3dMap}
+
+\item{res3d}{integer, see help for draw3dMap}
 
 \item{plot3DVertScale}{number which will multiply vertical scaling for plotly/rgl}
 

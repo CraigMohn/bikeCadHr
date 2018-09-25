@@ -7,9 +7,11 @@
 map_rides(geodf, outfile, maptitle, definedmaps, usemap,
   rasterDir = NULL, plotly = FALSE, rgl = FALSE,
   localElevFile = "", plot3DSize = 300, plot3DVertScale = 1,
-  featureDataSource = "none", townLevel = 3, roadLevel = 4,
-  waterALevel = 4, waterLLevel = 5, rglColorScheme = "default",
-  useImageRaster = FALSE, rglColorMaxElev = 3000, rglShininess = 0,
+  trackCurveElevFromRaster = FALSE, trackCurveHeight = 15,
+  res3d = 3000, featureDataSource = "none", townLevel = 3,
+  roadLevel = 4, waterALevel = 4, waterLLevel = 5,
+  rglColorScheme = "default", useImageRaster = FALSE,
+  rglColorMaxElev = 3000, rglShininess = 0,
   rglLightPars = "viewpoint.rel=TRUE", rglLights = TRUE,
   maptype = "osm", minTiles = 50, mapsize = c(1600, 1200),
   fine.map = FALSE, margin.factor = 0.08, draw.speed = FALSE,
@@ -41,9 +43,15 @@ latitude andf longitude of the map area}
 
 \item{localElevFile}{file containing raster object with elevations on lat/lon}
 
-\item{plot3DSize}{number which is rough target for size of grid for plotly/rgl}
+\item{plot3DSize}{number which is rough target for size of grid for plotly}
 
 \item{plot3DVertScale}{number which will multiply vertical scaling for plotly/rgl}
+
+\item{trackCurveElevFromRaster}{logical, see help for draw3dMap}
+
+\item{trackCurveHeight}{numeric, see help for draw3dMap}
+
+\item{res3d}{integer, see help for draw3dMap}
 
 \item{featureDataSource}{character,  "Raster" to load saved raster data
 from directory specified , "none" to show none}

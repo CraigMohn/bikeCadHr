@@ -19,7 +19,10 @@
 #' @param rgl use rgl openGL to draw 3D track in viewer
 #' @param rasterDir character location of base directory to load and save raster files
 #' @param localElevFile file containing raster object with elevations on lat/lon
-#' @param plot3DSize number which is rough target for size of grid for plotly/rgl
+#' @param plot3DSize number which is rough target for size of grid for plotly
+#' @param trackCurveElevFromRaster logical, see help for draw3dMap
+#' @param trackCurveHeight numeric, see help for draw3dMap
+#' @param res3d integer, see help for draw3dMap
 #' @param featureDataSource character,  "Raster" to load saved raster data
 #'    from directory specified , "none" to show none
 #' @param townLevel numeric, display towns ranked this number or higher:
@@ -90,6 +93,9 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
                       rasterDir=NULL,
                       plotly=FALSE,rgl=FALSE,localElevFile="",
                       plot3DSize=300,plot3DVertScale=1,
+                      trackCurveElevFromRaster=FALSE,
+                      trackCurveHeight=15,
+                      res3d=3000,
                       featureDataSource="none",
                       townLevel=3,roadLevel=4,waterALevel=4,waterLLevel=5,
                       rglColorScheme="default",useImageRaster=FALSE,
@@ -285,8 +291,8 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
     if (rgl) {
       maptrack3d::draw3dMap(paths=mapdf,
                   trackCurve=TRUE,
-                  trackCurveElevFromRaster=FALSE,
-                  trackCurveHeight=15,
+                  trackCurveElevFromRaster=trackCurveElevFromRaster,
+                  trackCurveHeight=trackCurveHeight,
                   mapWindow=c(map.lon.min.dd,map.lon.max.dd,
                               map.lat.min.dd,map.lat.max.dd),
                   USStatevec=NULL,
@@ -298,7 +304,7 @@ map_rides <- function(geodf,outfile,maptitle,definedmaps,usemap,
                   vScale=plot3DVertScale,maxElev=rglColorMaxElev,
                   rglColorScheme=rglColorScheme,useImageRaster=useImageRaster,
                   rasterDir=rasterDir,
-                  res3d=2400)
+                  res3d=res3d)
     }
     p <- NULL
     if (plotly) {

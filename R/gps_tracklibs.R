@@ -38,6 +38,9 @@
 #' @param rgl if TRUE use rgl to draw 3D track in viewer
 #' @param rasterDir character location of base directory to load and save raster files
 #' @param localElevFile file containing raster object with elevations on lat/lon
+#' @param trackCurveElevFromRaster logical, see help for draw3dMap
+#' @param trackCurveHeight numeric, see help for draw3dMap
+#' @param res3d integer, see help for draw3dMap
 #' @param featureDataSource character,  "Raster" to load saved raster data
 #'    from directory specified , "none" to show none
 #' @param townLevel numeric, display towns ranked this number or higher:
@@ -91,6 +94,9 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
                   featureDataSource="Raster",
                   townLevel=9,roadLevel=3,waterALevel=4,waterLLevel=5,
                   rglColorScheme="default",useImageRaster=FALSE,
+                  trackCurveElevFromRaster=FALSE,
+                  trackCurveHeight=15,
+                  res3d=3000,
                   plot3DVertScale=1,
                   cadCont=TRUE,
                   drawmap=TRUE,drawmap.both=FALSE,cores=4,loud=FALSE,...) {
@@ -176,6 +182,9 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
                     draw.speed=TRUE,minTiles=200,
                     outfile=outfile,mapsize=c(3840,2400),
                     rasterDir=rasterDir,
+                    trackCurveElevFromRaster=trackCurveElevFromRaster,
+                    trackCurveHeight=trackCurveHeight,
+                    res3d=res3d,
                     plotly=plotly,rgl=rgl,localElevFile=localElevFile,
                     plot3DVertScale=plot3DVertScale,
                     speed.color="speedcolors",maptype=maptype,
@@ -263,6 +272,9 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
                   outfile=outfile,mapsize=c(1920,1200),maptype=maptype,
                   plotly=plotly,rgl=rgl,localElevFile=localElevFile,
                   rasterDir=rasterDir,
+                  trackCurveElevFromRaster=trackCurveElevFromRaster,
+                  trackCurveHeight=trackCurveHeight,
+                  res3d=res3d,
                   draw.speed=TRUE,speed.color="magma",
                   featureDataSource=featureDataSource,
                   townLevel=townLevel,roadLevel=roadLevel,
