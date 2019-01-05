@@ -4,12 +4,15 @@
 \alias{read_ridefiles}
 \title{read multiple gps data files}
 \usage{
-read_ridefiles(ridefilevec, cores = 4, loud = loud, ...)
+read_ridefiles(ridefilevec, cores = 4, usefitdc = FALSE, loud = loud,
+  ...)
 }
 \arguments{
 \item{ridefilevec}{a vector of filenames to process}
 
 \item{cores}{number of cores (default is #CPUs - 1)}
+
+\item{usefitdc}{use package fitdc to read fit files instead of fitparse}
 
 \item{loud}{display summary of re/segmenting actions}
 

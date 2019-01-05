@@ -8,6 +8,7 @@
 #' @param ridefilevec a vector of filenames to process
 #' @param cores number of cores (default is #CPUs - 1)
 #' @param loud display summary of re/segmenting actions
+#' @param usefitdc use package fitdc to read fit files instead of fitparse
 #' @param ... parameters passed for track cleaning
 #'
 #' @return a list of two data tibbles:  \eqn{summaries} and \eqn{tracks}
@@ -17,7 +18,8 @@
 #' @seealso \code{\link{read_ride}}
 #'
 #' @export
-read_ridefiles <- function(ridefilevec,cores=4,loud=loud,...)  {
+read_ridefiles <- function(ridefilevec,cores=4,
+                           usefitdc=FALSE,loud=loud,...)  {
 
   nfiles <- length(ridefilevec)
   if(missing(cores)) cores <- parallel::detectCores()
@@ -28,7 +30,7 @@ read_ridefiles <- function(ridefilevec,cores=4,loud=loud,...)  {
                                trackpoints=dplyr::bind_rows(a[["trackpoints"]],b[["trackpoints"]]))
     ridelist <- foreach (x = ridefilevec,.combine=`cfun`,
                         .packages=c("bikeCadHr")) %dopar% {
-      read_ride(x,loud=loud,...)
+      read_ride(x,loud=loud,usefitdc=usefitdc,...)
     }
     doParallel::stopImplicitCluster()
     return(list(summaries=dplyr::arrange(ridelist[["summary"]],date,start.hour),
@@ -69,6 +71,7 @@ read_ridefiles <- function(ridefilevec,cores=4,loud=loud,...)  {
 #' @param fixDistance repair nonmonotonicities in distance which are on
 #'    segment breaks - this occurs when power is lost or on some device lockups
 #' @param loud print information about re/segmenting track data
+#' @param usefitdc use package fitdc to read fit files instead of fitparse
 #' @param ... parameters for \code{\link{processSegments}},
 #'    \code{\link{statsCadence}},
 #'    \code{\link{statsPower}},
@@ -95,14 +98,15 @@ read_ridefiles <- function(ridefilevec,cores=4,loud=loud,...)  {
 #'
 #' @export
 read_ride <- function(ridefile,tz="America/Los_Angeles",
-                      fixDistance=FALSE,loud=FALSE,...)  {
+                      fixDistance=FALSE,loud=FALSE,
+                      usefitdc=FALSE,...)  {
 
   cat("\nreading: ",ridefile,"\n")
   if (missing(tz)) {
     tz <- Sys.timezone()
   }
   if (substr(ridefile,nchar(ridefile)-3,nchar(ridefile))==".fit") {
-    temp <- read_fittrack(ridefile)
+    temp <- read_fittrack(ridefile,usefitdc=usefitdc)
     time.fn.string <- basename(ridefile)
     fit.fn.time.parse <- getOption("bCadHr.fit.fn.time.parse")
     fit.fn.lead <- getOption("bCadHr.fit.fn.lead")
@@ -330,12 +334,13 @@ repairCadence <- function(trackdf,
     trackdf$speed.m.s==0
   if (loud & sum(cadzero)>0) {
     cat("  ",sum(cadzero)," positive cadence values while speed is 0\n")
+    temp <- trackdf[cadzero,c("timestamp.s","speed.m.s","cadence.rpm",
+                           "distance.m")]
     if (sum(cadzero)>10)
-      print(trackdf[cadzero,c("timestamp.s","speed.m.s","cadence.rpm",
-                              "distance.m")],n=50)
+      print(temp,n=50,na.print="NA")
     if (cadCorrectStopped) cat("     setting them to zero\n")
   }
-  if (cadCorrectStopped) {
+  if (cadCorrectStopped & length(cadzero)>0) {
     trackdf$cadence.rpm[cadzero] <- 0
   }
 
@@ -435,7 +440,6 @@ processSegments <- function(trackdf,
   stopped[length(stopped)] <-TRUE
   starting <- !stopped & lag_one(stopped)
   starting[1] <- TRUE
-
   ###   now process segment and stop data
   #  wipe existing segment data from gps (auto)start/stop if requested
   #  otherwise make it a sequence of consecutive nondecreasing integers

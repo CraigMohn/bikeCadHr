@@ -5,7 +5,7 @@
 \title{read and clean a gps data file}
 \usage{
 read_ride(ridefile, tz = "America/Los_Angeles", fixDistance = FALSE,
-  loud = FALSE, ...)
+  loud = FALSE, usefitdc = FALSE, ...)
 }
 \arguments{
 \item{ridefile}{a filenames (.fit or .gpx extension) to process}
@@ -16,6 +16,8 @@ read_ride(ridefile, tz = "America/Los_Angeles", fixDistance = FALSE,
 segment breaks - this occurs when power is lost or on some device lockups}
 
 \item{loud}{print information about re/segmenting track data}
+
+\item{usefitdc}{use package fitdc to read fit files instead of fitparse}
 
 \item{...}{parameters for \code{\link{processSegments}},
 \code{\link{statsCadence}},
