@@ -1,6 +1,6 @@
 read_fittrack <- function(fitfile,usefitdc,createSegs=FALSE) {
 
-  requiredVars <- c("altittude.m", "distance.m", "heart_rate.bpm", "speed.m.s",
+  requiredVars <- c("altitude.m", "distance.m", "heart_rate.bpm", "speed.m.s",
                     "timestamp.s", "cadence.rpm", "power.watts")
   if (usefitdc) {
     dflist <- read_fitdc(fitfile, requiredVars=requiredVars)
@@ -10,6 +10,9 @@ read_fittrack <- function(fitfile,usefitdc,createSegs=FALSE) {
   records <- dflist[["records"]]
   session <- dflist[["session"]]
   events <- dflist[["events"]]
+  records$timestamp.s <- as.POSIXct(records$timestamp.s,tz="UTC",origin='1989-12-31')
+  events$timestamp.s <- as.POSIXct(events$timestamp.s,tz="UTC",origin='1989-12-31')
+
 
   #  drop records with no distance measure, they are beyond salvage
   records <- records[!is.na(records$distance.m),]
@@ -166,7 +169,7 @@ read_fittrack <- function(fitfile,usefitdc,createSegs=FALSE) {
     }
   }
 
-  records$timestamp.s <- as.POSIXct(records$timestamp.s,tz="UTC",origin='1989-12-31')
+#records$timestamp.s <- as.POSIXct(records$timestamp.s,tz="UTC",origin='1989-12-31')
   records <- dplyr::arrange(records[!is.na(records$segment),],timestamp.s)
   if ("position_lat.semicircles" %in% colnames(records)) {
     records$position_lat.dd <- records$position_lat.semicircles*( 180 / 2^31 )
@@ -264,9 +267,10 @@ read_fitdc <- function(fitfile,requiredVars) {
   #  try this since few relatively few events compared to records, slow but avoids warnings...
   colnames_full <- unique(unlist(lapply(events,names)))
   empty <- stats::setNames(as.list(rep(NA, length(colnames_full))),colnames_full)
-  if (!"data" %in% colnames(empty)) empty$data <- NA
+  if (!"data." %in% colnames(empty)) empty$data. <- NA
   events <- dplyr::bind_rows(lapply(events, merge_lists, empty))
-  names(events) <- gsub(".","",names(events))
+  names(events) <- gsub("[.]","",names(events))
+  names(events) <- gsub("timestamps","timestamp.s",names(events))
 
   session <- Filter(is_session, data_mesgs)
   session <- lapply(session, format_session)

@@ -4,22 +4,30 @@
 \alias{read_ride}
 \title{read and clean a gps data file}
 \usage{
-read_ride(ridefile, tz = "America/Los_Angeles", fixDistance = FALSE,
-  loud = FALSE, usefitdc = FALSE, ...)
+read_ride(ridefile, tz = "America/Los_Angeles", stopSpeed = 0,
+  fixDistance = FALSE, loud = FALSE, loudSegment = FALSE,
+  usefitdc = FALSE, ...)
 }
 \arguments{
 \item{ridefile}{a filenames (.fit or .gpx extension) to process}
 
 \item{tz}{string contaiing timezone for converting from UTC}
 
+\item{stopSpeed}{- speed in m/s below which the bike is considered stopped
+for time and cadence calculations}
+
 \item{fixDistance}{repair nonmonotonicities in distance which are on
 segment breaks - this occurs when power is lost or on some device lockups}
 
-\item{loud}{print information about re/segmenting track data}
+\item{loud}{print information about hr/cadence data issues/fixes}
+
+\item{loudSegment}{print information about re/segmenting track data}
 
 \item{usefitdc}{use package fitdc to read fit files instead of fitparse}
 
 \item{...}{parameters for \code{\link{processSegments}},
+\code{\link{repairHR}},
+\code{\link{repairCadence}},
 \code{\link{statsCadence}},
 \code{\link{statsPower}},
 \code{\link{statsHeartRate}},
@@ -45,6 +53,8 @@ a list of three data tibbles:  \eqn{summary} and \eqn{trackpoints}
 \seealso{
 \code{\link{read_ridefiles}},
    \code{\link{processSegments}},
+   \code{\link{repairHR}},
+   \code{\link{repairCadence}},
    \code{\link{statsCadence}},
    \code{\link{statsPower}},
    \code{\link{statsHeartRate}},

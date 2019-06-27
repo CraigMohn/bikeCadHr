@@ -76,6 +76,7 @@
 #'    the ride with speed-varying color for both the .fit files and the .gox files
 #' @param cores numer of cores (default is #CPUs - 1)
 #' @param loud display summary of re/segmenting
+#' @param usefitdc use package fitdc to read fit files instead of fitparse
 #' @param ... parameters passed for track cleaning
 #'
 #' @return a tbl contining the combined summaries and tracks, with preference
@@ -85,7 +86,7 @@
 #' @seealso \code{\link{read_ride}}
 #'
 #' @export
-update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c(NA,NA)),
+update_gps_variables <- function(outdir,fitrootdir,gpxrootdir=NA,merge.files=list(c(NA,NA)),
                   fitexcludes=c("bad","short"),gpxexcludes=c("bad","short","nosegs"),prefer.gpx=c(""),
                   rebuild.all.fit=FALSE,rebuild.all.gpx=FALSE,
                   drawprofile=TRUE,drawprofile.both=FALSE,elevationChar="|",
@@ -99,7 +100,8 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
                   res3d=3000,
                   plot3DVertScale=1,
                   cadCont=TRUE,
-                  drawmap=TRUE,drawmap.both=FALSE,cores=4,loud=FALSE,...) {
+                  drawmap=TRUE,drawmap.both=FALSE,
+                  cores=4,loud=FALSE,usefitdc=FALSE,...) {
 
   nomap <- maptype=="none"
   num_drawn <- 0
@@ -118,7 +120,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
         fl <- fl[grep(x,fl,invert=TRUE)]
       }
     }
-    fitlist <- read_ridefiles(fl,cores=cores,loud=loud,...)
+    fitlist <- read_ridefiles(fl,cores=cores,loud=loud,usefitdc=usefitdc,...)
     fitsummary <- fitlist[["summaries"]]
     fittracks <- dplyr::arrange(fitlist[["tracks"]],startbutton.date,timestamp.s)
     newfitfiles <- basename(fl)
@@ -141,7 +143,8 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
       }
     }
     if (length(newfitfiles)>0) {
-      newfitlist <- read_ridefiles(newfitfiles,cores=cores,loud=loud,...)
+      newfitlist <- read_ridefiles(newfitfiles,cores=cores,
+                                   loud=loud,usefitdc=usefitdc,...)
       newfitresults <- newfitlist[["summaries"]]
       newfittracks <- newfitlist[["tracks"]]
       newfiles <- newfitresults$sourcefile
@@ -201,107 +204,112 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir,merge.files=list(c
   if (length(newfitfiles)>0) save(fitsummary,file=paste0(outdir,"/fitsummary.rda"))
   if (length(newfitfiles)>0) save(fittracks,file=paste0(outdir,"/fittracks.rda"))
 
-  setwd(gpxrootdir)
-  if (rebuild.all.gpx) {
-    sink(file=paste0(outdir,"/gps_readgpxfiles.txt"),split=TRUE)
-    fl <- list.files(pattern=".gpx",recursive=TRUE)
-    if (!(gpxexcludes[1]=="")) {
-      for (x in gpxexcludes) {
-        fl <- fl[grep(x,fl,invert=TRUE)]
+  if (!is.na(gpxrootdir)) {
+    setwd(gpxrootdir)
+    if (rebuild.all.gpx) {
+      sink(file=paste0(outdir,"/gps_readgpxfiles.txt"),split=TRUE)
+      fl <- list.files(pattern=".gpx",recursive=TRUE)
+      if (!(gpxexcludes[1]=="")) {
+        for (x in gpxexcludes) {
+          fl <- fl[grep(x,fl,invert=TRUE)]
+        }
       }
-    }
-    gpxlist <- read_ridefiles(fl,cores=cores,loud=loud,...)
-    gpxsummary <- gpxlist[["summaries"]]
-    gpxtracks <- dplyr::arrange(gpxlist[["tracks"]],timestamp.s)
-    newgpxfiles <- basename(fl)
-    if (!missing(merge.files)&!is.na(merge.files[[1]][1])) {
-      temp <- join_ridefiles(merge.files,gpxsummary,gpxtracks)
-      if (temp[[1]]) {
-        gpxsummary <- temp[[3]]
-        gpxtracks <- temp[[4]]
-        newgpxfiles <- setdiff(newgpxfiles,temp[[2]])
-      }
-    }
-    sink()
-  } else {
-    newgpxfiles <- list.files(pattern=".gpx",recursive=FALSE)
-    load(paste0(outdir,"/gpxsummary.rda"))
-    load(paste0(outdir,"/gpxtracks.rda"))
-    if (!(gpxexcludes[1]=="")) {
-      for (x in gpxexcludes) {
-      newgpxfiles <- newgpxfiles[grep(x,newgpxfiles,invert=TRUE)]
-       }
-    }
-    if (length(newgpxfiles)>0) {
-      newgpxlist <- read_ridefiles(newgpxfiles,cores=cores,loud=loud,...)
-      newgpxresults <- newgpxlist[["summaries"]]
-      newgpxtracks <- newgpxlist[["tracks"]]
-      newfiles <- newgpxresults$sourcefile
+      gpxlist <- read_ridefiles(fl,cores=cores,loud=loud,usefitdc=usefitdc,...)
+      gpxsummary <- gpxlist[["summaries"]]
+      gpxtracks <- dplyr::arrange(gpxlist[["tracks"]],timestamp.s)
+      newgpxfiles <- basename(fl)
       if (!missing(merge.files)&!is.na(merge.files[[1]][1])) {
-        temp <- join_ridefiles(merge.files,newgpxresults,newgpxtracks)
+        temp <- join_ridefiles(merge.files,gpxsummary,gpxtracks)
         if (temp[[1]]) {
-          newgpxresults <- temp[[3]]
-          newgpxtracks <- temp[[4]]
-          newfiles <- setdiff(newfiles,temp[[2]])
+          gpxsummary <- temp[[3]]
+          gpxtracks <- temp[[4]]
+          newgpxfiles <- setdiff(newgpxfiles,temp[[2]])
         }
       }
-      gpxpair <- combine_track_stores(primary_sums=newgpxresults,
-                                      primary_tracks=newgpxtracks,
-                                      secondary_sums=gpxsummary,
-                                      secondary_tracks=gpxtracks)
-      gpxsummary <- gpxpair[["summaries"]]
-      gpxtracks <- gpxpair[["tracks"]]
-      for (ridefn in basename(newfiles)) {
-        idate <- gpxsummary[gpxsummary$sourcefile==ridefn,]$startbutton.date
-        itime <- gpxsummary[gpxsummary$sourcefile==ridefn,]$startbutton.time
-        if (drawprofile &(num_drawn==0 | drawprofile.both))
-          rideprofile <- plot_profile(gpxtracks[gpxtracks$startbutton.date==idate&
-                                                gpxtracks$startbutton.time==itime,],
-                                      gpxsummary[gpxsummary$sourcefile==ridefn,],
-                                      elevationShape=elevationChar,
-                                      cadCont=cadCont,
-                                      savefn=paste0(outdir,"/",ridefn,"profile.png"))
-        if ((drawmap | plotly) &(num_mapped==0 | drawmap.both)) {
-          if (nomap) {
-            outfile <- "none"
-          } else {
-            outfile <- paste0(outdir,"/",ridefn,"map.jpg")
+      sink()
+    } else {
+      newgpxfiles <- list.files(pattern=".gpx",recursive=FALSE)
+      load(paste0(outdir,"/gpxsummary.rda"))
+      load(paste0(outdir,"/gpxtracks.rda"))
+      if (!(gpxexcludes[1]=="")) {
+        for (x in gpxexcludes) {
+        newgpxfiles <- newgpxfiles[grep(x,newgpxfiles,invert=TRUE)]
+         }
+      }
+      if (length(newgpxfiles)>0) {
+        newgpxlist <- read_ridefiles(newgpxfiles,cores=cores,
+                                     loud=loud,usefitdc=usefitdc,...)
+        newgpxresults <- newgpxlist[["summaries"]]
+        newgpxtracks <- newgpxlist[["tracks"]]
+        newfiles <- newgpxresults$sourcefile
+        if (!missing(merge.files)&!is.na(merge.files[[1]][1])) {
+          temp <- join_ridefiles(merge.files,newgpxresults,newgpxtracks)
+          if (temp[[1]]) {
+            newgpxresults <- temp[[3]]
+            newgpxtracks <- temp[[4]]
+            newfiles <- setdiff(newfiles,temp[[2]])
           }
-          p<-map_rides(gpxtracks[gpxtracks$startbutton.date==idate&
-                              gpxtracks$startbutton.time==itime,],
-                  outfile=outfile,mapsize=c(1920,1200),maptype=maptype,
-                  plotly=plotly,rgl=rgl,localElevFile=localElevFile,
-                  rasterDir=rasterDir,
-                  trackCurveElevFromRaster=trackCurveElevFromRaster,
-                  trackCurveHeight=trackCurveHeight,
-                  res3d=res3d,
-                  draw.speed=TRUE,speed.color="magma",
-                  featureDataSource=featureDataSource,
-                  townLevel=townLevel,roadLevel=roadLevel,
-                  waterALevel=waterALevel,waterLLevel=waterLLevel,
-                  rglColorScheme=rglColorScheme,useImageRaster=useImageRaster)
-          if (plotly) htmlwidgets::saveWidget(p, paste0(outdir,"/",ridefn,"map.html"))
+        }
+        gpxpair <- combine_track_stores(primary_sums=newgpxresults,
+                                        primary_tracks=newgpxtracks,
+                                        secondary_sums=gpxsummary,
+                                        secondary_tracks=gpxtracks)
+        gpxsummary <- gpxpair[["summaries"]]
+        gpxtracks <- gpxpair[["tracks"]]
+        for (ridefn in basename(newfiles)) {
+          idate <- gpxsummary[gpxsummary$sourcefile==ridefn,]$startbutton.date
+          itime <- gpxsummary[gpxsummary$sourcefile==ridefn,]$startbutton.time
+          if (drawprofile &(num_drawn==0 | drawprofile.both))
+            rideprofile <- plot_profile(gpxtracks[gpxtracks$startbutton.date==idate&
+                                                  gpxtracks$startbutton.time==itime,],
+                                        gpxsummary[gpxsummary$sourcefile==ridefn,],
+                                        elevationShape=elevationChar,
+                                        cadCont=cadCont,
+                                        savefn=paste0(outdir,"/",ridefn,"profile.png"))
+          if ((drawmap | plotly) &(num_mapped==0 | drawmap.both)) {
+            if (nomap) {
+              outfile <- "none"
+            } else {
+              outfile <- paste0(outdir,"/",ridefn,"map.jpg")
+            }
+            p<-map_rides(gpxtracks[gpxtracks$startbutton.date==idate&
+                                   gpxtracks$startbutton.time==itime,],
+                         outfile=outfile,mapsize=c(1920,1200),maptype=maptype,
+                         plotly=plotly,rgl=rgl,localElevFile=localElevFile,
+                         rasterDir=rasterDir,
+                         trackCurveElevFromRaster=trackCurveElevFromRaster,
+                         trackCurveHeight=trackCurveHeight,
+                         res3d=res3d,
+                         draw.speed=TRUE,speed.color="magma",
+                         featureDataSource=featureDataSource,
+                         townLevel=townLevel,roadLevel=roadLevel,
+                         waterALevel=waterALevel,waterLLevel=waterLLevel,
+                         rglColorScheme=rglColorScheme,useImageRaster=useImageRaster)
+            if (plotly) htmlwidgets::saveWidget(p, paste0(outdir,"/",ridefn,"map.html"))
+          }
         }
       }
     }
-  }
-  if (length(newgpxfiles)>0) save(gpxsummary,file=paste0(outdir,"/gpxsummary.rda"))
-  if (length(newgpxfiles)>0) save(gpxtracks,file=paste0(outdir,"/gpxtracks.rda"))
+    if (length(newgpxfiles)>0) save(gpxsummary,file=paste0(outdir,"/gpxsummary.rda"))
+    if (length(newgpxfiles)>0) save(gpxtracks,file=paste0(outdir,"/gpxtracks.rda"))
 
-  if (length(newgpxfiles)+length(newfitfiles)> 0) {
-    if (length(newfitfiles)==0) load(paste0(outdir,"/fitsummary.rda"))
-    if (length(newfitfiles)==0) load(paste0(outdir,"/fittracks.rda"))
-    if (length(newgpxfiles)==0) load(paste0(outdir,"/gpxsummary.rda"))
-    if (length(newgpxfiles)==0) load(paste0(outdir,"/gpxtracks.rda"))
-    mergeddata <- combine_track_stores(primary_sums=fitsummary,primary_tracks=fittracks,
-                                       secondary_sums=gpxsummary,secondary_tracks=gpxtracks,
-                                       prefer_secondary=prefer.gpx)
-    gpssummary <- mergeddata[[1]]
-    gpstracks <- mergeddata[[2]]
-    save(gpssummary,file=paste0(outdir,"/gpssummary.rda"))
-    save(gpstracks,file=paste0(outdir,"/gpstracks.rda"))
+    if (length(newgpxfiles)+length(newfitfiles)> 0) {
+      if (length(newfitfiles)==0) load(paste0(outdir,"/fitsummary.rda"))
+      if (length(newfitfiles)==0) load(paste0(outdir,"/fittracks.rda"))
+      if (length(newgpxfiles)==0) load(paste0(outdir,"/gpxsummary.rda"))
+      if (length(newgpxfiles)==0) load(paste0(outdir,"/gpxtracks.rda"))
+      mergeddata <- combine_track_stores(primary_sums=fitsummary,primary_tracks=fittracks,
+                                         secondary_sums=gpxsummary,secondary_tracks=gpxtracks,
+                                         prefer_secondary=prefer.gpx)
+      gpssummary <- mergeddata[[1]]
+      gpstracks <- mergeddata[[2]]
+      save(gpssummary,file=paste0(outdir,"/gpssummary.rda"))
+      save(gpstracks,file=paste0(outdir,"/gpstracks.rda"))
+    } else {
+      load(paste0(outdir,"/gpssummary.rda"))
+    }
   } else {
-    load(paste0(outdir,"/gpssummary.rda"))
+    gpssummary <- fitsummary
   }
   return(gpssummary)
 }
