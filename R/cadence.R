@@ -60,9 +60,9 @@ statsCadence <- function(trackdf,sessionpedalstrokes=NA,
     segtimes$distance.m >= segtimes$segbegdist+cadTrimBegMeters &
     segtimes$distance.m <= segtimes$segenddist-cadTrimBegMeters
 
-  cadenceNumerator <- sum(trackdf$deltatime[pedaling]*
+  cadenceNumerator <- sum(trackdf$deltatimestart[pedaling]*
                             trackdf$cadence.rpm[pedaling])
-  cadenceNumeratorInner <- sum(trackdf$deltatime[pedaling&innersegment]*
+  cadenceNumeratorInner <- sum(trackdf$deltatimestart[pedaling&innersegment]*
                                  trackdf$cadence.rpm[pedaling&innersegment])
 
   avgcadenceNoZerosSum <- cadenceNumerator / pedalTime(trackdf,...)
@@ -74,17 +74,16 @@ statsCadence <- function(trackdf,sessionpedalstrokes=NA,
     avgcadenceWithZerosSession <- NA
   } else {
     if (loud) {
-      print(paste0("pedalstrokes - session = ",sessionpedalstrokes," , summed = ",
-                   cadenceNumerator/60))
-      print(paste0(" summed exceeds session by  ",
-                   ((cadenceNumerator/(60*sessionpedalstrokes))-1)))
+      cat("pedalstrokes - session = ",sessionpedalstrokes," , summed = ",
+                   cadenceNumerator/60,"   summed exceeds session by  ",
+                   ((cadenceNumerator/(60*sessionpedalstrokes))-1),"\n")
     }
     avgcadenceNoZerosSession <- sessionpedalstrokes / (pedalTime(trackdf,...)/60)
     avgcadenceWithZerosSession <- sessionpedalstrokes / (rollingTime(trackdf,...)/60)
     if (abs(avgcadenceNoZerosSession-avgcadenceNoZerosSum) >= 0.1 & loud)
-      print(paste0("nozeros (session,sum) = ",avgcadenceNoZerosSession," , ",avgcadenceNoZerosSum))
+      print(paste0("  cadence nozeros (session,sum) = ",avgcadenceNoZerosSession," , ",avgcadenceNoZerosSum))
     if (abs(avgcadenceWithZerosSession-avgcadenceWithZerosSum) >= 0.1 & loud)
-      print(paste0("withzeros (session,sum) = ",avgcadenceWithZerosSession," , ",avgcadenceWithZerosSum))
+      print(paste0("  cadence withzeros (session,sum) = ",avgcadenceWithZerosSession," , ",avgcadenceWithZerosSum))
   }
 
   return(list(avgcadenceNoZerosSum=avgcadenceNoZerosSum,
@@ -150,11 +149,11 @@ repairCadence <- function(trackdf,fixCadence=TRUE,
   cadTooHigh[is.na(cadTooHigh)] <- FALSE
   if (sum(cadTooHigh) > 0) {
     if (loud) {
-      cat("    ",sum(cadTooHigh)," too-large cadence values\n")
-      cat("    ",paste(sort(unique(trackdf$cadence.rpm[cadTooHigh])),sep=","),"\n")
+      if (fixCadence) cat("  fixing")
+      cat("  ",sum(cadTooHigh)," too-large cadence values\n")
+      cat("   ",paste(sort(unique(trackdf$cadence.rpm[cadTooHigh])),sep=","),"\n")
     }
     if (fixCadence) {
-      if (loud) cat("    fixing them\n")
       if (cadCorrectTooHigh) {
         trackdf$cadence.rpm[cadTooHigh] <- NA
         cadenceSmoothed <- smoothDataSegments(yvec=trackdf$cadence.rpm,
@@ -179,12 +178,12 @@ repairCadence <- function(trackdf,fixCadence=TRUE,
   cadTooLow[is.na(cadTooLow)] <- FALSE
   if (sum(cadTooLow) > 0) {
     if (loud) {
-      cat("    ",sum(cadTooLow)," too-small cadence values\n")
-      cat("    ",paste(sort(unique(trackdf$cadence.rpm[cadTooLow])),
+      if (fixCadence) cat("  fixing")
+      cat("  ",sum(cadTooLow)," too-small cadence values\n")
+      cat("   ",paste(sort(unique(trackdf$cadence.rpm[cadTooLow])),
                        sep=","),"\n")
     }
     if (fixCadence) {
-      if (loud) cat("    fixing them\n")
       trackdf$cadence.rpm[cadTooLow] <- 0
       cadChanged <- TRUE
     }
@@ -227,13 +226,13 @@ repairCadence <- function(trackdf,fixCadence=TRUE,
       zapcadence <- speedfact > cadStuckSpdDelta
       if (max(zapcadence) > 0) {
         if (loud) {
+          if (fixCadence) cat("  zeroing")
           cat("  ",sum(zapcadence)," apparently stuck cadence values \n")
           temp <- trackdf[zapcadence,c("timestamp.s","speed.m.s","cadence.rpm",
                                        "distance.m")]
           print(temp,n=70,na.print="NA")
         }
         if (fixCadence) {
-          if (loud)cat("     setting them to zero\n")
           trackdf$cadence.rpm[zapcadence] <- 0
           cadChanged <- TRUE
         }
@@ -248,6 +247,7 @@ repairCadence <- function(trackdf,fixCadence=TRUE,
     c(0,trackdf$speed.m.s[-nrow(trackdf)]) == 0
   if (sum(cadzero)>0) {
     if (loud) {
+      if (cadCorrectStopped & fixCadence) cat("  zeroing")
       cat("  ",sum(cadzero)," positive cadence values while speed is 0\n")
       if (sum(cadzero)>0) {
         temp <- trackdf[cadzero,c("timestamp.s","speed.m.s","cadence.rpm",
@@ -256,7 +256,6 @@ repairCadence <- function(trackdf,fixCadence=TRUE,
       }
     }
     if (cadCorrectStopped & fixCadence) {
-      if (loud) cat("     setting them to zero\n")
       trackdf$cadence.rpm[cadzero] <- 0
       cadChanged <- TRUE
     }
@@ -267,7 +266,7 @@ repairCadence <- function(trackdf,fixCadence=TRUE,
   if (cadCorrectNA & fixCadence) {
     cadenceNA <- is.na(trackdf$cadence.rpm)
     if (sum(cadenceNA) > 0) {
-      if (loud) cat("fixing ",sum(cadenceNA)," missing cadence values")
+      if (loud) cat("  fixing ",sum(cadenceNA)," missing cadence values")
       cadenceSmoothed <- smoothDataSegments(yvec=trackdf$cadence.rpm,
                                             xvar=cumsum(trackdf$deltatime),
                                             segment=trackdf$segment,

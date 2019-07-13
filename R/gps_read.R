@@ -176,17 +176,12 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
   trackdata <- repairSensorDropOut(trackdata,loud=loud,...)
   repHR <- repairHR(trackdata,loud=loud,...)
   trackdata <- repHR[["trackdf"]]
-  nHRTooHigh = repHR[["nHRTooHigh"]]
   repCad <- repairCadence(trackdata,loud=loud,...)
   trackdata <- repCad[["trackdf"]]
-  nCadTooHigh = repCad[["nCadTooHigh"]]
-  nCadTooLow = repCad[["nCadTooLow"]]
-  nCadStoppedPos = repCad[["nCadStoppedPos"]]
-  nCadStuck=repCad[["nCadStuck"]]
-
   #  split/revise track into segments separated by non-negligile stops
-  sessionStats <- statsSession(session)
   trackdata <- processSegments(trackdf=trackdata,loud=loudSegment,...)
+
+  sessionStats <- statsSession(session)
   cadStats <- statsCadence(trackdf=trackdata,
                 sessionpedalstrokes=sessionStats[["sessionPedalStrokes"]],
                 loud=loud,...)
@@ -194,7 +189,7 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
   hrStats <- statsHeartRate(trackdf=trackdata,recovery_hr=recovery_hr,...)
   gearStats <- statsGearing(trackdf=trackdata,...)
   climbStats <- statsGrade(trackdf=trackdata,...)
-    stopsStats <- statsStops(trackdf=trackdata,...)
+  stopsStats <- statsStops(trackdf=trackdata,...)
 
   if (!is.na(trackdata$position_lon.dd[1])){
     begEndGap <-
@@ -232,13 +227,13 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
                        numsegs = max(trackdata$segment),
                        pct.trkpts.hr = sum(!is.na(trackdata$heart_rate.bpm))/
                                          nrow(trackdata),
-                       nHRTooHigh = nHRTooHigh,
+                       nHRTooHigh = repHR[["nHRTooHigh"]],
                        pct.trkpts.cad = sum(!is.na(trackdata$cadence.rpm))/
                                           nrow(trackdata),
-                       nCadTooHigh = nCadTooHigh,
-                       nCadTooLow = nCadTooLow,
-                       nCadStoppedPos = nCadStoppedPos,
-                       nCadStuck=nCadStuck,
+                       nCadTooHigh = repCad[["nCadTooHigh"]],
+                       nCadTooLow = repCad[["nCadTooLow"]],
+                       nCadStoppedPos = repCad[["nCadStoppedPos"]],
+                       nCadStuck = repCad[["nCadStuck"]],
                        begEndGap = begEndGap,
                        deltaElev = trackdata$altitude.m[nrow(trackdata)] -
                                    trackdata$altitude.m[1],

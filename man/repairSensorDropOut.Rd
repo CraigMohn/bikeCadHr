@@ -5,13 +5,15 @@
 \title{clean up sensor dropout data for a track}
 \usage{
 repairSensorDropOut(trackdf, fixAllSensorDrop = TRUE,
-  sensorDropSmooth = TRUE, lookBackward = 3, lookForward = 5,
-  loud = FALSE, ...)
+  fixSpeedSensorDrop = TRUE, sensorDropSmooth = TRUE,
+  lookBackward = 3, lookForward = 5, loud = FALSE, ...)
 }
 \arguments{
 \item{trackdf}{data frame or tibble with gps track data}
 
-\item{fixAllSensorDrop}{logical, if TRU fix case of all sensor dropouts}
+\item{fixAllSensorDrop}{logical, if TRUE fix case of all sensor dropouts}
+
+\item{fixSpeedSensorDrop}{logical, if TRUE fix case of speed sensor dropouts}
 
 \item{sensorDropSmooth}{fill in values}
 

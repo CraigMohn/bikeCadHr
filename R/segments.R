@@ -1,6 +1,6 @@
 #' generate stops statistics for a track
 #'
-#' \code{statsStops}  processes a gps track file to summarize grade data
+#' \code{statsStops}  processes a gps track file to summarize start/stop data
 #'
 #' @param trackdf data frame or tibble with gps track data
 #' @param segInitIdleAggSecs stops/restarts before this time has
@@ -141,6 +141,7 @@ processSegments <- function(trackdf,
   stopped[length(stopped)] <-TRUE
   starting <- !stopped & lag_one(stopped)
   starting[1] <- TRUE
+
   ###   now process segment and stop data
   #  wipe existing segment data from gps (auto)start/stop if requested
   #  otherwise make it a sequence of consecutive nondecreasing integers
@@ -176,13 +177,12 @@ processSegments <- function(trackdf,
     newseg <- newseg & !needjoin
   }
   # split if time since last motion is too large
-  lastmovedtime <- cummax(ifelse(stopped&!newseg,
+  lastmovedtime <- cummax(ifelse(stopped & !newseg,
                                  0,
                                  timesecs))
   stoptoolong <- c(FALSE,diff(lastmovedtime) >= segSplitTimeStop) &
     !stopped &
     lag_one(stopped)
-
   needsplit <- stoptoolong & !newseg
   if (sum(needsplit) > 0) {
     if (loud) {
@@ -283,9 +283,19 @@ processSegments <- function(trackdf,
     dplyr::select(-joinseg,-starting,-newsegBase)
 
   trackdf$stopped <- stopped
+  trackdf$deltatimestart <- deltaTimeStart(trackdf$deltatime,trackdf$segment)
   if (loud) {
     cat("ending with ",sum(newseg)," segments\n")
   }
 
   return(trackdf)
 }
+
+deltaTimeStart <- function(deltatime,segment) {
+  leaddeltatime <- c(deltatime[-1],0)
+  dtime <- deltatime
+  tdtime <- pmin(deltatime,leaddeltatime)
+  dtime[segment != lag_one(segment)] <- tdtime[segment != lag_one(segment)]
+  dtime
+}
+

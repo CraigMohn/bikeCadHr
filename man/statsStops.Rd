@@ -28,7 +28,7 @@ of the initial start are discarded as above}
 a list containing summary data
 }
 \description{
-\code{statsStops}  processes a gps track file to summarize grade data
+\code{statsStops}  processes a gps track file to summarize start/stop data
 }
 \seealso{
 \code{\link{read_ride}},

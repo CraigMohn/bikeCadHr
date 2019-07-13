@@ -87,7 +87,8 @@ statsSession <- function(session) {
 #'
 #' @param trackdf data frame or tibble with gps track data
 #' @param loud display actions taken
-#' @param fixAllSensorDrop logical, if TRU fix case of all sensor dropouts
+#' @param fixAllSensorDrop logical, if TRUE fix case of all sensor dropouts
+#' @param fixSpeedSensorDrop logical, if TRUE fix case of speed sensor dropouts
 #' @param sensorDropSmooth fill in values
 #' @param lookBackward number of seconds to look before dropout when fixing
 #' @param lookForward number of seconds to look after dropout when fixing
@@ -107,6 +108,7 @@ statsSession <- function(session) {
 #' @export
 repairSensorDropOut <- function(trackdf,
                                 fixAllSensorDrop=TRUE,
+                                fixSpeedSensorDrop=TRUE,
                                 sensorDropSmooth=TRUE,
                                 lookBackward=3,
                                 lookForward=5,
@@ -172,11 +174,12 @@ repairSensorDropOut <- function(trackdf,
     return(trackdf)
   }
 
+  spdDrop <- flagdrop("speed.m.s")
   cadDrop <- flagdrop("cadence.rpm")
   hrDrop <-  flagdrop("heart_rate.bpm")
   powDrop <- flagdrop("power.watts" )
 
-  allDrop <- is.na(trackdf$speed.m.s) & cadDrop & hrDrop & powDrop
+  allDrop <- spdDrop & cadDrop & hrDrop & powDrop
   if (sum(allDrop) > 0) {
     if (loud) {
       cat("   there are ",sum(allDrop)," records with no external sensor data\n")
@@ -184,15 +187,37 @@ repairSensorDropOut <- function(trackdf,
     }
     if (fixAllSensorDrop) {
       if (sensorDropSmooth) {
-        trackdf <- repairdrops(trackdf,"speed.m.s",NAOK=FALSE,zeroOK=TRUE,allDrop)
-        trackdf <- repairdrops(trackdf,"cadence.rpm",NAOK=FALSE,zeroOK=TRUE,allDrop)
-        trackdf <- repairdrops(trackdf,"heart_rate.bpm",NAOK=FALSE,zeroOK=FALSE,allDrop)
-        trackdf <- repairdrops(trackdf,"power.watts",NAOK=FALSE,zeroOK=FALSE,allDrop)
+        trackdf <- repairdrops(trackdf,"speed.m.s",NAOK=FALSE,
+                               zeroOK=TRUE,allDrop)
+        trackdf <- repairdrops(trackdf,"cadence.rpm",NAOK=FALSE,
+                               zeroOK=TRUE,allDrop)
+        trackdf <- repairdrops(trackdf,"heart_rate.bpm",NAOK=FALSE,
+                               zeroOK=FALSE,allDrop)
+        trackdf <- repairdrops(trackdf,"power.watts",NAOK=FALSE,
+                               zeroOK=FALSE,allDrop)
       } else {
         if (loud) cat("    removing them\n")
         trackdf <- trackdf[!allDrop,]
       }
     }
   }
+  if (sum(spdDrop) > 0) {
+    if (loud) {
+      cat("  ** there are ",sum(allDrop)," records with no speed data\n")
+      cat("  ",paste(sort(unique(trackdf$timestamp.s[spdDrop])),sep=","),"\n")
+    }
+    if (fixSpeedSensorDrop) {
+      trackdf$speed.m.s[spdDrop] <- 0.0
+      if (loud) cat("      setting them to zero\n")
+    }
+
+  }
+  if (loud & sum(cadDrop) > 0 & sum(!cadDrop) > 0)
+    cat("  ** there are ",sum(cadDrop)," records with no cadence data\n")
+  if (loud & sum(hrDrop) > 0 & sum(!hrDrop) > 0)
+    cat("  ** there are ",sum(hrDrop)," records with no heartrate data\n")
+  if (loud & sum(powDrop) > 0 & sum(!powDrop) > 0)
+    cat("  ** there are ",sum(powDrop)," records with no power data\n")
+
   return(trackdf)
 }

@@ -30,7 +30,7 @@
 statsPower <- function(trackdf,powerCalibrateTime=0,...) {
   powerpos <- !is.na(trackdf$power.watts) & trackdf$power.watts > 0
   powerNum <- sum(trackdf$power.watts[powerpos]*
-                    trackdf$deltatime[powerpos]  )
+                    trackdf$deltatimestart[powerpos]  )
   if (sum(powerpos)>0) {
     avgpowerNoZeros <- powerNum / totalTime(trackdf,powerpos)
     avgpowerWithZeros <- powerNum / rollingTime(trackdf,...)
@@ -38,7 +38,7 @@ statsPower <- function(trackdf,powerCalibrateTime=0,...) {
     calibrate <- cumsum(trackdf$deltatime)<powerCalibrateTime
     if (sum(!calibrate)>sum(calibrate)) {
       powerNumpost <- sum(trackdf$power.watts[powerpos & !calibrate]*
-                            trackdf$deltatime[powerpos & !calibrate]  )
+                            trackdf$deltatimestart[powerpos & !calibrate]  )
       avgpowerPostCalNoZeros <-powerNumpost / totalTime(trackdf,
                                                         include=powerpos & !calibrate,
                                                         ...)
