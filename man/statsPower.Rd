@@ -4,12 +4,11 @@
 \alias{statsPower}
 \title{generate power statistics for a track}
 \usage{
-statsPower(trackdf, powerCalibrateTime = 0, ...)
+statsPower(trackdf, ...)
 }
 \arguments{
-\item{trackdf}{data frame or tibble with gps track data}
-
-\item{powerCalibrateTime}{number of seconds to ignore in avgpowerPostCal}
+\item{trackdf}{data frame or tibble with gps track data
+powerCalibrateTime <= 0}
 
 \item{...}{parameters for \code{\link{processSegments}},
 \code{\link{repairHR}},
@@ -28,7 +27,7 @@ a list containing summary data
 \code{statsPower}  processes a gps track file to summarize the power data
 }
 \seealso{
-\code{\link{read_ride}},\code{\link{processSegments}},
+\code{\link{read_ride}},\code{\link{excludeCalibrate}},
    \code{\link{repairHR}},
    \code{\link{repairCadence}},
    \code{\link{statsCadence}},

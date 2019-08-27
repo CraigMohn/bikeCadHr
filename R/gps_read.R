@@ -178,6 +178,8 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
   trackdata <- repHR[["trackdf"]]
   repCad <- repairCadence(trackdata,loud=loud,...)
   trackdata <- repCad[["trackdf"]]
+  repPower <- repairPower(trackdata,loud=loud,...)
+  trackdata <- repPower[["trackdf"]]
   #  split/revise track into segments separated by non-negligile stops
   trackdata <- processSegments(trackdf=trackdata,loud=loudSegment,...)
 
@@ -258,8 +260,7 @@ read_ride <- function(ridefile,tz="America/Los_Angeles",
                        summed.pedal.strokes = cadStats[["summedPedalStrokes"]],
                        avgpower.nozeros=powStats[["avgpowerNoZeros"]],
                        avgpower.withzeros=powStats[["avgpowerWithZeros"]],
-                       avgpower.postcal.nozeros=powStats[["avgpowerPostCalNoZeros"]],
-                       avgpower.postcal.rolling=powStats[["avgpowerPostCalRolling"]],
+                       power.calibrations.detected=repPower[["nCalibrateSequences"]],
                        ascent = climbStats[["ascent"]],
                        descent = climbStats[["descent"]],
                        distance.ascending = climbStats[["distanceAscending"]],
