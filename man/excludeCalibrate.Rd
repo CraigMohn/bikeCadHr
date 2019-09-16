@@ -19,7 +19,7 @@ excludeCalibrate(deltatime, watts, afterlast = TRUE,
 
 \item{powerCalibrateAuto}{automatically find calibration signals if}
 
-\item{powerCalibrateTime}{number of seconds to ignore in avgpowerPostCal}
+\item{powerCalibrateTime}{number of seconds to ignore in avgpower PostCal}
 
 \item{maxCalDelta}{maximum stepsize in increasing sequence}
 

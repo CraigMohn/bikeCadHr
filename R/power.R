@@ -75,7 +75,7 @@ powerAvgs <- function(trackdf,...) {
 repairPower <- function(trackdf,loud=FALSE,...) {
 
   powerfixed <- excludeCalibrate(trackdf$deltatime,
-                                 trackdf$powser.watts,...)
+                                 trackdf$power.watts,...)
   if (powerfixed[["calSeqs"]] > 0){
     trackdf$power.uncorrected <- trackdf$power.watts
     trackdf$power.watts < -powerfixed[["power"]]
@@ -89,7 +89,7 @@ repairPower <- function(trackdf,loud=FALSE,...) {
 #' @param deltatime timestamp vector
 #' @param watts power vector
 #' @param powerCalibrateAuto automatically find calibration signals if
-#' @param powerCalibrateTime number of seconds to ignore in avgpowerPostCal
+#' @param powerCalibrateTime number of seconds to ignore in avgpower PostCal
 #' @param afterlast zap all power readings before last calibration
 #' @param maxCalDelta maximum stepsize in increasing sequence
 #' @param maxCalWatts power value at end of calibration

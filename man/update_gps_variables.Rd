@@ -8,15 +8,9 @@ update_gps_variables(outdir, fitrootdir, gpxrootdir = NA,
   merge.files = list(c(NA, NA)), fitexcludes = c("bad", "short"),
   gpxexcludes = c("bad", "short", "nosegs"), prefer.gpx = c(""),
   rebuild.all.fit = FALSE, rebuild.all.gpx = FALSE,
-  drawprofile = TRUE, drawprofile.both = FALSE, elevationChar = "|",
-  plotly = FALSE, rgl = FALSE, rasterDir = NULL,
-  localElevFile = "", maptype = "bing", featureDataSource = "Raster",
-  townLevel = 9, roadLevel = 3, waterALevel = 4, waterLLevel = 5,
-  rglColorScheme = "default", useImageRaster = FALSE,
-  trackCurveElevFromRaster = FALSE, trackCurveHeight = 15,
-  res3d = 3000, plot3DVertScale = 1, cadCont = TRUE,
-  drawmap = TRUE, drawmap.both = FALSE, cores = 4, loud = FALSE,
-  usefitdc = FALSE, ...)
+  drawprofile = TRUE, drawprofile.both = FALSE, rgl = FALSE,
+  maptype = "bing", drawmap = TRUE, drawmap.both = FALSE,
+  cores = 4, loud = FALSE, usefitdc = FALSE, ...)
 }
 \arguments{
 \item{outdir}{string containing location of output data pair files}
@@ -51,60 +45,13 @@ the ride}
 \item{drawprofile.both}{create a .png file in the output directory profiling
 the ride for both the .fit files and .gpx files}
 
-\item{elevationChar}{character to use when printing the elevation profile}
-
-\item{plotly}{if TRUE use plotly to draw 3D track in viewer}
-
 \item{rgl}{if TRUE use rgl to draw 3D track in viewer}
-
-\item{rasterDir}{character location of base directory to load and save raster files}
-
-\item{localElevFile}{file containing raster object with elevations on lat/lon}
 
 \item{maptype}{map to use as background (\code{"maptoolkit-topo"} or
 \code{"bing"} or \code{"osm"} or \code{"stamen-terrain"} or
 \code{"esri-topo"}  or \code{"stamen-watercolor"} or \code{"mapbox"} or
 \code{"esri"} or \code{"osm-public-transport"} or \code{"opencyclemap"}
 or \code{"apple-iphoto"} or \code{"skobbler"})}
-
-\item{featureDataSource}{character,  "Raster" to load saved raster data
-from directory specified , "none" to show none}
-
-\item{townLevel}{numeric, display towns ranked this number or higher:
-3=all towns     5=larger towns (in US >50k)}
-
-\item{roadLevel}{numeric, display roads ranked this number or higher:
-2=Service Drive, Bike Path, etc      3=Local Street
-4=Secondary Hwy                      5=Primary Hwy/Transit}
-
-\item{waterALevel}{numeric, display areal water ranked this number or higher:
-2=res/treatmentpond/pit/quarry       3=lake/pond/swamp/stream
-4=class 2 or 3 bigger than 1k ha     5=named lake/pond/swamp/stream
-6=large lake/pond/swamp/stream       7=Ocean/Bay/Est/Sound
-8=glacier}
-
-\item{waterLLevel}{numeric, display linear water ranked this number or higher:
-2=canal/ditch                        3=braided stream
-4=stream/river                       5=named stream/river
-6=named stream/river containing the string "RIV"}
-
-\item{rglColorScheme}{name of color scheme from
-c("default","beach","viridis","plasma","terrain","oleron","snow","oslo",
-  "desert","lajolla","niccoli","bright",
-  "bing","maptoolkit-topo","nps","apple-iphoto")}
-
-\item{useImageRaster}{logical, use the image raster from saved openStreetmap
-colrings of the map surface}
-
-\item{trackCurveElevFromRaster}{logical, see help for draw3dMap}
-
-\item{trackCurveHeight}{numeric, see help for draw3dMap}
-
-\item{res3d}{integer, see help for draw3dMap}
-
-\item{plot3DVertScale}{number which will multiply vertical scaling for plotly/rgl}
-
-\item{cadCont}{display cadence as continuous rather than categorical}
 
 \item{drawmap}{create a .tiff file in the output directory mapping
 the ride with speed-varying color}
@@ -118,7 +65,7 @@ the ride with speed-varying color for both the .fit files and the .gox files}
 
 \item{usefitdc}{use package fitdc to read fit files instead of fitparse}
 
-\item{...}{parameters passed for track cleaning}
+\item{...}{parameters passed for track cleaning, output production}
 }
 \value{
 a tbl contining the combined summaries and tracks, with preference

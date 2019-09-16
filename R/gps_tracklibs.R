@@ -33,38 +33,7 @@
 #'    the ride
 #' @param drawprofile.both create a .png file in the output directory profiling
 #'    the ride for both the .fit files and .gpx files
-#' @param elevationChar character to use when printing the elevation profile
-#' @param plotly if TRUE use plotly to draw 3D track in viewer
 #' @param rgl if TRUE use rgl to draw 3D track in viewer
-#' @param rasterDir character location of base directory to load and save raster files
-#' @param localElevFile file containing raster object with elevations on lat/lon
-#' @param trackCurveElevFromRaster logical, see help for draw3dMap
-#' @param trackCurveHeight numeric, see help for draw3dMap
-#' @param res3d integer, see help for draw3dMap
-#' @param featureDataSource character,  "Raster" to load saved raster data
-#'    from directory specified , "none" to show none
-#' @param townLevel numeric, display towns ranked this number or higher:
-#'    3=all towns     5=larger towns (in US >50k)
-#' @param roadLevel numeric, display roads ranked this number or higher:
-#'    2=Service Drive, Bike Path, etc      3=Local Street
-#'    4=Secondary Hwy                      5=Primary Hwy/Transit
-#' @param waterALevel numeric, display areal water ranked this number or higher:
-#'    2=res/treatmentpond/pit/quarry       3=lake/pond/swamp/stream
-#'    4=class 2 or 3 bigger than 1k ha     5=named lake/pond/swamp/stream
-#'    6=large lake/pond/swamp/stream       7=Ocean/Bay/Est/Sound
-#'    8=glacier
-#' @param waterLLevel numeric, display linear water ranked this number or higher:
-#'    2=canal/ditch                        3=braided stream
-#'    4=stream/river                       5=named stream/river
-#'    6=named stream/river containing the string "RIV"
-#' @param rglColorScheme name of color scheme from
-#'     c("default","beach","viridis","plasma","terrain","oleron","snow","oslo",
-#'       "desert","lajolla","niccoli","bright",
-#'       "bing","maptoolkit-topo","nps","apple-iphoto")
-#' @param useImageRaster logical, use the image raster from saved openStreetmap
-#'    colrings of the map surface
-#' @param plot3DVertScale number which will multiply vertical scaling for plotly/rgl
-#' @param cadCont display cadence as continuous rather than categorical
 #' @param drawmap create a .tiff file in the output directory mapping
 #'    the ride with speed-varying color
 #' @param maptype map to use as background (\code{"maptoolkit-topo"} or
@@ -77,7 +46,7 @@
 #' @param cores numer of cores (default is #CPUs - 1)
 #' @param loud display summary of re/segmenting
 #' @param usefitdc use package fitdc to read fit files instead of fitparse
-#' @param ... parameters passed for track cleaning
+#' @param ... parameters passed for track cleaning, output production
 #'
 #' @return a tbl contining the combined summaries and tracks, with preference
 #'   given to data from .fit files over the corresponding .gpx file, with specified
@@ -89,17 +58,9 @@
 update_gps_variables <- function(outdir,fitrootdir,gpxrootdir=NA,merge.files=list(c(NA,NA)),
                   fitexcludes=c("bad","short"),gpxexcludes=c("bad","short","nosegs"),prefer.gpx=c(""),
                   rebuild.all.fit=FALSE,rebuild.all.gpx=FALSE,
-                  drawprofile=TRUE,drawprofile.both=FALSE,elevationChar="|",
-                  plotly=FALSE,rgl=FALSE,
-                  rasterDir=NULL,localElevFile="",maptype="bing",
-                  featureDataSource="Raster",
-                  townLevel=9,roadLevel=3,waterALevel=4,waterLLevel=5,
-                  rglColorScheme="default",useImageRaster=FALSE,
-                  trackCurveElevFromRaster=FALSE,
-                  trackCurveHeight=15,
-                  res3d=3000,
-                  plot3DVertScale=1,
-                  cadCont=TRUE,
+                  drawprofile=TRUE,drawprofile.both=FALSE,
+                  rgl=FALSE,
+                  maptype="bing",
                   drawmap=TRUE,drawmap.both=FALSE,
                   cores=4,loud=FALSE,usefitdc=FALSE,...) {
 
@@ -167,36 +128,27 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir=NA,merge.files=lis
         idate <- fitsummary[fitsummary$sourcefile==ridefn,]$startbutton.date
         itime <- fitsummary[fitsummary$sourcefile==ridefn,]$startbutton.time
         if (drawprofile) {
-          plot_profile(fittracks[fittracks$startbutton.date==idate&
-                                 fittracks$startbutton.time==itime,],
-                       fitsummary[fitsummary$sourcefile==ridefn,],
-                       elevationShape=elevationChar,cadCont=cadCont,
-                       savefn=paste0(outdir,"/",ridefn,"profile.pdf"))
+          rideProfile::rideProfile(fittracks[fittracks$startbutton.date==idate&
+                                             fittracks$startbutton.time==itime,],
+                                   fitsummary[fitsummary$sourcefile==ridefn,],
+                                   savefn=paste0(outdir,"/",ridefn,"profile.pdf"),
+                                   ...)
           num_drawn <- 1
         }
-        if (drawmap | plotly) {
+        if (drawmap) {
           if (nomap) {
             outfile <- "none"
           } else {
             outfile <- paste0(outdir,"/",ridefn,"map.jpg")
           }
-          p <- map_rides(fittracks[fittracks$startbutton.date==idate&
-                    fittracks$startbutton.time==itime,],
+          map_rides(fittracks[fittracks$startbutton.date==idate&
+                              fittracks$startbutton.time==itime,],
                     draw.speed=TRUE,minTiles=200,
                     outfile=outfile,mapsize=c(3840,2400),
-                    rasterDir=rasterDir,
-                    trackCurveElevFromRaster=trackCurveElevFromRaster,
-                    trackCurveHeight=trackCurveHeight,
-                    res3d=res3d,
-                    plotly=plotly,rgl=rgl,localElevFile=localElevFile,
-                    plot3DVertScale=plot3DVertScale,
+                    rgl=rgl,
                     speed.color="speedcolors",maptype=maptype,
-                    featureDataSource=featureDataSource,
-                    townLevel=townLevel,roadLevel=roadLevel,
-                    waterALevel=waterALevel,waterLLevel=waterLLevel,
-                    rglColorScheme=rglColorScheme,useImageRaster=useImageRaster)
-          if (plotly) htmlwidgets::saveWidget(p, paste0(outdir,"/",ridefn,"map.html"))
-          num_mapped <- 1
+                    ...)
+           num_mapped <- 1
         }
       }
     }
@@ -260,13 +212,12 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir=NA,merge.files=lis
           idate <- gpxsummary[gpxsummary$sourcefile==ridefn,]$startbutton.date
           itime <- gpxsummary[gpxsummary$sourcefile==ridefn,]$startbutton.time
           if (drawprofile &(num_drawn==0 | drawprofile.both))
-            rideprofile <- plot_profile(gpxtracks[gpxtracks$startbutton.date==idate&
-                                                  gpxtracks$startbutton.time==itime,],
-                                        gpxsummary[gpxsummary$sourcefile==ridefn,],
-                                        elevationShape=elevationChar,
-                                        cadCont=cadCont,
-                                        savefn=paste0(outdir,"/",ridefn,"profile.png"))
-          if ((drawmap | plotly) &(num_mapped==0 | drawmap.both)) {
+            rideProfile::rideProfile(gpxtracks[gpxtracks$startbutton.date==idate&
+                                               gpxtracks$startbutton.time==itime,],
+                                     gpxsummary[gpxsummary$sourcefile==ridefn,],
+                                     savefn=paste0(outdir,"/",ridefn,"profile.png"),
+                                     ...)
+          if ((drawmap) &(num_mapped==0 | drawmap.both)) {
             if (nomap) {
               outfile <- "none"
             } else {
@@ -275,17 +226,9 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir=NA,merge.files=lis
             p<-map_rides(gpxtracks[gpxtracks$startbutton.date==idate&
                                    gpxtracks$startbutton.time==itime,],
                          outfile=outfile,mapsize=c(1920,1200),maptype=maptype,
-                         plotly=plotly,rgl=rgl,localElevFile=localElevFile,
-                         rasterDir=rasterDir,
-                         trackCurveElevFromRaster=trackCurveElevFromRaster,
-                         trackCurveHeight=trackCurveHeight,
-                         res3d=res3d,
+                         rgl=rgl,
                          draw.speed=TRUE,speed.color="magma",
-                         featureDataSource=featureDataSource,
-                         townLevel=townLevel,roadLevel=roadLevel,
-                         waterALevel=waterALevel,waterLLevel=waterLLevel,
-                         rglColorScheme=rglColorScheme,useImageRaster=useImageRaster)
-            if (plotly) htmlwidgets::saveWidget(p, paste0(outdir,"/",ridefn,"map.html"))
+                         ...)
           }
         }
       }

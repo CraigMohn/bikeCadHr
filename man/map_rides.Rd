@@ -4,20 +4,7 @@
 \alias{map_rides}
 \title{plot ride track data on a map}
 \usage{
-map_rides(geodf, outfile, maptitle, definedmaps, usemap,
-  rasterDir = NULL, plotly = FALSE, rgl = FALSE,
-  localElevFile = "", plot3DSize = 300, plot3DVertScale = 1,
-  trackCurveElevFromRaster = FALSE, trackCurveHeight = 15,
-  res3d = 3000, featureDataSource = "none", townLevel = 3,
-  roadLevel = 4, waterALevel = 4, waterLLevel = 5,
-  rglColorScheme = "default", useImageRaster = FALSE,
-  rglColorMaxElev = 3000, rglShininess = 0,
-  rglLightPars = "viewpoint.rel=TRUE", rglLights = TRUE,
-  maptype = "osm", minTiles = 50, mapsize = c(1600, 1200),
-  fine.map = FALSE, margin.factor = 0.08, draw.speed = FALSE,
-  line.color = "magenta", line.width = 3, line.alpha = 0.8,
-  speed.color = "speedcolors", speed.alpha = 0.7, speed.ptsize = 6,
-  speed.pch = 19, jpeg.quality = 90)
+map_rides(geodf, maptitle, rgl = FALSE, ...)
 }
 \arguments{
 \item{geodf}{data frame or tibble containing at least: position_lat.dd,
@@ -25,117 +12,11 @@ position_lon.dd,(or lat,lon)(both numeric,decimal degrees),
 startbutton.date(int),startbutton.time(int),segment(numeric),
 and speed.m.s for speed coloring}
 
-\item{outfile}{name of output file, extension is either .tiff or .jpg}
-
 \item{maptitle}{string containing title}
-
-\item{definedmaps}{list, each named entry is a list of two vectors of
-length two, named lat and lon, containing the min and max of the
-latitude andf longitude of the map area}
-
-\item{usemap}{string identifying area from list \eqn{definedmaps} or}
-
-\item{rasterDir}{character location of base directory to load and save raster files}
-
-\item{plotly}{use plotly to draw 3D track in viewer}
 
 \item{rgl}{use rgl openGL to draw 3D track in viewer}
 
-\item{localElevFile}{file containing raster object with elevations on lat/lon}
-
-\item{plot3DSize}{number which is rough target for size of grid for plotly}
-
-\item{plot3DVertScale}{number which will multiply vertical scaling for plotly/rgl}
-
-\item{trackCurveElevFromRaster}{logical, see help for draw3dMap}
-
-\item{trackCurveHeight}{numeric, see help for draw3dMap}
-
-\item{res3d}{integer, see help for draw3dMap}
-
-\item{featureDataSource}{character,  "Raster" to load saved raster data
-from directory specified , "none" to show none}
-
-\item{townLevel}{numeric, display towns ranked this number or higher:
-3=all towns     5=larger towns (in US >50k)}
-
-\item{roadLevel}{numeric, display roads ranked this number or higher:
-2=Service Drive, Bike Path, etc      3=Local Street
-4=Secondary Hwy                      5=Primary Hwy/Transit}
-
-\item{waterALevel}{numeric, display areal water ranked this number or higher:
-2=res/treatmentpond/pit/quarry       3=lake/pond/swamp/stream
-4=class 2 or 3 bigger than 1k ha     5=named lake/pond/swamp/stream
-6=large lake/pond/swamp/stream       7=Ocean/Bay/Est/Sound
-8=glacier}
-
-\item{waterLLevel}{numeric, display linear water ranked this number or higher:
-2=canal/ditch                        3=braided stream
-4=stream/river                       5=named stream/river
-6=named stream/river containing the string "RIV"}
-
-\item{rglColorScheme}{name of color scheme from
-c("default","beach","viridis","plasma","terrain","oleron","snow","oslo",
-  "desert","lajolla","niccoli","bright",
-  "bing","maptoolkit-topo","nps","apple-iphoto")}
-
-\item{useImageRaster}{logical, use the image raster from saved openStreetmap
-colrings of the map surface}
-
-\item{rglColorMaxElev}{the upper limit of elevation, anything above this will
-be colored the same in the rgl}
-
-\item{rglShininess}{number controlling surface shininess in rgl rendering}
-
-\item{rglLightPars}{string containing parameters for rgl.light call}
-
-\item{rglLights}{logical indicating whether to turn on lighting}
-
-\item{maptype}{map to use as background (\code{"maptoolkit-topo"} or
-\code{"bing"} or \code{"osm"} or \code{"stamen-terrain"} or
-\code{"esri-topo"}  or \code{"stamen-watercolor"} or \code{"mapbox"} or
-\code{"esri"} or \code{"osm-public-transport"} or \code{"opencyclemap"}
-or \code{"apple-iphoto"} or \code{"skobbler"})}
-
-\item{minTiles}{minimum number of tiles fetched for map, larger is slower
-but better quality}
-
-\item{mapsize}{pixel size of map created}
-
-\item{fine.map}{if true, use c(7680,4800) for map size}
-
-\item{margin.factor}{percentage to expand map area beyond limits of
-the track in each direction, when autodetermining region to plot}
-
-\item{draw.speed}{if true, draw track(s) as a series of points whose color
-indicates travel speed}
-
-\item{line.color}{the color to draw the lines of the tracks,
-if a palette is specified (\code{"plasma"} or \code{"viridis"} or
- \code{"rainbow"} or \code{"heat"} or \code{"red-blue"})is specified,
-each track supplied will be assigned a color from that palette}
-
-\item{line.width}{the width of the line for the tracks}
-
-\item{line.alpha}{the opacity of the line}
-
-\item{speed.color}{palette to use to represent speed on plot
-(\code{"speedcolors"} or \code{"red-blue-green"} or
-\code{"rainbow"} or \code{"plasma"} or \code{"magma"} or
-\code{"heat"} )}
-
-\item{speed.alpha}{opacity of the speed line if \eqn{speed.color} specified}
-
-\item{speed.ptsize}{size for the symbols used to plot the speed line,
-doubled if \eqn{fine.map} is set true.}
-
-\item{speed.pch}{the character to use plotting the points of the speed line}
-
-\item{jpeg.quality}{the "quality" of the JPEG image, a percentage. Smaller
-values will give more compression but also more degradation of the image}
-}
-\value{
-NULL or plotly object
+\item{...}{arguments for 3d rendering calls}
 }
 \description{
 \code{map_rides} Plot lat/long data on maps, optionally using colored

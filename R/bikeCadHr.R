@@ -46,7 +46,7 @@
 #'   \link{update_gps_variables}, \link{join_ridefiles}, \link{combine_track_stores}
 #'
 #' @section map and visualization:
-#'   \link{map_rides}, \link{plot_profile}
+#'   \link{map_rides}
 #'
 #'
 #' @import magrittr tibble dplyr stringr ggplot2
@@ -54,6 +54,7 @@
 #' @import XML
 #' @import rgl
 #' @import maptrack3d
+#' @import rideProfile
 #' @importFrom grDevices colorRampPalette dev.off heat.colors
 #'                       jpeg rainbow tiff
 #' @importFrom graphics lines par plot points title
