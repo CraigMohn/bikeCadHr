@@ -49,26 +49,13 @@
 #'   \link{map_rides}
 #'
 #'
-#' @import magrittr tibble dplyr stringr ggplot2
-#' @import viridis
-#' @import XML
-#' @import rgl
+#' @import magrittr tibble dplyr stringr
 #' @import maptrack3d
+#' @import maptrack2d
 #' @import rideProfile
-#' @importFrom grDevices colorRampPalette dev.off heat.colors
-#'                       jpeg rainbow tiff
-#' @importFrom graphics lines par plot points title
-#' @importFrom plotly plot_ly layout add_surface add_trace
+#' @import rideReadGPS
 #' @importFrom stats approx median quantile setNames weighted.mean
-#' @importFrom scales alpha
-#' @importFrom fitdc read_fit
-#' @importFrom OpenStreetMap openmap projectMercator
-#' @importFrom raster pointDistance crop rasterize as.matrix
-#' @importFrom lubridate mday month year second minute hour ymd_hms
-#' @importFrom doParallel registerDoParallel stopImplicitCluster
-#' @importFrom foreach foreach %dopar% %do%
-#' @importFrom parallel detectCores
-#' @importFrom htmlwidgets saveWidget
+#' @importFrom raster pointDistance
 #'
 #' @name bikeCadHr
 NULL

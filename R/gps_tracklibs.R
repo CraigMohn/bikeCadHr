@@ -81,7 +81,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir=NA,merge.files=lis
         fl <- fl[grep(x,fl,invert=TRUE)]
       }
     }
-    fitlist <- read_ridefiles(fl,cores=cores,loud=loud,usefitdc=usefitdc,...)
+    fitlist <- rideReadGPS::read_ridefiles(fl,cores=cores,loud=loud,usefitdc=usefitdc,...)
     fitsummary <- fitlist[["summaries"]]
     fittracks <- dplyr::arrange(fitlist[["tracks"]],startbutton.date,timestamp.s)
     newfitfiles <- basename(fl)
@@ -104,7 +104,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir=NA,merge.files=lis
       }
     }
     if (length(newfitfiles)>0) {
-      newfitlist <- read_ridefiles(newfitfiles,cores=cores,
+      newfitlist <- rideReadGPS::read_ridefiles(newfitfiles,cores=cores,
                                    loud=loud,usefitdc=usefitdc,...)
       newfitresults <- newfitlist[["summaries"]]
       newfittracks <- newfitlist[["tracks"]]
@@ -166,7 +166,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir=NA,merge.files=lis
           fl <- fl[grep(x,fl,invert=TRUE)]
         }
       }
-      gpxlist <- read_ridefiles(fl,cores=cores,loud=loud,usefitdc=usefitdc,...)
+      gpxlist <- rideReadGPS::read_ridefiles(fl,cores=cores,loud=loud,usefitdc=usefitdc,...)
       gpxsummary <- gpxlist[["summaries"]]
       gpxtracks <- dplyr::arrange(gpxlist[["tracks"]],timestamp.s)
       newgpxfiles <- basename(fl)
@@ -189,7 +189,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir=NA,merge.files=lis
          }
       }
       if (length(newgpxfiles)>0) {
-        newgpxlist <- read_ridefiles(newgpxfiles,cores=cores,
+        newgpxlist <- rideReadGPS::read_ridefiles(newgpxfiles,cores=cores,
                                      loud=loud,usefitdc=usefitdc,...)
         newgpxresults <- newgpxlist[["summaries"]]
         newgpxtracks <- newgpxlist[["tracks"]]
