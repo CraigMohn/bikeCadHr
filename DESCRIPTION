@@ -6,7 +6,7 @@ Date: 2019-06-27
 Author: Craig Mohn
 Maintainer: Craig Mohn <craig.mohn.projects@gmail.com>
 Depends: R (>= 2.15.0)
-Imports: magrittr, dplyr, tibble, stringr, raster,  
+Imports: magrittr, dplyr, tibble, stringr, lubridate, raster,  
     rideProfile, maptrack3d, maptrack2d, rideReadGPS
 Remotes: CraigMohn/maptrack3d, CraigMohn/fitparseR, CraigMohn/rideProfile,
     CraigMohn/maptrack2d, CraigMohn/rideReadGPS

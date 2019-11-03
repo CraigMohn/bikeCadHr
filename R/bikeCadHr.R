@@ -54,6 +54,7 @@
 #' @import maptrack2d
 #' @import rideProfile
 #' @import rideReadGPS
+#' @importFrom lubridate tz
 #' @importFrom stats approx median quantile setNames weighted.mean
 #' @importFrom raster pointDistance
 #'

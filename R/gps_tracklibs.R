@@ -98,6 +98,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir=NA,merge.files=lis
     newfitfiles <- list.files(pattern=".fit",recursive=FALSE)
     load(paste0(outdir,"/fitsummary.rda"))
     load(paste0(outdir,"/fittracks.rda"))
+    libtz <- lubridate::tz(fittracks$timestamp.s)
     if (!(fitexcludes[1]=="")) {
       for (x in fitexcludes) {
         newfitfiles <- newfitfiles[grep(x,newfitfiles,invert=TRUE)]
@@ -105,7 +106,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir=NA,merge.files=lis
     }
     if (length(newfitfiles)>0) {
       newfitlist <- rideReadGPS::read_ridefiles(newfitfiles,cores=cores,
-                                   loud=loud,usefitdc=usefitdc,...)
+                                   loud=loud,usefitdc=usefitdc,tz=libtz,...)
       newfitresults <- newfitlist[["summaries"]]
       newfittracks <- newfitlist[["tracks"]]
       newfiles <- newfitresults$sourcefile
@@ -183,6 +184,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir=NA,merge.files=lis
       newgpxfiles <- list.files(pattern=".gpx",recursive=FALSE)
       load(paste0(outdir,"/gpxsummary.rda"))
       load(paste0(outdir,"/gpxtracks.rda"))
+      libtz <- lubridate::tz(gpxtracks$timestamp.s)
       if (!(gpxexcludes[1]=="")) {
         for (x in gpxexcludes) {
         newgpxfiles <- newgpxfiles[grep(x,newgpxfiles,invert=TRUE)]
@@ -190,7 +192,7 @@ update_gps_variables <- function(outdir,fitrootdir,gpxrootdir=NA,merge.files=lis
       }
       if (length(newgpxfiles)>0) {
         newgpxlist <- rideReadGPS::read_ridefiles(newgpxfiles,cores=cores,
-                                     loud=loud,usefitdc=usefitdc,...)
+                                     loud=loud,usefitdc=usefitdc,tz=libtz,...)
         newgpxresults <- newgpxlist[["summaries"]]
         newgpxtracks <- newgpxlist[["tracks"]]
         newfiles <- newgpxresults$sourcefile
@@ -425,52 +427,57 @@ join_ridefiles <- function(joinlist,summaries,tracks) {
 combine_track_stores <- function(primary_sums,primary_tracks,
                                  secondary_sums,secondary_tracks,
                                    prefer_secondary=""){
-    #every entry in track tbls should have a corresponding summary entry
-    pri.on.times <- unique(dateTimeStr(primary_sums$startbutton.date,
-                                       primary_sums$startbutton.time))
-    sec.on.times <- unique(dateTimeStr(secondary_sums$startbutton.date,
-                                       secondary_sums$startbutton.time))
-    #  specify rides to keep based on time startbutton turned on
-    #     (from filename so gpx and fit should match)
-    if (nrow(primary_tracks[!dateTimeStr(primary_tracks$startbutton.date,
-                                         primary_tracks$startbutton.time) %in%
-                            pri.on.times,1])>0) {
-      cat("** track dataframe track not in primary summary, starting time \n",
-          setdiff(unique(dateTimeStr(primary_tracks$startbutton.date,
-                                     primary_tracks$startbutton.time)),
-                  pri.on.times))
-    }
-    if (nrow(secondary_tracks[!dateTimeStr(secondary_tracks$startbutton.date,
-                                       secondary_tracks$startbutton.time) %in%
-                              sec.on.times,1])>0) {
-      cat("** track dataframe track not in secondary summary, start time ",
-          setdiff(unique(dateTimeStr(secondary_tracks$startbutton.date,
-                                     secondary_tracks$startbutton.time)),
-                  sec.on.times),"\n")
-    }
-    frompri <- pri.on.times
-    if (!missing(prefer_secondary))
-      frompri <- setdiff(frompri,intersect(sec.on.times,prefer_secondary))
-    fromsec <- setdiff(sec.on.times,frompri)
-    summaries <-
-      dplyr::arrange(
-        dplyr::bind_rows(
-          primary_sums[dateTimeStr(primary_sums$startbutton.date,
-                                   primary_sums$startbutton.time) %in%
-                       frompri,],
-          secondary_sums[dateTimeStr(secondary_sums$startbutton.date,
-                                     secondary_sums$startbutton.time) %in%
-                       fromsec,]),
-        start.time)
-    sourcefiles <- unique(summaries$sourcefile)
-    tracks <- dplyr::arrange(
+  tzpri <- lubridate::tz(primary_tracks$timestamp.s)
+  tzsec <- lubridate::tz(secondary_tracks$timestamp.s)
+  if (tzpri != tzsec)
+    stop("cannot combine tracks and summaries with different timezones")
+
+  #every entry in track tbls should have a corresponding summary entry
+  pri.on.times <- unique(dateTimeStr(primary_sums$startbutton.date,
+                                     primary_sums$startbutton.time))
+  sec.on.times <- unique(dateTimeStr(secondary_sums$startbutton.date,
+                                     secondary_sums$startbutton.time))
+  #  specify rides to keep based on time startbutton turned on
+  #     (from filename so gpx and fit should match)
+  if (nrow(primary_tracks[!dateTimeStr(primary_tracks$startbutton.date,
+                                       primary_tracks$startbutton.time) %in%
+                           pri.on.times,1])>0) {
+    cat("** track dataframe track not in primary summary, starting time \n",
+        setdiff(unique(dateTimeStr(primary_tracks$startbutton.date,
+                                   primary_tracks$startbutton.time)),
+                pri.on.times))
+  }
+  if (nrow(secondary_tracks[!dateTimeStr(secondary_tracks$startbutton.date,
+                                         secondary_tracks$startbutton.time) %in%
+                            sec.on.times,1])>0) {
+    cat("** track dataframe track not in secondary summary, start time ",
+        setdiff(unique(dateTimeStr(secondary_tracks$startbutton.date,
+                                   secondary_tracks$startbutton.time)),
+                sec.on.times),"\n")
+  }
+  frompri <- pri.on.times
+  if (!missing(prefer_secondary))
+    frompri <- setdiff(frompri,intersect(sec.on.times,prefer_secondary))
+  fromsec <- setdiff(sec.on.times,frompri)
+  summaries <-
+    dplyr::arrange(
       dplyr::bind_rows(
-        primary_tracks[dateTimeStr(primary_tracks$startbutton.date,
-                                   primary_tracks$startbutton.time) %in%
-                       frompri,],
-        secondary_tracks[dateTimeStr(secondary_tracks$startbutton.date,
-                                     secondary_tracks$startbutton.time) %in%
-                       fromsec,]),
-      startbutton.date,timestamp.s)
-    return(list(summaries=summaries,tracks=tracks))
+        primary_sums[dateTimeStr(primary_sums$startbutton.date,
+                                 primary_sums$startbutton.time) %in%
+                     frompri,],
+        secondary_sums[dateTimeStr(secondary_sums$startbutton.date,
+                                   secondary_sums$startbutton.time) %in%
+                     fromsec,]),
+      start.time)
+  sourcefiles <- unique(summaries$sourcefile)
+  tracks <- dplyr::arrange(
+    dplyr::bind_rows(
+      primary_tracks[dateTimeStr(primary_tracks$startbutton.date,
+                                 primary_tracks$startbutton.time) %in%
+                     frompri,],
+      secondary_tracks[dateTimeStr(secondary_tracks$startbutton.date,
+                                   secondary_tracks$startbutton.time) %in%
+                     fromsec,]),
+    startbutton.date,timestamp.s)
+  return(list(summaries=summaries,tracks=tracks))
 }
