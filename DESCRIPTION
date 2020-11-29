@@ -20,4 +20,4 @@ Description: Functions to process and clean up .fit and .gpx files containing
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.1

@@ -470,14 +470,24 @@ combine_track_stores <- function(primary_sums,primary_tracks,
                      fromsec,]),
       start.time)
   sourcefiles <- unique(summaries$sourcefile)
-  tracks <- dplyr::arrange(
-    dplyr::bind_rows(
-      primary_tracks[dateTimeStr(primary_tracks$startbutton.date,
-                                 primary_tracks$startbutton.time) %in%
-                     frompri,],
-      secondary_tracks[dateTimeStr(secondary_tracks$startbutton.date,
-                                   secondary_tracks$startbutton.time) %in%
-                     fromsec,]),
-    startbutton.date,timestamp.s)
-  return(list(summaries=summaries,tracks=tracks))
+#temppt <<- primary_tracks[dateTimeStr(primary_tracks$startbutton.date,
+#                                  primary_tracks$startbutton.time) %in%
+#                          frompri,]
+#tempst <<- secondary_tracks[dateTimeStr(secondary_tracks$startbutton.date,
+#                                    secondary_tracks$startbutton.time) %in%
+#                          fromsec,]
+  excludenames <- c("left_right_balance.")
+  ptracks <- primary_tracks[dateTimeStr(primary_tracks$startbutton.date,
+                                        primary_tracks$startbutton.time) %in%
+                              frompri,]
+  stracks <- secondary_tracks[dateTimeStr(secondary_tracks$startbutton.date,
+                                          secondary_tracks$startbutton.time) %in%
+                              fromsec,]
+  if (any(names(ptracks) %in% excludenames))
+    ptracks <- ptracks[,-which(names(ptracks) %in% excludenames)]
+  if (any(names(stracks) %in% excludenames))
+    stracks <- stracks[,-which(names(stracks) %in% excludenames)]
+  tracks <- dplyr::arrange(dplyr::bind_rows(ptracks,stracks),
+                           startbutton.date,timestamp.s)
+return(list(summaries=summaries,tracks=tracks))
 }

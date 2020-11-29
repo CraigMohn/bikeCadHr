@@ -4,13 +4,27 @@
 \alias{update_gps_variables}
 \title{add/replace ride data in all tbl pairs}
 \usage{
-update_gps_variables(outdir, fitrootdir, gpxrootdir = NA,
-  merge.files = list(c(NA, NA)), fitexcludes = c("bad", "short"),
-  gpxexcludes = c("bad", "short", "nosegs"), prefer.gpx = c(""),
-  rebuild.all.fit = FALSE, rebuild.all.gpx = FALSE,
-  drawprofile = TRUE, drawprofile.both = FALSE, rgl = FALSE,
-  maptype = "bing", drawmap = TRUE, drawmap.both = FALSE,
-  cores = 4, loud = FALSE, usefitdc = FALSE, ...)
+update_gps_variables(
+  outdir,
+  fitrootdir,
+  gpxrootdir = NA,
+  merge.files = list(c(NA, NA)),
+  fitexcludes = c("bad", "short"),
+  gpxexcludes = c("bad", "short", "nosegs"),
+  prefer.gpx = c(""),
+  rebuild.all.fit = FALSE,
+  rebuild.all.gpx = FALSE,
+  drawprofile = TRUE,
+  drawprofile.both = FALSE,
+  rgl = FALSE,
+  maptype = "bing",
+  drawmap = TRUE,
+  drawmap.both = FALSE,
+  cores = 4,
+  loud = FALSE,
+  usefitdc = FALSE,
+  ...
+)
 }
 \arguments{
 \item{outdir}{string containing location of output data pair files}

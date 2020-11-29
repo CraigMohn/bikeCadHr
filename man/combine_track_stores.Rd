@@ -4,8 +4,13 @@
 \alias{combine_track_stores}
 \title{combine two (summary,track) tbl pairs}
 \usage{
-combine_track_stores(primary_sums, primary_tracks, secondary_sums,
-  secondary_tracks, prefer_secondary = "")
+combine_track_stores(
+  primary_sums,
+  primary_tracks,
+  secondary_sums,
+  secondary_tracks,
+  prefer_secondary = ""
+)
 }
 \arguments{
 \item{primary_sums}{tbl of ride summaries created from gpx and/or fit files}

@@ -19,7 +19,7 @@ This package was motivated because my models of cycling effort and
  average cadence, this package creates summary variables counting and categorizing
  the number of stops on the ride.
 
-The package also allows for the creation of maps of a ride or set of rides.
+ The package also allows for the creation of maps of a ride or set of rides.
  The map area will be slightly larger than the track of the ride, unless you supply
  a named list of map lat/long boundaries. If a specific map is not specified from
  the list, it will choose the first in the list that covers the track.  The
@@ -27,16 +27,16 @@ The package also allows for the creation of maps of a ride or set of rides.
  the map format.  Respect the terms of use and do not automate the generation
  of maps.
 
-The package will also create a plot of the elevation profile of a ride, with
+ The package will also create a plot of the elevation profile of a ride, with
  speed encoded as the color of the profile line, and color bars below showing
  heart rate and cadence range over the ride.  This may be easier to quickly
  interpret than the superposed wiggly lines that are usually displayed in
  cycling performance apps.
 
-Currently there is no support for power meters, although the data should be read
+ Currently there is no support for power meters, although the data should be read
  from fit files and passed upstream unchanged.
 
-Very short .fit files (typically for rides less than 30 seconds) sometimes fail to
+ Very short .fit files (typically for rides less than 30 seconds) sometimes fail to
  be read in.  It is possible to specify a vector of files to exclude to avoid this
  situation, and by default .fit filenames containing the strings "short" or "bad" are
  ignored, as are .gpx filenames containing those substrings.  The string "nosegs" will
